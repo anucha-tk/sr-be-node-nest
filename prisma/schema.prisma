@@ -1,0 +1,10 @@
+// Prisma Schema — sr-be-node-nest
+// Naming convention: PascalCase tables, camelCase columns
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}

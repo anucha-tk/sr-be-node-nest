@@ -1,7 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthTestController } from './auth-test.controller';
-
 import { APP_GUARD } from '@nestjs/core';
+import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
+import { ApiKeyService } from '../services/api-key.service';
 
 describe('AuthTestController', () => {
   let controller: AuthTestController;
@@ -12,7 +13,15 @@ describe('AuthTestController', () => {
       providers: [
         {
           provide: APP_GUARD,
-          useValue: { canActivate: () => true }, // Mock guard for unit testing controller logic itself
+          useValue: { canActivate: () => true },
+        },
+        {
+          provide: ApiKeyGuard,
+          useValue: { canActivate: () => true },
+        },
+        {
+          provide: ApiKeyService,
+          useValue: {},
         },
       ],
     }).compile();

@@ -32,6 +32,9 @@ class MockGuard implements CanActivate {
   }
 }
 
+import { ApiKeyGuard } from '../src/common/guards/api-key.guard';
+import { ApiKeyService } from '../src/modules/auth/services/api-key.service';
+
 @Global()
 @Module({
   controllers: [AuthTestController],
@@ -53,6 +56,8 @@ class MockGuard implements CanActivate {
     { provide: AuthGuard, useClass: MockGuard },
     { provide: ResourceGuard, useClass: MockGuard },
     { provide: RoleGuard, useClass: MockGuard },
+    { provide: ApiKeyGuard, useClass: MockGuard },
+    { provide: ApiKeyService, useValue: {} },
   ],
   exports: [
     'KEYCLOAK_INSTANCE',
@@ -62,6 +67,8 @@ class MockGuard implements CanActivate {
     AuthGuard,
     ResourceGuard,
     RoleGuard,
+    ApiKeyGuard,
+    ApiKeyService,
   ],
 })
 class MockAuthModule {}

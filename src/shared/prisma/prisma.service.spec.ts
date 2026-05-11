@@ -1,7 +1,12 @@
 import { PrismaService } from './prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 jest.mock('@prisma/client', () => {
   class MockPrismaClient {
+    public options: unknown;
+    constructor(options?: unknown) {
+      this.options = options;
+    }
     $connect = jest.fn().mockResolvedValue(undefined);
     $disconnect = jest.fn().mockResolvedValue(undefined);
   }
@@ -10,9 +15,15 @@ jest.mock('@prisma/client', () => {
 
 describe('PrismaService', () => {
   let service: PrismaService;
+  let mockConfigService: Partial<ConfigService>;
 
   beforeEach(() => {
-    service = new PrismaService();
+    mockConfigService = {
+      get: jest
+        .fn()
+        .mockReturnValue('postgresql://test:test@localhost:5432/test'),
+    };
+    service = new PrismaService(mockConfigService as ConfigService);
   });
 
   it('should be defined', () => {

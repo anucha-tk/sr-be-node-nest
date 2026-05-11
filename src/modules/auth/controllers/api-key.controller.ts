@@ -3,13 +3,24 @@ import { ApiKeyService } from '../services/api-key.service';
 import { CreateApiKeyDto } from '../dto/create-api-key.dto';
 import { Roles } from 'nest-keycloak-connect';
 import { ApiKey } from '@prisma/client';
+import { ApiTags, ApiSecurity, ApiOperation } from '@nestjs/swagger';
+import { ApiStandardResponse } from '../../../common/docs/api-response.decorator';
+import {
+  ApiKeyResponseDto,
+  ApiKeyRevokeResponseDto,
+} from '../dto/api-key-response.dto';
 
+@ApiTags('Auth')
+@ApiSecurity('bearer')
+@ApiSecurity('api-key')
 @Controller('v1/auth/api-keys')
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
 
   @Post()
   @Roles({ roles: ['admin'] })
+  @ApiOperation({ summary: 'Create a new API key' })
+  @ApiStandardResponse(ApiKeyResponseDto)
   async create(
     @Body() createDto: CreateApiKeyDto,
   ): Promise<{ success: boolean; data: Partial<ApiKey> & { key: string } }> {
@@ -30,6 +41,8 @@ export class ApiKeyController {
 
   @Delete(':id')
   @Roles({ roles: ['admin'] })
+  @ApiOperation({ summary: 'Revoke an API key' })
+  @ApiStandardResponse(ApiKeyRevokeResponseDto)
   async revoke(
     @Param('id') id: string,
   ): Promise<{ success: boolean; data: { id: string } }> {

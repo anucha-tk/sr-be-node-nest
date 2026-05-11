@@ -45,7 +45,7 @@ development_status:
   epic-1: in-progress
   1-1-project-foundation-infra-setup: done
   1-2-keycloak-identity-rbac: done
-  1-3-api-key-security-for-services: backlog
+  1-3-api-key-security-for-services: done
   1-4-interactive-scalar-api-docs: backlog
   epic-1-retrospective: optional
   epic-2: backlog

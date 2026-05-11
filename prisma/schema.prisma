@@ -7,5 +7,18 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+model ApiKey {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  keyHash   String    @unique
+  salt      String
+  scopes    String[]
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  revokedAt DateTime?
+
+  @@map("api_keys")
 }

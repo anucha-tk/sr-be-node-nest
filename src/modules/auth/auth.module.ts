@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { KeycloakConnectModule } from 'nest-keycloak-connect';
 import { AuthTestController } from './controllers/auth-test.controller';
+import { ApiKeyController } from './controllers/api-key.controller';
+import { ApiKeyService } from './services/api-key.service';
 
 @Module({
   imports: [
@@ -20,14 +22,14 @@ import { AuthTestController } from './controllers/auth-test.controller';
           authServerUrl,
           realm,
           clientId: config.get<string>('KEYCLOAK_CLIENT_ID'),
-          secret: 'public', // public client or specify dummy
+          secret: 'public',
         };
       },
       inject: [ConfigService],
     }),
   ],
-  controllers: [AuthTestController],
-  providers: [],
-  exports: [KeycloakConnectModule],
+  controllers: [AuthTestController, ApiKeyController],
+  providers: [ApiKeyService],
+  exports: [KeycloakConnectModule, ApiKeyService],
 })
 export class AuthModule {}

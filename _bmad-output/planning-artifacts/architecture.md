@@ -93,7 +93,7 @@ nest new sr-be-node-nest
 ### Decision Priority Analysis
 
 **Critical Decisions (Block Implementation):**
-- **Data Foundation**: ใช้ PostgreSQL 17 และ Prisma v7.7.0 ร่วมกับ `nestjs-zod` สำหรับการทำ Schema Validation ที่เข้มงวด
+- **Data Foundation**: ใช้ PostgreSQL 17 และ Prisma v7.8.0 ร่วมกับ `nestjs-zod` สำหรับการทำ Schema Validation ที่เข้มงวด
 - **Security Backbone**: ใช้ Keycloak (OIDC) ร่วมกับ API Key Strategy (Custom Guard) เพื่อความปลอดภัยระดับ Enterprise
 - **Event-Driven Core**: ใช้ Kafka ผ่าน NestJS Microservices และระบบ Idempotency เพื่อความแม่นยำของข้อมูลรายได้
 
@@ -104,7 +104,7 @@ nest new sr-be-node-nest
 
 ### Data Architecture
 - **Database**: PostgreSQL 17 (LTS) - รันผ่าน Docker
-- **ORM**: Prisma v7.7.0 - เน้น Type-safety และประสิทธิภาพการ Query 1M+ Records
+- **ORM**: Prisma v7.8.0 - เน้น Type-safety และประสิทธิภาพการ Query 1M+ Records
 - **Validation**: `nestjs-zod` - ป้องกันข้อมูลผิดพลาดตั้งแต่ระดับ Entry point
 - **Migration**: Prisma Migrate
 

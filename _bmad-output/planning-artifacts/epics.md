@@ -49,7 +49,7 @@ NFR10: Adherence to NestJS best practices and Clean Architecture.
 ### Additional Requirements
 
 - **Starter Template**: NestJS CLI (Standard Express) already initialized.
-- **Data Foundation**: PostgreSQL 17 + Prisma v7.7.0 + nestjs-zod for schema validation.
+- **Data Foundation**: PostgreSQL 17 + Prisma v7.8.0 + nestjs-zod for schema validation.
 - **Security Backbone**: Keycloak (OIDC) integration + custom API Key Strategy Guard.
 - **Event-Driven Core**: Apache Kafka via NestJS Microservices with distributed idempotency logic.
 - **Orchestration**: Docker Compose for all infrastructure (DB, Keycloak, Kafka).

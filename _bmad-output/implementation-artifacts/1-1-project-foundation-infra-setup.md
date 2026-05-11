@@ -13,7 +13,7 @@ so that I can build enterprise features with consistent infrastructure.
 ## Acceptance Criteria
 
 1. **Infrastructure Availability**: `docker compose up` brings up healthy containers for PostgreSQL 17, Keycloak v26, and Kafka v4.
-2. **Data Persistence Foundation**: Prisma client (v7.7.0) is initialized and can successfully connect/run migrations to the PostgreSQL container.
+2. **Data Persistence Foundation**: Prisma client (v7.8.0) is initialized and can successfully connect/run migrations to the PostgreSQL container.
 3. **Fail-Fast Configuration**: Environment variables are strictly validated using Zod at application startup; process exits with clear error if required variables are missing or invalid.
 4. **Clean Architecture Alignment**: Basic project structure matches naming conventions (PascalCase Tables, camelCase Columns, kebab-case Files) and core observability (Pino) is initialized.
 
@@ -24,7 +24,7 @@ so that I can build enterprise features with consistent infrastructure.
   - [x] Ensure proper health checks and volume persistence for all services.
   - [x] Configure Keycloak initial admin credentials via environment variables.
 - [x] Configure Data Layer with Prisma (AC: 2)
-  - [x] Install `prisma` (dev) and `@prisma/client` (v7.7.0).
+  - [x] Install `prisma` (dev) and `@prisma/client` (v7.8.0).
   - [x] Initialize `prisma/schema.prisma` with PostgreSQL provider.
   - [x] Verify connection via a dummy migration or `prisma db pull`.
 - [x] Implement Strict Environment Validation (AC: 3)

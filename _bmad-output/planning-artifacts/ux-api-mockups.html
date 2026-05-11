@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Design Directions - sr-be-node-nest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #6366f1;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --error: #ef4444;
+            --border: #e2e8f0;
+            --json-key: #312e81;
+            --json-string: #059669;
+            --json-number: #d97706;
+            --json-bool: #7c3aed;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            margin-bottom: 8px;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1em;
+        }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fafafa;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 0.95em;
+            color: var(--text-main);
+        }
+
+        .status-badge {
+            font-size: 0.75em;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+        }
+
+        .status-success { background: #d1fae5; color: #065f46; }
+        .status-error { background: #fee2e2; color: #991b1b; }
+
+        .card-body {
+            padding: 0;
+            position: relative;
+        }
+
+        pre {
+            margin: 0;
+            padding: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            background: #ffffff;
+            color: var(--text-main);
+        }
+
+        .key { color: var(--json-key); font-weight: 600; }
+        .string { color: var(--json-string); }
+        .number { color: var(--json-number); }
+        .boolean { color: var(--json-bool); }
+
+        .meta-tags {
+            padding: 12px 24px;
+            background: #f1f5f9;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 16px;
+            font-size: 0.8em;
+            color: var(--text-muted);
+        }
+
+        .tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tag-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        footer {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>API Design Directions</h1>
+            <p class="subtitle">Mockups for sr-be-node-nest (Pure Backend Experience)</p>
+        </header>
+
+        <div class="mockup-grid">
+            <!-- SUCCESS ANALYTICS -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">GET /api/v1/revenue/analytics/overview</span>
+                    <span class="status-badge status-success">200 OK</span>
+                </div>
+                <div class="card-body">
+<pre>{
+  <span class="key">"success"</span>: <span class="boolean">true</span>,
+  <span class="key">"data"</span>: {
+    <span class="key">"summary"</span>: {
+      <span class="key">"currentBalance"</span>: <span class="number">125430.50</span>,
+      <span class="key">"pendingRevenue"</span>: <span class="number">45000.00</span>,
+      <span class="key">"lastPayoutDate"</span>: <span class="string">"2026-05-10T08:00:00Z"</span>
+    },
+    <span class="key">"trends"</span>: [
+      { <span class="key">"date"</span>: <span class="string">"2026-05-04"</span>, <span class="key">"amount"</span>: <span class="number">12000</span> },
+      { <span class="key">"date"</span>: <span class="string">"2026-05-05"</span>, <span class="key">"amount"</span>: <span class="number">15000</span> }
+    ]
+  },
+  <span class="key">"meta"</span>: {
+    <span class="key">"timestamp"</span>: <span class="string">"2026-05-11T04:35:00Z"</span>,
+    <span class="key">"executionTimeMs"</span>: <span class="number">120</span>,
+    <span class="key">"dataSource"</span>: <span class="string">"PostgreSQL + Kafka Buffer"</span>
+  },
+  <span class="key">"error"</span>: <span class="boolean">null</span>
+}</pre>
+                </div>
+                <div class="meta-tags">
+                    <div class="tag"><div class="tag-dot" style="background: var(--primary);"></div> Clean Response</div>
+                    <div class="tag"><div class="tag-dot" style="background: var(--success);"></div> High Performance</div>
+                </div>
+            </div>
+
+            <!-- SUCCESS INVOICE LIST -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">GET /api/v1/invoices?limit=50&offset=0</span>
+                    <span class="status-badge status-success">200 OK</span>
+                </div>
+                <div class="card-body">
+<pre>{
+  <span class="key">"success"</span>: <span class="boolean">true</span>,
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"invoiceId"</span>: <span class="string">"INV-2026-001"</span>,
+      <span class="key">"amount"</span>: <span class="number">1500.00</span>,
+      <span class="key">"status"</span>: <span class="string">"PAID"</span>,
+      <span class="key">"paidAt"</span>: <span class="string">"2026-05-11T04:00:00Z"</span>
+    }
+  ],
+  <span class="key">"meta"</span>: {
+    <span class="key">"pagination"</span>: {
+      <span class="key">"totalRecords"</span>: <span class="number">1254300</span>,
+      <span class="key">"currentPage"</span>: <span class="number">1</span>,
+      <span class="key">"totalPages"</span>: <span class="number">25086</span>
+    },
+    <span class="key">"executionTimeMs"</span>: <span class="number">850</span>
+  },
+  <span class="key">"error"</span>: <span class="boolean">null</span>
+}</pre>
+                </div>
+                <div class="meta-tags">
+                    <div class="tag"><div class="tag-dot" style="background: var(--json-number);"></div> Million Record View</div>
+                </div>
+            </div>
+
+            <!-- ERROR VALIDATION -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">POST /api/v1/invoices/validate</span>
+                    <span class="status-badge status-error">400 Bad Request</span>
+                </div>
+                <div class="card-body">
+<pre>{
+  <span class="key">"success"</span>: <span class="boolean">false</span>,
+  <span class="key">"data"</span>: <span class="boolean">null</span>,
+  <span class="key">"meta"</span>: { <span class="key">"timestamp"</span>: <span class="string">"2026-05-11T04:35:00Z"</span> },
+  <span class="key">"error"</span>: {
+    <span class="key">"code"</span>: <span class="string">"VALIDATION_ERROR"</span>,
+    <span class="key">"message"</span>: <span class="string">"Invalid invoice data provided."</span>,
+    <span class="key">"details"</span>: [
+      { <span class="key">"field"</span>: <span class="string">"amount"</span>, <span class="key">"reason"</span>: <span class="string">"Must be a positive number"</span> }
+    ]
+  }
+}</pre>
+                </div>
+                <div class="meta-tags">
+                    <div class="tag"><div class="tag-dot" style="background: var(--error);"></div> Actionable Errors</div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            &copy; 2026 sr-be-node-nest - Designed for Developers
+        </footer>
+    </div>
+</body>
+</html>

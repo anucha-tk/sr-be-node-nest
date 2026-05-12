@@ -121,6 +121,22 @@ inputDocuments: ["_bmad-output/planning-artifacts/prd.md"]
 - **Adapt**: นำความเร็วและการตอบสนองแบบ Linear มาใช้ในการออกแบบ User Flow เพื่อให้ Somsak รู้สึกว่าระบบ "ทันใจ"
 - **Avoid**: หลีกเลี่ยงดีไซน์แบบ Dashboard วิศวกรที่ดูซับซ้อนเกินไป (Technical Overload) เพื่อรักษาความ Minimal ตามโจทย์
 
+## Interactive Showcase Frontend (Epic 5)
+
+### Vision
+สร้างหน้าจอพิเศษที่ใช้สำหรับการ Demo และ Presentation โดยเฉพาะ เน้นการเล่าเรื่อง (Storytelling) ผ่าน UI ที่สวยงามระดับ Premium เพื่อแสดงให้เห็นถึงความซับซ้อนของระบบ Backend (Kafka, Security, Performance) ในรูปแบบที่เข้าใจง่ายและน่าทึ่ง
+
+### Design Principles
+- **Visual Storytelling**: ใช้ Animation และ Motion (Framer Motion) ในการอธิบายการไหลของข้อมูล
+- **Interactive Depth**: ผู้ใช้สามารถเจาะลึก (Drill-down) เข้าไปดูโค้ดหรือการทำงานจริงในแต่ละจุดได้
+- **Real-time Feedback**: แสดงผลการประมวลผล Kafka แบบวินาทีต่อวินาที เพื่อยืนยันความเร็วของระบบ
+
+### Key Sections
+1. **The Architecture Map**: แผนผังระบบที่โต้ตอบได้ เมื่อคลิกที่ "Kafka" จะเห็นสถานะ Queue แบบ Real-time
+2. **The Performance Lab**: กราฟแสดงความเร็วในการ Query ข้อมูล 1M+ records แบบเปรียบเทียบ
+3. **The Security Vault**: สาธิตการทำงานของ Keycloak และ API Keys ผ่าน Interface ที่ดูล้ำสมัย
+4. **Presentation Mode**: ระบบนำเสนอแบบสไลด์ที่ฝังอยู่ใน Dashboard ช่วยให้การ Demo เป็นไปอย่างราบรื่น
+
 ## Design System Foundation (API & Developer Experience)
 
 ### 1.1 Design System Choice
@@ -301,6 +317,7 @@ sequenceDiagram
 - **Phase 1 - Core Financial DTOs**: กำหนดมาตรฐานข้อมูลสรุปและรายการธุรกรรมแบบ Optimized
 - **Phase 2 - Error & Envelope Components**: พัฒนาระบบตัวครอบข้อมูลมาตรฐานและระบบจัดการข้อผิดพลาด
 - **Phase 3 - Audit & Traceability Resources**: เพิ่มฟิลด์ Metadata สำหรับการตรวจสอบย้อนกลับไปยัง Kafka
+- **Phase 4 - Interactive Showcase (Epic 5)**: พัฒนาหน้าจอ Presentation และระบบ Interactive Demo
 
 ## UX Consistency Patterns (API Interaction Patterns)
 

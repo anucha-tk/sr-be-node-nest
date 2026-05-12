@@ -88,6 +88,8 @@ FR16: Epic 1 - Interactive Scalar documentation
 FR17: Epic 3 - API Rate limiting
 FR18: Epic 2 - Immutable audit logging
 FR19: Epic 2 - Transaction correlation IDs
+FR20: Epic 5 - Interactive Project Presentation
+FR21: Epic 5 - Real-time Showcase
 
 ## Epic List
 
@@ -106,6 +108,10 @@ Goal: Provide deep transparency into financial transactions. Users can search, f
 ### Epic 4: Enterprise Performance Analytics
 Goal: Deliver high-scale financial insights. Admins see real-time aggregations and trends on 1M+ records with senior-level SQL optimization.
 **FRs covered:** FR11, FR12, FR13.
+
+### Epic 5: Interactive Presentation & Showcase
+Goal: Provide a premium, visual-first demonstration of the project's technical depth. A mini React frontend designed to "wow" interviewers and stakeholders.
+**FRs covered:** FR20, FR21.
 
 ## Epic 1: Secure Access & Documentation
 
@@ -347,3 +353,63 @@ So that complex analytics remains performant at any scale.
 **Then** the system utilizes B-Tree indexes on search columns and Materialized Views for slow aggregations
 **And** `EXPLAIN ANALYZE` confirms index-only scans or optimized plan paths for core endpoints
 **And** the `lastRefreshed` timestamp is provided for all Materialized View data
+
+## Epic 5: Interactive Presentation & Showcase
+
+Provide a premium, visual-first demonstration of the project's technical depth. A mini React frontend designed to "wow" interviewers and stakeholders.
+
+### Story 5.1: Premium React Showcase Scaffold
+
+As a Lead Developer,
+I want a high-performance React frontend with rich aesthetics,
+So that I can present the backend's complexity in a visually stunning way.
+
+**Acceptance Criteria:**
+
+**Given** a new `frontend/` directory
+**When** I run the Vite-based development server
+**Then** a React 18+ application with Tailwind CSS v4 and Framer Motion is initialized
+**And** the UI follows "Rich Aesthetics" (glassmorphism, dark mode, custom typography)
+**And** a responsive layout with a premium navigation sidebar is implemented
+
+### Story 5.2: Interactive Architecture & Tech Stack
+
+As a Senior Interviewer,
+I want to see an interactive visualization of the system's architecture,
+So that I can quickly understand the integration of Kafka, Keycloak, and NestJS.
+
+**Acceptance Criteria:**
+
+**Given** the frontend is running
+**When** I navigate to the "Architecture" section
+**Then** an interactive Mermaid or SVG-based diagram shows the data flow from Kafka to PostgreSQL
+**And** clicking on components (e.g., "Kafka Consumer") reveals technical details and code snippets
+**And** the tech stack is presented with high-fidelity icons and deep-link references to the backend code
+
+### Story 5.3: Live Metrics & Demo Dashboard
+
+As a Stakeholder,
+I want to see real-time data being processed by the backend,
+So that I can verify the system's performance and event-driven nature.
+
+**Acceptance Criteria:**
+
+**Given** the backend is running and producing Kafka events
+**When** I open the "Live Showcase" dashboard
+**Then** I see real-time updates of revenue metrics via WebSockets or Polling
+**And** a "Simulate Transaction" button triggers a Kafka event and shows the visual feedback in the UI
+**And** the dashboard includes performance charts (P95 latency, throughput) powered by Chart.js or D3
+
+### Story 5.4: Deployment & Presentation Mode
+
+As a Presenter,
+I want a "Presentation Mode" that guides viewers through the project's highlights,
+So that I can deliver a structured and professional demo.
+
+**Acceptance Criteria:**
+
+**Given** the frontend is in "Presentation Mode"
+**When** I use the navigation controls
+**Then** the UI transitions smoothly between key sections (Auth, Kafka, Performance, Security)
+**And** each section includes a "Key Takeaway" sidebar for interviewer-facing notes
+**And** the entire project is containerized for easy deployment to Vercel or a staging server

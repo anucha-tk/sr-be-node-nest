@@ -163,6 +163,8 @@ This project distinguishes itself through a multi-dimensional focus on advanced 
 - **FR17**: Rate limiting for external API endpoints.
 - **FR18**: Immutable audit logging for financial transactions.
 - **FR19**: Transaction tracing via Correlation IDs.
+- **FR20**: Interactive Project Presentation (Mini React Frontend).
+- **FR21**: Real-time Showcase of Backend Capabilities.
 
 ## Non-Functional Requirements
 
@@ -201,3 +203,8 @@ This project distinguishes itself through a multi-dimensional focus on advanced 
 
 - **Goal**: Enterprise maturity and observability.
 - **Features**: Multi-tenancy, ELK/Datadog APM, Multi-region replication.
+
+### Epic 5: Interactive Showcase (Frontend)
+
+- **Goal**: Provide a high-fidelity visual demonstration of the system's capabilities.
+- **Features**: React-based presentation layer, live metric dashboards, interactive architecture diagrams, and "Senior Showcase" walk-throughs.

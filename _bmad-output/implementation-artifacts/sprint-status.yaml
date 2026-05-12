@@ -51,7 +51,7 @@ development_status:
   epic-2: in-progress
   2-1-kafka-consumer-event-mapping: done
   2-2-idempotent-revenue-engine: done
-  2-3-immutable-audit-trail: backlog
+  2-3-immutable-audit-trail: in-progress
   2-4-fast-balance-visibility-api: backlog
   epic-2-retrospective: optional
   epic-3: backlog
@@ -66,3 +66,9 @@ development_status:
   4-3-time-series-trend-analysis: backlog
   4-4-advanced-sql-index-optimization: backlog
   epic-4-retrospective: optional
+  epic-5: backlog
+  5-1-premium-react-showcase-scaffold: backlog
+  5-2-interactive-architecture-tech-stack: backlog
+  5-3-live-metrics-demo-dashboard: backlog
+  5-4-deployment-presentation-mode: backlog
+  epic-5-retrospective: optional

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { KeycloakConnectModule } from 'nest-keycloak-connect';
+import { KeycloakConnectModule, TokenValidation } from 'nest-keycloak-connect';
 import { AuthTestController } from './controllers/auth-test.controller';
 import { ApiKeyController } from './controllers/api-key.controller';
 import { ApiKeyService } from './services/api-key.service';
@@ -22,7 +22,10 @@ import { ApiKeyService } from './services/api-key.service';
           authServerUrl,
           realm,
           clientId: config.get<string>('KEYCLOAK_CLIENT_ID'),
-          secret: 'public',
+          secret: '', // Empty for public client
+          tokenValidation: TokenValidation.OFFLINE,
+          verifyTokenAudience: false,
+          bearerOnly: true,
         };
       },
       inject: [ConfigService],

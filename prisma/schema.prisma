@@ -37,3 +37,18 @@ model SupplierRevenue {
 
   @@map("supplier_revenues")
 }
+
+model RevenueAuditLog {
+  id              String   @id @default(uuid())
+  supplierId      String
+  invoiceId       String
+  correlationId   String
+  amount          Decimal  @db.Decimal(20, 2)
+  previousBalance Decimal  @db.Decimal(20, 2)
+  newBalance      Decimal  @db.Decimal(20, 2)
+  createdAt       DateTime @default(now())
+
+  @@map("revenue_audit_logs")
+  @@index([supplierId], name: "idx_revenue_audit_logs_supplierId")
+  @@index([correlationId], name: "idx_revenue_audit_logs_correlationId")
+}

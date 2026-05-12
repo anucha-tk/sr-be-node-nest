@@ -31,6 +31,10 @@ describe('RevenueService', () => {
             },
             supplierRevenue: {
               upsert: jest.fn(),
+              findUnique: jest.fn(),
+            },
+            revenueAuditLog: {
+              create: jest.fn(),
             },
           },
         },
@@ -45,7 +49,15 @@ describe('RevenueService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should process revenue and update balance', async () => {
+  it('should process revenue, update balance, and create audit log', async () => {
+    const previousBalance = new Prisma.Decimal(500);
+    const expectedNewBalance = previousBalance.add(mockRevenueEvent.amount);
+
+    (prisma.supplierRevenue.findUnique as jest.Mock).mockResolvedValue({
+      supplierId: mockRevenueEvent.supplierId,
+      balance: previousBalance,
+    });
+
     const transactionMock = jest.fn(async (callback) => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       return await callback(prisma);
@@ -71,6 +83,42 @@ describe('RevenueService', () => {
       create: {
         supplierId: mockRevenueEvent.supplierId,
         balance: mockRevenueEvent.amount,
+      },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(prisma.revenueAuditLog.create).toHaveBeenCalledWith({
+      data: {
+        supplierId: mockRevenueEvent.supplierId,
+        invoiceId: mockRevenueEvent.invoiceId,
+        correlationId: mockRevenueEvent.correlationId,
+        amount: mockRevenueEvent.amount,
+        previousBalance: previousBalance,
+        newBalance: expectedNewBalance,
+      },
+    });
+  });
+
+  it('should create audit log with zero previous balance if supplier does not exist', async () => {
+    (prisma.supplierRevenue.findUnique as jest.Mock).mockResolvedValue(null);
+
+    const transactionMock = jest.fn(async (callback) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return await callback(prisma);
+    });
+    (prisma.$transaction as jest.Mock).mockImplementation(transactionMock);
+
+    await service.processRevenue(mockRevenueEvent);
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(prisma.revenueAuditLog.create).toHaveBeenCalledWith({
+      data: {
+        supplierId: mockRevenueEvent.supplierId,
+        invoiceId: mockRevenueEvent.invoiceId,
+        correlationId: mockRevenueEvent.correlationId,
+        amount: mockRevenueEvent.amount,
+        previousBalance: new Prisma.Decimal(0),
+        newBalance: new Prisma.Decimal(mockRevenueEvent.amount),
       },
     });
   });

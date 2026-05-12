@@ -51,7 +51,7 @@ development_status:
   epic-2: in-progress
   2-1-kafka-consumer-event-mapping: done
   2-2-idempotent-revenue-engine: done
-  2-3-immutable-audit-trail: in-progress
+  2-3-immutable-audit-trail: done
   2-4-fast-balance-visibility-api: backlog
   epic-2-retrospective: optional
   epic-3: backlog

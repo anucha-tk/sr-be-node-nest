@@ -19,7 +19,17 @@ export class RevenueService {
             data: { id: dto.eventId },
           });
 
-          // 2. Atomic balance update
+          // 2. Fetch previous balance for auditing
+
+          const currentRevenue = await tx.supplierRevenue.findUnique({
+            where: { supplierId: dto.supplierId },
+          });
+
+          const previousBalance =
+            currentRevenue?.balance || new Prisma.Decimal(0);
+          const newBalance = previousBalance.add(dto.amount);
+
+          // 3. Atomic balance update
 
           await tx.supplierRevenue.upsert({
             where: { supplierId: dto.supplierId },
@@ -32,8 +42,21 @@ export class RevenueService {
             },
           });
 
+          // 4. Create immutable audit log
+
+          await tx.revenueAuditLog.create({
+            data: {
+              supplierId: dto.supplierId,
+              invoiceId: dto.invoiceId,
+              correlationId: dto.correlationId,
+              amount: dto.amount,
+              previousBalance,
+              newBalance,
+            },
+          });
+
           this.logger.log(
-            `Processed revenue for supplier ${dto.supplierId}: +${dto.amount} (Event: ${dto.eventId}, Correlation: ${dto.correlationId})`,
+            `Processed revenue for supplier ${dto.supplierId}: +${dto.amount} (Balance: ${previousBalance.toString()} -> ${newBalance.toString()}) (Event: ${dto.eventId}, Correlation: ${dto.correlationId})`,
           );
         } catch (error: unknown) {
           if (

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RevenueController } from './revenue.controller';
+import { RevenueService } from './revenue.service';
 import { Logger } from '@nestjs/common';
 import { of } from 'rxjs';
 import { KAFKA_TOPICS } from '../kafka/kafka.constants';
@@ -11,6 +12,10 @@ describe('RevenueController', () => {
     emit: jest.fn().mockReturnValue(of({})),
   };
 
+  const mockRevenueService = {
+    processRevenue: jest.fn().mockResolvedValue(undefined),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RevenueController],
@@ -18,6 +23,10 @@ describe('RevenueController', () => {
         {
           provide: 'KAFKA_SERVICE',
           useValue: mockKafkaClient,
+        },
+        {
+          provide: RevenueService,
+          useValue: mockRevenueService,
         },
       ],
     }).compile();
@@ -49,6 +58,7 @@ describe('RevenueController', () => {
       expect(loggerSpy).toHaveBeenCalledWith(
         expect.stringContaining(`Received ${KAFKA_TOPICS.INVOICE_PAID} event`),
       );
+      expect(mockRevenueService.processRevenue).toHaveBeenCalled();
       expect(mockKafkaClient.emit).not.toHaveBeenCalled();
     });
 

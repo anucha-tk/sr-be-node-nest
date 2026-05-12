@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { InvoicePaidSchema } from './schemas/invoice-paid.schema';
 import { RevenueEventDto } from './dto/revenue-event.dto';
 import { KAFKA_TOPICS } from '../kafka/kafka.constants';
+import { RevenueService } from './revenue.service';
 
 @Controller()
 export class RevenueController {
@@ -11,6 +12,7 @@ export class RevenueController {
 
   constructor(
     @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
+    private readonly revenueService: RevenueService,
   ) {}
 
   @EventPattern(KAFKA_TOPICS.INVOICE_PAID)
@@ -26,7 +28,8 @@ export class RevenueController {
         `Received ${KAFKA_TOPICS.INVOICE_PAID} event: ${dto.eventId} (Correlation: ${dto.correlationId})`,
       );
 
-      // Story 2.2 will implement the calculation engine here
+      // Process revenue with idempotency and atomic updates
+      await this.revenueService.processRevenue(dto);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';

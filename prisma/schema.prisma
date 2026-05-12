@@ -22,3 +22,18 @@ model ApiKey {
 
   @@map("api_keys")
 }
+
+model ProcessedEvent {
+  id        String   @id
+  createdAt DateTime @default(now())
+
+  @@map("processed_events")
+}
+
+model SupplierRevenue {
+  supplierId String   @id
+  balance    Decimal  @default(0) @db.Decimal(20, 2)
+  updatedAt  DateTime @updatedAt
+
+  @@map("supplier_revenues")
+}

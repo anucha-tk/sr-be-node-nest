@@ -98,6 +98,13 @@ Copy the `access_token` from the response.
 | **E2E**       | `npm run test:e2e`  |
 | **Prisma UI** | `npx prisma studio` |
 
+## 📊 System Diagrams
+
+Detailed visualizations of the system's core engines:
+
+- [🏗️ System Architecture](docs/diagrams/architect.md): High-level overview of event ingestion and data persistence.
+- [🔄 Logic Flow: Idempotency](docs/diagrams/flow-function.md): Sequence diagram of the exactly-once processing engine.
+
 ## 🏗️ Development Status
 
 Managed via BMad. See `_bmad-output/implementation-artifacts/sprint-status.yaml`.

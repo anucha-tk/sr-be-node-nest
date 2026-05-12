@@ -49,3 +49,26 @@ model RevenueAuditLog {
   @@index([correlationId], map: "idx_revenue_audit_logs_correlationId")
   @@map("revenue_audit_logs")
 }
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String   @unique
+  supplierId    String
+  amount        Decimal  @db.Decimal(20, 2)
+  status        InvoiceStatus @default(PENDING)
+  paidAt        DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([supplierId], map: "idx_invoices_supplierId")
+  @@index([status], map: "idx_invoices_status")
+  @@index([paidAt], map: "idx_invoices_paidAt")
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+

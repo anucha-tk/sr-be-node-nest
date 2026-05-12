@@ -48,14 +48,14 @@ development_status:
   1-3-api-key-security-for-services: done
   1-4-interactive-scalar-api-docs: done
   epic-1-retrospective: done
-  epic-2: in-progress
+  epic-2: done
   2-1-kafka-consumer-event-mapping: done
   2-2-idempotent-revenue-engine: done
   2-3-immutable-audit-trail: done
   2-4-fast-balance-visibility-api: done
-  epic-2-retrospective: optional
-  epic-3: backlog
-  3-1-filterable-invoice-history-api: backlog
+  epic-2-retrospective: done
+  epic-3: in-progress
+  3-1-filterable-invoice-history-api: done
   3-2-api-rate-limiting: backlog
   3-3-standardized-json-export: backlog
   3-4-consumer-ready-rest-api: backlog
@@ -66,9 +66,10 @@ development_status:
   4-3-time-series-trend-analysis: backlog
   4-4-advanced-sql-index-optimization: backlog
   epic-4-retrospective: optional
-  epic-5: done
+  epic-5: in-progress
   5-1-premium-react-showcase-scaffold: done
   5-2-interactive-architecture-tech-stack: done
   5-3-live-metrics-demo-dashboard: done
   5-4-deployment-presentation-mode: done
+  5-5-premium-ui-refinement-and-storytelling: in-progress
   epic-5-retrospective: optional

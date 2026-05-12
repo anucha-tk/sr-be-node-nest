@@ -14,6 +14,11 @@ export interface ResponseEnvelope<T> {
   meta: {
     timestamp: string;
     executionTimeMs: number;
+    pagination?: {
+      limit: number;
+      offset: number;
+      total: number;
+    } | null;
   };
   error: null;
 }
@@ -36,14 +41,43 @@ export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
           return data;
         }
 
+        // Handle pagination if present in data
+        let pagination: {
+          limit: number;
+          offset: number;
+          total: number;
+        } | null = null;
+        let responseData = data;
+
+        if (
+          data &&
+          typeof data === 'object' &&
+          'items' in data &&
+          'total' in data
+        ) {
+          const paginated = data as {
+            items: T;
+            total: number;
+            limit?: number;
+            offset?: number;
+          };
+          responseData = paginated.items;
+          pagination = {
+            limit: paginated.limit ?? 0,
+            offset: paginated.offset ?? 0,
+            total: paginated.total ?? 0,
+          };
+        }
+
         return {
           success: true,
-          data,
+          data: responseData,
           meta: {
             timestamp: new Date().toISOString(),
             executionTimeMs: parseFloat(
               (performance.now() - startTime).toFixed(3),
             ),
+            pagination,
           },
           error: null,
         };

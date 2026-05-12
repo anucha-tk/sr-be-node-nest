@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { RevenueModule } from './modules/revenue/revenue.module';
+import { InvoiceModule } from './modules/invoice/invoice.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
@@ -36,6 +37,7 @@ import { UnifiedResourceGuard } from './common/guards/unified-resource.guard';
     AuthModule,
     PrismaModule,
     RevenueModule,
+    InvoiceModule,
   ],
   controllers: [AppController],
   providers: [

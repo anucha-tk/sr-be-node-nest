@@ -14,13 +14,11 @@ export class RevenueService {
       await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         try {
           // 1. Attempt to record the event for idempotency
-
           await tx.processedEvent.create({
             data: { id: dto.eventId },
           });
 
           // 2. Atomic balance update and get fresh state
-
           const updatedRevenue = await tx.supplierRevenue.upsert({
             where: { supplierId: dto.supplierId },
             update: {
@@ -33,7 +31,6 @@ export class RevenueService {
           });
 
           // 3. Create immutable audit log using fresh state
-
           await tx.revenueAuditLog.create({
             data: {
               supplierId: dto.supplierId,
@@ -83,7 +80,7 @@ export class RevenueService {
     if (!revenue) {
       return {
         balance: 0,
-        currency: 'USD', // Default currency
+        currency: 'USD',
         metadata: {
           lastUpdated: new Date().toISOString(),
         },

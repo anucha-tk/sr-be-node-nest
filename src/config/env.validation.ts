@@ -22,6 +22,10 @@ export const envSchema = z.object({
     .regex(/^[a-zA-Z0-9.-]+:[0-9]+(,[a-zA-Z0-9.-]+:[0-9]+)*$/)
     .default('localhost:9092'),
   KAFKA_CONSUMER_GROUP_ID: z.string().default('sr-consumer-group'),
+
+  // Throttler
+  GLOBAL_THROTTLE_TTL: z.coerce.number().default(60),
+  GLOBAL_THROTTLE_LIMIT: z.coerce.number().default(100),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

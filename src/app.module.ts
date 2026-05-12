@@ -13,6 +13,8 @@ import { ApiKeyGuard } from './common/guards/api-key.guard';
 import { UnifiedAuthGuard } from './common/guards/unified-auth.guard';
 import { UnifiedRoleGuard } from './common/guards/unified-role.guard';
 import { UnifiedResourceGuard } from './common/guards/unified-resource.guard';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 
 @Module({
   imports: [
@@ -38,10 +40,23 @@ import { UnifiedResourceGuard } from './common/guards/unified-resource.guard';
     PrismaModule,
     RevenueModule,
     InvoiceModule,
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          ttl: config.get<number>('GLOBAL_THROTTLE_TTL')! * 1000, // Convert to ms
+          limit: config.get<number>('GLOBAL_THROTTLE_LIMIT')!,
+        },
+      ],
+    }),
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: ApiKeyGuard,

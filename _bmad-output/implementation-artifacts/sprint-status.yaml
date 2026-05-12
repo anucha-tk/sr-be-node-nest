@@ -56,7 +56,7 @@ development_status:
   epic-2-retrospective: done
   epic-3: in-progress
   3-1-filterable-invoice-history-api: done
-  3-2-api-rate-limiting: backlog
+  3-2-api-rate-limiting: done
   3-3-standardized-json-export: backlog
   3-4-consumer-ready-rest-api: backlog
   epic-3-retrospective: optional

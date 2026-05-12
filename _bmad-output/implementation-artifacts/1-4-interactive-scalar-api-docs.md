@@ -28,6 +28,7 @@ So that I can test endpoints and integrate with zero friction.
 - **Security Schemes:**
   - Define `bearer` auth for Keycloak OIDC.
   - Define `api-key` auth using the `x-api-key` header.
+  - **Global Requirement:** Every endpoint supports EITHER `bearer` or `api-key` (documented globally in OpenAPI specification).
 - **Global Config:** Ensure all controllers/endpoints use `@ApiTags()` for categorization.
 - **Standard Envelope Documentation:** 
   - Create a reusable `StandardResponseDto` using `@ApiProperty()` and `@ApiExtraModels()`.

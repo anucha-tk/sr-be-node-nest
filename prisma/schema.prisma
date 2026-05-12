@@ -1,6 +1,3 @@
-// Prisma Schema — sr-be-node-nest
-// Naming convention: PascalCase tables, camelCase columns
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -48,7 +45,7 @@ model RevenueAuditLog {
   newBalance      Decimal  @db.Decimal(20, 2)
   createdAt       DateTime @default(now())
 
+  @@index([supplierId], map: "idx_revenue_audit_logs_supplierId")
+  @@index([correlationId], map: "idx_revenue_audit_logs_correlationId")
   @@map("revenue_audit_logs")
-  @@index([supplierId], name: "idx_revenue_audit_logs_supplierId")
-  @@index([correlationId], name: "idx_revenue_audit_logs_correlationId")
 }

@@ -19,19 +19,9 @@ export class RevenueService {
             data: { id: dto.eventId },
           });
 
-          // 2. Fetch previous balance for auditing
+          // 2. Atomic balance update and get fresh state
 
-          const currentRevenue = await tx.supplierRevenue.findUnique({
-            where: { supplierId: dto.supplierId },
-          });
-
-          const previousBalance =
-            currentRevenue?.balance || new Prisma.Decimal(0);
-          const newBalance = previousBalance.add(dto.amount);
-
-          // 3. Atomic balance update
-
-          await tx.supplierRevenue.upsert({
+          const updatedRevenue = await tx.supplierRevenue.upsert({
             where: { supplierId: dto.supplierId },
             update: {
               balance: { increment: dto.amount },
@@ -42,7 +32,7 @@ export class RevenueService {
             },
           });
 
-          // 4. Create immutable audit log
+          // 3. Create immutable audit log using fresh state
 
           await tx.revenueAuditLog.create({
             data: {
@@ -50,13 +40,13 @@ export class RevenueService {
               invoiceId: dto.invoiceId,
               correlationId: dto.correlationId,
               amount: dto.amount,
-              previousBalance,
-              newBalance,
+              previousBalance: updatedRevenue.balance.minus(dto.amount),
+              newBalance: updatedRevenue.balance,
             },
           });
 
           this.logger.log(
-            `Processed revenue for supplier ${dto.supplierId}: +${dto.amount} (Balance: ${previousBalance.toString()} -> ${newBalance.toString()}) (Event: ${dto.eventId}, Correlation: ${dto.correlationId})`,
+            `Processed revenue for supplier ${dto.supplierId}: +${dto.amount} (Balance: ${updatedRevenue.balance.minus(dto.amount).toString()} -> ${updatedRevenue.balance.toString()}) (Event: ${dto.eventId}, Correlation: ${dto.correlationId})`,
           );
         } catch (error: unknown) {
           if (
@@ -79,5 +69,33 @@ export class RevenueService {
       );
       throw error;
     }
+  }
+
+  async getSupplierBalance(supplierId: string): Promise<{
+    balance: number;
+    currency: string;
+    metadata: { lastUpdated: string };
+  }> {
+    const revenue = await this.prisma.supplierRevenue.findUnique({
+      where: { supplierId },
+    });
+
+    if (!revenue) {
+      return {
+        balance: 0,
+        currency: 'USD', // Default currency
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+        },
+      };
+    }
+
+    return {
+      balance: revenue.balance.toNumber(),
+      currency: 'USD',
+      metadata: {
+        lastUpdated: revenue.updatedAt.toISOString(),
+      },
+    };
   }
 }

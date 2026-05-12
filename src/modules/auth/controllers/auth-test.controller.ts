@@ -1,14 +1,13 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { Public, Roles } from 'nest-keycloak-connect';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { KeycloakUser } from '../interfaces/keycloak-user.interface';
-import { ApiTags, ApiSecurity, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ApiStandardResponse } from '../../../common/docs/api-response.decorator';
 import {
   AuthTestResponseDto,
   MessageResponseDto,
 } from '../dto/auth-test-response.dto';
-import { ApiKeyGuard } from '../../../common/guards/api-key.guard';
 
 @ApiTags('Test')
 @Controller('auth-test')
@@ -22,8 +21,7 @@ export class AuthTestController {
   }
 
   @Get('protected')
-  @ApiSecurity('bearer')
-  @ApiOperation({ summary: 'Protected test endpoint (JWT)' })
+  @ApiOperation({ summary: 'Protected test endpoint (JWT or API Key)' })
   @ApiStandardResponse(AuthTestResponseDto)
   getProtected(@CurrentUser() user: KeycloakUser) {
     return {
@@ -33,7 +31,6 @@ export class AuthTestController {
   }
 
   @Get('admin-only')
-  @ApiSecurity('bearer')
   @Roles({ roles: ['admin'] })
   @ApiOperation({ summary: 'Admin-only test endpoint' })
   @ApiStandardResponse(AuthTestResponseDto)
@@ -45,7 +42,6 @@ export class AuthTestController {
   }
 
   @Get('supplier-only')
-  @ApiSecurity('bearer')
   @Roles({ roles: ['supplier'] })
   @ApiOperation({ summary: 'Supplier-only test endpoint' })
   @ApiStandardResponse(AuthTestResponseDto)
@@ -57,8 +53,6 @@ export class AuthTestController {
   }
 
   @Get('api-key-protected')
-  @ApiSecurity('api-key')
-  @UseGuards(ApiKeyGuard)
   @ApiOperation({ summary: 'API Key protected test endpoint' })
   @ApiStandardResponse(MessageResponseDto)
   getApiKeyProtected() {

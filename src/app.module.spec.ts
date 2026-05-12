@@ -5,6 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { Global, Module, Injectable, CanActivate } from '@nestjs/common';
 import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 import { PrismaService } from './shared/prisma/prisma.service';
+import { ApiKeyService } from './modules/auth/services/api-key.service';
 
 @Injectable()
 class MockGuard implements CanActivate {
@@ -23,6 +24,10 @@ class MockGuard implements CanActivate {
     { provide: AuthGuard, useClass: MockGuard },
     { provide: ResourceGuard, useClass: MockGuard },
     { provide: RoleGuard, useClass: MockGuard },
+    {
+      provide: ApiKeyService,
+      useValue: { validateKey: jest.fn() },
+    },
   ],
   exports: [
     'KEYCLOAK_INSTANCE',
@@ -32,6 +37,7 @@ class MockGuard implements CanActivate {
     AuthGuard,
     ResourceGuard,
     RoleGuard,
+    ApiKeyService,
   ],
 })
 class MockAuthModule {}

@@ -2,13 +2,16 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { APP_GUARD } from '@nestjs/core';
-import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { RevenueModule } from './modules/revenue/revenue.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
+import { ApiKeyGuard } from './common/guards/api-key.guard';
+import { UnifiedAuthGuard } from './common/guards/unified-auth.guard';
+import { UnifiedRoleGuard } from './common/guards/unified-role.guard';
+import { UnifiedResourceGuard } from './common/guards/unified-resource.guard';
 
 @Module({
   imports: [
@@ -39,15 +42,19 @@ import { validateEnv } from './config/env.validation';
     AppService,
     {
       provide: APP_GUARD,
-      useClass: AuthGuard,
+      useClass: ApiKeyGuard,
     },
     {
       provide: APP_GUARD,
-      useClass: ResourceGuard,
+      useClass: UnifiedAuthGuard,
     },
     {
       provide: APP_GUARD,
-      useClass: RoleGuard,
+      useClass: UnifiedResourceGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: UnifiedRoleGuard,
     },
   ],
 })

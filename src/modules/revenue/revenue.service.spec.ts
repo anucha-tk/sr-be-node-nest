@@ -63,6 +63,10 @@ describe('RevenueService', () => {
       return await callback(prisma);
     });
     (prisma.$transaction as jest.Mock).mockImplementation(transactionMock);
+    (prisma.supplierRevenue.upsert as jest.Mock).mockResolvedValue({
+      supplierId: mockRevenueEvent.supplierId,
+      balance: expectedNewBalance,
+    });
 
     await service.processRevenue(mockRevenueEvent);
 
@@ -107,6 +111,10 @@ describe('RevenueService', () => {
       return await callback(prisma);
     });
     (prisma.$transaction as jest.Mock).mockImplementation(transactionMock);
+    (prisma.supplierRevenue.upsert as jest.Mock).mockResolvedValue({
+      supplierId: mockRevenueEvent.supplierId,
+      balance: new Prisma.Decimal(mockRevenueEvent.amount),
+    });
 
     await service.processRevenue(mockRevenueEvent);
 

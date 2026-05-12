@@ -49,6 +49,7 @@ export class ApiKeyService {
     }
 
     const hash = SecurityUtil.hashWithSalt(plainKey, keyRecord.salt ?? '');
+
     if (hash !== keyRecord.keyHash) {
       throw new UnauthorizedException({
         success: false,

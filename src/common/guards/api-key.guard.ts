@@ -2,18 +2,15 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ApiKeyService } from '../../modules/auth/services/api-key.service';
-import { Request } from 'express';
 import { API_SCOPES_KEY } from '../decorators/api-scopes.decorator';
-import { ApiKey } from '@prisma/client';
+import { RequestWithAuth } from '../interfaces/request.interface';
 
-interface RequestWithAuth extends Request {
-  apiKey?: ApiKey;
-  user?: any;
+interface KeycloakRoles {
+  roles: string[];
 }
 
 @Injectable()
@@ -34,33 +31,36 @@ export class ApiKeyGuard implements CanActivate {
       : (rawApiKey as string);
 
     if (!apiKey) {
-      throw new UnauthorizedException({
-        success: false,
-        error: {
-          code: 'ERR_MISSING_API_KEY',
-          message: 'API key is required in x-api-key header',
-        },
-      });
+      return true; // Proceed to other guards (like Keycloak)
     }
 
     const keyRecord = await this.apiKeyService.validateKey(apiKey);
 
-    // AC3: Scope Authorization
-    const requiredScopes = this.reflector.getAllAndOverride<string[]>(
-      API_SCOPES_KEY,
+    // AC3: Scope Authorization (Support both custom scopes and Keycloak roles)
+    const requiredScopes =
+      this.reflector.getAllAndOverride<string[]>(API_SCOPES_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]) || [];
+
+    const keycloakRoles = this.reflector.getAllAndOverride<KeycloakRoles>(
+      'roles', // This is the key used by nest-keycloak-connect
       [context.getHandler(), context.getClass()],
     );
+    const requiredRoles = keycloakRoles?.roles || [];
 
-    if (requiredScopes && requiredScopes.length > 0) {
-      const hasScope = requiredScopes.every((scope) =>
+    const allRequired = [...new Set([...requiredScopes, ...requiredRoles])];
+
+    if (allRequired.length > 0) {
+      const hasPermission = allRequired.every((scope) =>
         keyRecord.scopes.includes(scope),
       );
-      if (!hasScope) {
+      if (!hasPermission) {
         throw new ForbiddenException({
           success: false,
           error: {
-            code: 'ERR_INSUFFICIENT_SCOPES',
-            message: `Key lacks required scopes: ${requiredScopes.join(', ')}`,
+            code: 'ERR_INSUFFICIENT_PERMISSIONS',
+            message: `Key lacks required permissions: ${allRequired.join(', ')}`,
           },
         });
       }
@@ -68,6 +68,7 @@ export class ApiKeyGuard implements CanActivate {
 
     // Attach to request for downstream use
     request.apiKey = keyRecord;
+    request.isApiKeyAuthenticated = true;
 
     // RBAC Compatibility: Populate request.user so @Roles() works
     // We map scopes to roles for consistency with nest-keycloak-connect

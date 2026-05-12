@@ -47,7 +47,7 @@ npm run start:dev
 
 ## 🔐 Authentication & Authorization
 
-This project uses **Keycloak** (OIDC) for user identity and **API Keys** for service-to-service communication.
+This project supports dual authentication: **Keycloak (JWT)** and **API Keys**. Every protected endpoint accepts either a Bearer token or an `x-api-key` header.
 
 ### 1. Keycloak Setup
 

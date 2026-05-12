@@ -12,6 +12,16 @@ import { KAFKA_GROUP_ID } from './modules/kafka/kafka.constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:5174',
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+    allowedHeaders: 'Content-Type, Accept, Authorization, x-api-key',
+  });
 
   // Cleanup OpenAPI document for nestjs-zod compatibility
 
@@ -19,7 +29,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
 
   // OpenAPI / Swagger Configuration
-  const config = new DocumentBuilder()
+  const builder = new DocumentBuilder()
     .setTitle('sr-be-node-nest API')
     .setDescription('Supplier Revenue Dashboard Backend API documentation')
     .setVersion('1.0')
@@ -28,7 +38,10 @@ async function bootstrap() {
       'bearer',
     )
     .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'api-key')
-    .build();
+    .addSecurityRequirements('bearer')
+    .addSecurityRequirements('api-key');
+
+  const config = builder.build();
 
   const document = SwaggerModule.createDocument(app, config);
   cleanupOpenApiDoc(document);

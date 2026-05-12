@@ -14,6 +14,7 @@ describe('RevenueController', () => {
 
   const mockRevenueService = {
     processRevenue: jest.fn().mockResolvedValue(undefined),
+    getSupplierBalance: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -79,6 +80,33 @@ describe('RevenueController', () => {
           payload: invalidPayload,
           error: expect.any(String) as string,
         }),
+      );
+    });
+  });
+
+  describe('getMeRevenue', () => {
+    const mockUser = {
+      sub: 'SUP-001',
+      preferred_username: 'supplier1',
+      roles: ['supplier'],
+    };
+
+    it('should return supplier revenue balance', async () => {
+      const mockBalance = {
+        balance: 1000,
+        currency: 'USD',
+        metadata: {
+          lastUpdated: new Date().toISOString(),
+        },
+      };
+      mockRevenueService.getSupplierBalance = jest
+        .fn()
+        .mockResolvedValue(mockBalance);
+
+      const result = await controller.getMeRevenue(mockUser);
+      expect(result).toEqual(mockBalance);
+      expect(mockRevenueService.getSupplierBalance).toHaveBeenCalledWith(
+        mockUser.sub,
       );
     });
   });

@@ -2,11 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ApiKeyGuard } from './api-key.guard';
 import { ApiKeyService } from '../../modules/auth/services/api-key.service';
 import { Reflector } from '@nestjs/core';
-import {
-  ExecutionContext,
-  UnauthorizedException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { ApiKey } from '@prisma/client';
 
 interface RequestWithAuth {
@@ -45,16 +41,14 @@ describe('ApiKeyGuard', () => {
     expect(guard).toBeDefined();
   });
 
-  it('should throw UnauthorizedException if header is missing', async () => {
+  it('should return true if header is missing (allowing Keycloak check)', async () => {
     const context = {
       switchToHttp: () => ({
         getRequest: () => ({ headers: {} }),
       }),
     } as unknown as ExecutionContext;
 
-    await expect(guard.canActivate(context)).rejects.toThrow(
-      UnauthorizedException,
-    );
+    expect(await guard.canActivate(context)).toBe(true);
   });
 
   it('should allow access if key valid and no scopes required', async () => {

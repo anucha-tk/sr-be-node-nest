@@ -1,5 +1,5 @@
 # generated: 2026-05-11
-# last_updated: 2026-05-11
+# last_updated: 2026-05-12
 # project: sr-be-node-nest
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-05-11
-last_updated: 2026-05-11
+last_updated: 2026-05-12
 project: sr-be-node-nest
 project_key: NOKEY
 tracking_system: file-system
@@ -49,7 +49,7 @@ development_status:
   1-4-interactive-scalar-api-docs: done
   epic-1-retrospective: done
   epic-2: in-progress
-  2-1-kafka-consumer-event-mapping: backlog
+  2-1-kafka-consumer-event-mapping: done
   2-2-idempotent-revenue-engine: backlog
   2-3-immutable-audit-trail: backlog
   2-4-fast-balance-visibility-api: backlog

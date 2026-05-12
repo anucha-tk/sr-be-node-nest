@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -6,6 +7,8 @@ import { ResponseEnvelopeInterceptor } from './common/interceptors/response-enve
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
 import { cleanupOpenApiDoc } from 'nestjs-zod';
+
+import { KAFKA_GROUP_ID } from './modules/kafka/kafka.constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -39,6 +42,32 @@ async function bootstrap() {
   );
 
   const configService = app.get(ConfigService);
+
+  // Kafka Microservice Configuration
+  try {
+    app.connectMicroservice({
+      transport: Transport.KAFKA,
+      options: {
+        client: {
+          brokers: [
+            configService.get<string>('KAFKA_BROKERS') || 'localhost:9092',
+          ],
+          clientId:
+            configService.get<string>('KAFKA_CLIENT_ID') ?? 'sr-be-revenue',
+        },
+        consumer: {
+          groupId:
+            configService.get<string>('KAFKA_GROUP_ID') ?? KAFKA_GROUP_ID,
+        },
+      },
+    });
+
+    await app.startAllMicroservices();
+  } catch (error) {
+    // Use console if app failed to start
+    console.error('Failed to start Kafka microservices:', error);
+  }
+
   const port = configService.get<number>('PORT') ?? 3000;
   await app.listen(port);
 }

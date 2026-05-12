@@ -3,11 +3,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
+import { AuthModule } from './modules/auth/auth.module';
+import { PrismaModule } from './shared/prisma/prisma.module';
+import { RevenueModule } from './modules/revenue/revenue.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
-import { AuthModule } from './modules/auth/auth.module';
-import { PrismaModule } from './shared/prisma/prisma.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
     }),
     AuthModule,
     PrismaModule,
+    RevenueModule,
   ],
   controllers: [AppController],
   providers: [

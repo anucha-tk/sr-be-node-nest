@@ -103,6 +103,34 @@ describe('InvoiceService', () => {
         }),
       );
     });
+
+    it('should handle sorting (ascending)', async () => {
+      mockPrismaService.invoice.count.mockResolvedValue(0);
+      mockPrismaService.invoice.findMany.mockResolvedValue([]);
+
+      const query = { sort: 'amount', limit: 10, offset: 0 };
+      await service.findAll(supplierId, query);
+
+      expect(mockPrismaService.invoice.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { amount: 'asc' },
+        }),
+      );
+    });
+
+    it('should handle sorting (descending)', async () => {
+      mockPrismaService.invoice.count.mockResolvedValue(0);
+      mockPrismaService.invoice.findMany.mockResolvedValue([]);
+
+      const query = { sort: '-amount', limit: 10, offset: 0 };
+      await service.findAll(supplierId, query);
+
+      expect(mockPrismaService.invoice.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          orderBy: { amount: 'desc' },
+        }),
+      );
+    });
   });
 
   describe('exportAll', () => {

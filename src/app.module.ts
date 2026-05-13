@@ -51,10 +51,7 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
       useFactory: (config: ConfigService) => [
         {
           ttl: config.get<number>('GLOBAL_THROTTLE_TTL')! * 1000,
-          limit:
-            config.get<string>('NODE_ENV') === 'test'
-              ? 10
-              : config.get<number>('GLOBAL_THROTTLE_LIMIT')!,
+          limit: 10,
         },
       ],
     }),

@@ -153,4 +153,59 @@ describe('RevenueService', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(prisma.supplierRevenue.upsert).not.toHaveBeenCalled();
   });
+
+  it('should rethrow non-P2002 errors during transaction', async () => {
+    const transactionMock = jest.fn(async (callback) => {
+      (prisma.processedEvent.create as jest.Mock).mockRejectedValue(
+        new Error('DB failure'),
+      );
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+      return await callback(prisma);
+    });
+    (prisma.$transaction as jest.Mock).mockImplementation(transactionMock);
+
+    await expect(service.processRevenue(mockRevenueEvent)).rejects.toThrow(
+      'DB failure',
+    );
+  });
+
+  it('should throw unknown errors outside transaction', async () => {
+    (prisma.$transaction as jest.Mock).mockRejectedValue(
+      'something went wrong',
+    );
+    await expect(service.processRevenue(mockRevenueEvent)).rejects.toBe(
+      'something went wrong',
+    );
+  });
+
+  describe('getSupplierBalance', () => {
+    const supplierId = 'sup-789';
+
+    it('should return balance if supplier exists', async () => {
+      const mockRevenue = {
+        supplierId,
+        balance: new Prisma.Decimal(123.45),
+        updatedAt: new Date(),
+      };
+      (prisma.supplierRevenue.findUnique as jest.Mock).mockResolvedValue(
+        mockRevenue,
+      );
+
+      const result = await service.getSupplierBalance(supplierId);
+
+      expect(result.balance).toBe(123.45);
+      expect(result.metadata.lastUpdated).toBe(
+        mockRevenue.updatedAt.toISOString(),
+      );
+    });
+
+    it('should return 0 balance if supplier does not exist', async () => {
+      (prisma.supplierRevenue.findUnique as jest.Mock).mockResolvedValue(null);
+
+      const result = await service.getSupplierBalance(supplierId);
+
+      expect(result.balance).toBe(0);
+      expect(result.currency).toBe('USD');
+    });
+  });
 });

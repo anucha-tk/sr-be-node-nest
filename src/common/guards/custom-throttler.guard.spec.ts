@@ -44,5 +44,24 @@ describe('CustomThrottlerGuard', () => {
       const tracker = await guard.getTracker(req);
       expect(tracker).toBe('ip:127.0.0.1');
     });
+
+    it('should use unknown if IP is missing', async () => {
+      const req = {
+        headers: {},
+      };
+
+      // @ts-expect-error - accessing protected method for testing
+      const tracker = await guard.getTracker(req);
+      expect(tracker).toBe('ip:unknown');
+    });
+  });
+
+  describe('throwThrottlingException', () => {
+    it('should throw HttpException with custom message and code', async () => {
+      await expect(
+        // @ts-expect-error - accessing protected method for testing
+        guard.throwThrottlingException({} as any, {} as any),
+      ).rejects.toThrow('Rate limit exceeded. Please try again later.');
+    });
   });
 });

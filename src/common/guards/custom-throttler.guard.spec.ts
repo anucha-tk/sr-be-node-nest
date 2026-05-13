@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import { CustomThrottlerGuard } from './custom-throttler.guard';
 
 describe('CustomThrottlerGuard', () => {
@@ -18,8 +19,7 @@ describe('CustomThrottlerGuard', () => {
         headers: { 'x-api-key': 'test-key' },
       };
 
-      // @ts-expect-error - accessing protected method for testing
-      const tracker = await guard.getTracker(req);
+      const tracker = await (guard as any).getTracker(req);
       expect(tracker).toBe('api-key:test-key');
     });
 
@@ -29,8 +29,7 @@ describe('CustomThrottlerGuard', () => {
         headers: {},
       };
 
-      // @ts-expect-error - accessing protected method for testing
-      const tracker = await guard.getTracker(req);
+      const tracker = await (guard as any).getTracker(req);
       expect(tracker).toBe('user:user-123');
     });
 
@@ -40,8 +39,7 @@ describe('CustomThrottlerGuard', () => {
         headers: {},
       };
 
-      // @ts-expect-error - accessing protected method for testing
-      const tracker = await guard.getTracker(req);
+      const tracker = await (guard as any).getTracker(req);
       expect(tracker).toBe('ip:127.0.0.1');
     });
 
@@ -50,8 +48,7 @@ describe('CustomThrottlerGuard', () => {
         headers: {},
       };
 
-      // @ts-expect-error - accessing protected method for testing
-      const tracker = await guard.getTracker(req);
+      const tracker = await (guard as any).getTracker(req);
       expect(tracker).toBe('ip:unknown');
     });
   });
@@ -59,8 +56,7 @@ describe('CustomThrottlerGuard', () => {
   describe('throwThrottlingException', () => {
     it('should throw HttpException with custom message and code', async () => {
       await expect(
-        // @ts-expect-error - accessing protected method for testing
-        guard.throwThrottlingException({} as any, {} as any),
+        (guard as any).throwThrottlingException({} as any, {} as any),
       ).rejects.toThrow('Rate limit exceeded. Please try again later.');
     });
   });

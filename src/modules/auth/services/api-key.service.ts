@@ -69,7 +69,7 @@ export class ApiKeyService {
 
     return keys.map((key) => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { keyHash, salt, ...safeKey } = key;
+      const { keyHash: _hash, salt: _salt, ...safeKey } = key;
       return safeKey;
     });
   }

@@ -81,18 +81,22 @@ export default function SecurityView() {
     // Attempt 10 rapid requests
     for (let i = 0; i < 10; i++) {
       try {
-        const response = await fetch('/api/v1/security-showcase/rate-limit-test')
-        const data = await response.json() as { message: string }
+        const res = await fetchApi<{ message: string }>('/v1/security-showcase/rate-limit-test')
         
         if (mountedRef.current) {
+          const status = res.status || 200;
+          const message = status === 429 
+            ? 'BLOCK: Rate Limit Exceeded' 
+            : (res.data?.message || 'Allowed');
+
           setRateLimitLogs(prev => [{
             id: Date.now() + i,
-            status: response.status,
-            message: response.status === 429 ? 'BLOCK: Rate Limit Exceeded' : data.message || 'Allowed',
+            status: status,
+            message: message,
             time: new Date().toLocaleTimeString()
           }, ...prev.slice(0, 9)])
 
-          if (response.status === 429) {
+          if (status === 429) {
             setBlockedUntil(Date.now() + 60000)
             break
           }

@@ -49,7 +49,7 @@ export class RevenueController {
   async getMeRevenue(
     @CurrentUser() user: KeycloakUser,
   ): Promise<RevenueResponseDto> {
-    return this.revenueService.getSupplierBalance(user.sub);
+    return await this.revenueService.getSupplierBalance(user.sub);
   }
 
   @Get('audit-logs')
@@ -61,7 +61,10 @@ export class RevenueController {
   async getAuditLogs(@CurrentUser() user: KeycloakUser) {
     const isAdmin = user.roles?.includes('admin') ?? false;
     // In showcase, we want to see logs. If admin, see all, else see own.
-    return this.revenueService.getAuditLogs(isAdmin ? null : user.sub, 20);
+    return await this.revenueService.getAuditLogs(
+      isAdmin ? null : user.sub,
+      20,
+    );
   }
 
   @Post('simulate-payment')
@@ -98,7 +101,6 @@ export class RevenueController {
     this.logger.log(`Simulated payment event sent to Kafka: ${eventId}`);
 
     return {
-      success: true,
       message: 'Payment simulation event dispatched to Kafka',
       data: payload,
     };
@@ -133,12 +135,7 @@ export class RevenueController {
       timestamp: new Date().toISOString(),
     };
 
-    const result = await this.revenueService.processRevenue(dto);
-
-    return {
-      success: true,
-      data: result,
-    };
+    return await this.revenueService.processRevenue(dto);
   }
 
   @EventPattern(KAFKA_TOPICS.INVOICE_PAID)

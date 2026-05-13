@@ -101,7 +101,7 @@ export class RevenueService {
   }
 
   async getAuditLogs(supplierId: string | null, limit: number = 20) {
-    return this.prisma.revenueAuditLog.findMany({
+    return await this.prisma.revenueAuditLog.findMany({
       where: supplierId ? { supplierId } : undefined,
       orderBy: { createdAt: 'desc' },
       take: limit,

@@ -13,7 +13,7 @@ sections_completed:
     'anti_patterns',
   ]
 status: 'complete'
-rule_count: 40
+rule_count: 42
 optimized_for_llm: true
 ---
 
@@ -50,22 +50,27 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Module System:** Use `nodenext` for both `module` and `moduleResolution`.
 - **Strictness:** Target `ES2023` with `strictNullChecks: true`.
 - **Exports:** Use **Named exports** for all NestJS components (Modules, Controllers, Services). Avoid default exports.
-- **Errors:** Use `Prisma.PrismaClientKnownRequestError` for database-specific errors (e.g., `P2002` for idempotency).
+- **Error Handling:** 
+    - Use `catch (error: unknown)`.
+    - Extract messages via `instanceof Error`.
+    - Handle `Prisma.PrismaClientKnownRequestError` for database-specific idempotency failures (P2002).
 
 ### Framework-Specific Rules
 
 **NestJS (Backend)**
 
-- **Structure:** Maintain a **Feature-based modular structure** in `src/modules/{feature}`.
-- **Boundaries:** Cross-module communication MUST happen via Services. Controllers should not call other controllers.
-- **Access Control:** Use `@Public()` for open routes and `@Roles('admin')` for administrative tasks.
-- **Prisma:** Always inject `PrismaService` via constructor; never instantiate `PrismaClient` manually.
+- **Structure:** Feature-based modular structure in `src/modules/{feature}`.
+- **Boundaries:** Cross-module communication MUST happen via Services. Controllers must not call other controllers.
+- **Security:** Use `@Public()` for open routes and `@Roles()` for RBAC.
+- **Prisma:** Always inject `PrismaService` via constructor.
+- **Kafka:** Every event processing MUST check `ProcessedEvent` table for idempotency.
+- **Docs:** Use `@ApiTags()` and `@ApiStandardResponse()` for all endpoints.
 
 **React (Frontend)**
 
-- **Design:** Adhere to **Glassmorphism** aesthetics using the `glass-panel` utility and Tailwind 4.
-- **Motion:** Use `framer-motion` for all non-static UI transitions and interactive elements.
-- **Data:** Use the `fetchApi` helper in `src/api.ts` to ensure compatibility with the backend standard envelope.
+- **Design:** Glassmorphism aesthetics using `glass-panel` utility and Tailwind 4.
+- **Motion:** Use `framer-motion` for all non-static UI transitions.
+- **Data:** Use the `fetchApi` helper in `src/api.ts` for consistency.
 - **Icons:** Use `Lucide React` for all interface icons.
 
 ### Testing Rules
@@ -73,24 +78,27 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Coverage:** Minimum **80% coverage** threshold for Branches, Functions, Lines, and Statements.
 - **Location:** Unit tests (`.spec.ts`) reside adjacent to code; E2E tests (`.e2e-spec.ts`) in `test/e2e/`.
 - **Idempotency:** Every financial operation test MUST cover the "duplicate event" scenario (P2002 handling).
-- **Mocks:** Use `jest.fn()` for `PrismaService` isolation.
+- **Mocks:** Use `jest.fn()` for `PrismaService` and `ClientKafka` isolation.
+- **Enforcement:** All tests must pass before commit via `lefthook`.
 
 ### Code Quality & Style Rules
 
-- **Quality Gates:** Commit only after `lefthook` successfully runs `bun check:full` (runs `lint`, `format`, `type-check`, and `test:cov`).
+- **Quality Gates:** Commit only after `lefthook` successfully runs `bun check:full`.
 - **Commits:** Strictly follow **Conventional Commits** (e.g., `feat:`, `fix:`, `refactor:`).
 - **Naming:**
-  - Files: `kebab-case.suffix.ts`
-  - Classes: `PascalCase`
-  - DB Tables: `PascalCase` (Prisma default)
-- **Docs:** Use `@ApiTags()` and `@ApiResponse()` for Scalar UI documentation.
+    - Files: `kebab-case.suffix.ts`
+    - Classes: `PascalCase`
+    - DB Tables: `PascalCase`
+- **Documentation:** Use `@ApiTags()`, `@ApiOperation()`, and `@ApiStandardResponse()` for API docs.
+- **Clean Code:** Small, single-responsibility functions. Replace magic numbers with constants.
 
 ### Development Workflow Rules
 
-- **Infrastructure:** Always develop with `docker compose` to match production-like PostgreSQL, Keycloak, and Kafka environments.
+- **Infrastructure:** Always develop with `docker compose` to match production-like environments.
 - **Environment:** Validate all `.env` variables via Zod at application startup.
-- **Migrations:** Use `bun prisma:migrate` for schema changes; avoid `bun prisma:push` in collaborative environments.
-- **Tracking:** Keep [sprint-status.yaml](file:///Users/anucha-tk/App/anucha-tk/sr-be-node-nest/_bmad-output/implementation-artifacts/sprint-status.yaml) updated as the single source of truth for progress.
+- **Migrations:** Use `bun prisma:migrate` for schema changes; avoid `bun prisma:push`.
+- **Tracking:** Keep `sprint-status.yaml` updated as the single source of truth for progress.
+- **Quality Control:** `lefthook` must pass before any push.
 
 ### Critical Don't-Miss Rules
 
@@ -99,8 +107,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Performance:** Queries on 1M+ records MUST use Materialized Views or optimized B-Tree indexes.
 - **Atomicity:** Balance updates and audit logging MUST occur within a single ACID transaction.
 - **Logging:** Use `nestjs-pino` for all logs. Never log sensitive keys or raw secrets.
-- **Loading:** Always implement Skeleton Loaders for heavy data fetching to maintain high perceived performance.
-- **Runtime Optimization:** Prefer `bun` for faster cold starts and high-performance I/O operations.
+- **Loading:** Always implement Skeleton Loaders for heavy data fetching.
+- **Runtime Optimization:** Prefer `bun` for faster cold starts and I/O.
 
 ---
 

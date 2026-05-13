@@ -9,7 +9,26 @@ import { TrendResponseDto } from './dto/trend-response.dto';
 export class AnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSummary(): Promise<AdminSummaryDto> {
+  async getSummary(): Promise<AdminSummaryDto & { lastRefreshed?: string }> {
+    const [summary] = await this.prisma.$queryRaw<
+      Array<{
+        total_revenue: number;
+        total_pending: number;
+        supplier_count: number;
+        last_refreshed: Date;
+      }>
+    >`SELECT * FROM "mv_admin_revenue_summary" LIMIT 1`;
+
+    if (summary) {
+      return {
+        totalRevenue: Number(summary.total_revenue || 0),
+        totalPending: Number(summary.total_pending || 0),
+        supplierCount: Number(summary.supplier_count || 0),
+        lastRefreshed: summary.last_refreshed.toISOString(),
+      };
+    }
+
+    // Fallback to real-time if view is empty
     const [paidResult, pendingResult, suppliers] = await Promise.all([
       this.prisma.invoice.aggregate({
         _sum: { amount: true },
@@ -31,22 +50,43 @@ export class AnalyticsService {
     };
   }
 
-  async getTrends(query: TrendQueryDto): Promise<TrendResponseDto> {
+  async getTrends(
+    query: TrendQueryDto,
+  ): Promise<TrendResponseDto & { lastRefreshed?: string }> {
     const { granularity } = query;
+    let trendData: Array<{ period: string; totalAmount: number }> = [];
+    let lastRefreshed: string | undefined;
 
-    const trendData =
-      (await this.prisma.$queryRaw<
-        Array<{ period: string; totalAmount: number }>
-      >`
-      SELECT 
-        TO_CHAR(DATE_TRUNC(${granularity}, "createdAt"), 'YYYY-MM-DD') as period,
-        SUM(amount) as "totalAmount"
-      FROM "Invoice"
-      WHERE status = ${InvoiceStatus.PAID}
-      GROUP BY period
-      ORDER BY period ASC
-      LIMIT 12
-    `) || [];
+    if (granularity === 'monthly') {
+      const viewData = await this.prisma.$queryRaw<
+        Array<{ period: string; total_amount: number; last_refreshed: Date }>
+      >`SELECT period, total_amount, last_refreshed FROM "mv_revenue_trends_monthly" ORDER BY period ASC LIMIT 12`;
+
+      if (viewData.length > 0) {
+        trendData = viewData.map((d) => ({
+          period: d.period,
+          totalAmount: d.total_amount,
+        }));
+        lastRefreshed = viewData[0].last_refreshed.toISOString();
+      }
+    }
+
+    if (trendData.length === 0) {
+      // Fallback to optimized raw SQL query
+      trendData =
+        (await this.prisma.$queryRaw<
+          Array<{ period: string; totalAmount: number }>
+        >`
+        SELECT 
+          TO_CHAR(DATE_TRUNC(${granularity}, "createdAt"), 'YYYY-MM-DD') as period,
+          SUM(amount) as "totalAmount"
+        FROM "invoices"
+        WHERE status = ${InvoiceStatus.PAID}
+        GROUP BY period
+        ORDER BY period ASC
+        LIMIT 12
+      `) || [];
+    }
 
     // 2. Get Comparison Data
     const now = new Date();
@@ -104,6 +144,7 @@ export class AnalyticsService {
         previousValue,
         growthPercentage,
       },
+      lastRefreshed,
     };
   }
 }

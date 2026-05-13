@@ -47,6 +47,28 @@ describe('PrismaService', () => {
     expect(getInternal(service).$connect).toHaveBeenCalled();
   });
 
+  it('should log on pool error', () => {
+    mockConfigService = {
+      get: jest.fn().mockReturnValue('postgresql://test@localhost:5432/test'),
+    };
+    service = new PrismaService(mockConfigService as ConfigService);
+
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+    // Simulate pool error
+    interface MockPool {
+      emit(event: string, err: Error): boolean;
+    }
+    const pool = (service as unknown as { pool: MockPool }).pool;
+    pool.emit('error', new Error('test error'));
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Unexpected error on idle client',
+      expect.any(Error),
+    );
+    consoleErrorSpy.mockRestore();
+  });
+
   it('should throw if connection fails', async () => {
     mockConfigService = {
       get: jest.fn().mockReturnValue('postgresql://test@localhost:5432/test'),

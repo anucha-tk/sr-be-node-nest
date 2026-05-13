@@ -106,6 +106,7 @@ describe('Analytics (e2e)', () => {
 
   it('GET /v1/analytics/summary should return summary for admin', async () => {
     currentRole = 'admin';
+    (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // Mock empty MV to fallback to aggregation
     (prisma.invoice.aggregate as jest.Mock)
       .mockResolvedValueOnce({ _sum: { amount: 1000 } }) // PAID
       .mockResolvedValueOnce({ _sum: { amount: 500 } }); // PENDING
@@ -129,7 +130,11 @@ describe('Analytics (e2e)', () => {
   it('GET /v1/analytics/trends should return trends for admin', async () => {
     currentRole = 'admin';
     (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([
-      { period: '2026-01', totalAmount: 1000 },
+      {
+        period: '2026-01',
+        total_amount: 1000,
+        last_refreshed: new Date('2026-05-13T09:00:00.000Z'),
+      },
     ]);
     (prisma.invoice.aggregate as jest.Mock)
       .mockResolvedValueOnce({ _sum: { amount: 1000 } }) // Current

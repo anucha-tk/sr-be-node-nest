@@ -60,12 +60,12 @@ development_status:
   3-3-standardized-json-export: done
   3-4-consumer-ready-rest-api: done
   epic-3-retrospective: done
-  epic-4: in-progress
+  epic-4: done
   4-1-million-record-seeding-engine: done
   4-2-real-time-admin-summary-api: done
   4-3-time-series-trend-analysis: done
-  4-4-advanced-sql-index-optimization: backlog
-  epic-4-retrospective: optional
+  4-4-advanced-sql-index-optimization: done
+  epic-4-retrospective: done
   epic-5: in-progress
   5-1-premium-react-showcase-scaffold: done
   5-2-interactive-architecture-tech-stack: done

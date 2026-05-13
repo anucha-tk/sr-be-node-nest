@@ -37,6 +37,7 @@ describe('AnalyticsService', () => {
       const mockPendingAggregate = { _sum: { amount: 500 } };
       const mockGroupBy = [{ supplierId: 's1' }, { supplierId: 's2' }];
 
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // Empty view
       (prisma.invoice.aggregate as jest.Mock)
         .mockResolvedValueOnce(mockPaidAggregate)
         .mockResolvedValueOnce(mockPendingAggregate);
@@ -59,6 +60,7 @@ describe('AnalyticsService', () => {
     });
 
     it('should handle null sums by returning 0', async () => {
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([]); // Empty view
       (prisma.invoice.aggregate as jest.Mock).mockResolvedValue({
         _sum: { amount: null },
       });
@@ -77,8 +79,16 @@ describe('AnalyticsService', () => {
   describe('getTrends', () => {
     it('should return trend data with comparison', async () => {
       const mockRawTrends = [
-        { period: '2026-01', totalAmount: 1000 },
-        { period: '2026-02', totalAmount: 1500 },
+        {
+          period: '2026-01',
+          total_amount: 1000,
+          last_refreshed: new Date('2026-05-13T09:00:00.000Z'),
+        },
+        {
+          period: '2026-02',
+          total_amount: 1500,
+          last_refreshed: new Date('2026-05-13T09:00:00.000Z'),
+        },
       ];
 
       // Mocking $queryRaw and aggregate
@@ -93,6 +103,7 @@ describe('AnalyticsService', () => {
       expect(result.trends[0]).toEqual({ label: '2026-01', value: 1000 });
       expect(result.comparison.growthPercentage).toBeGreaterThan(0);
       expect(result.comparison.previousValue).toBe(800);
+      expect(result.lastRefreshed).toBe('2026-05-13T09:00:00.000Z');
     });
 
     it('should handle daily granularity', async () => {
@@ -120,7 +131,7 @@ describe('AnalyticsService', () => {
 
     it('should handle zero growth (previousValue equals currentValue)', async () => {
       (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([
-        { period: '2026-01', totalAmount: 1000 },
+        { period: '2026-01', total_amount: 1000, last_refreshed: new Date() },
       ]);
       (prisma.invoice.aggregate as jest.Mock)
         .mockResolvedValueOnce({ _sum: { amount: 1000 } })
@@ -132,7 +143,7 @@ describe('AnalyticsService', () => {
 
     it('should handle negative growth (previousValue > currentValue)', async () => {
       (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([
-        { period: '2026-01', totalAmount: 500 },
+        { period: '2026-01', total_amount: 500, last_refreshed: new Date() },
       ]);
       (prisma.invoice.aggregate as jest.Mock)
         .mockResolvedValueOnce({ _sum: { amount: 500 } })

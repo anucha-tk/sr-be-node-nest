@@ -62,7 +62,8 @@ model Invoice {
   updatedAt     DateTime      @updatedAt
 
   @@index([supplierId], map: "idx_invoices_supplierId")
-  @@index([status], map: "idx_invoices_status")
+  @@index([status, createdAt], map: "idx_invoices_status_createdAt")
+  @@index([status, amount], map: "idx_invoices_status_amount")
   @@index([paidAt], map: "idx_invoices_paidAt")
   @@map("invoices")
 }

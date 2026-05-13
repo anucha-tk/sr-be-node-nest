@@ -53,6 +53,15 @@ describe('SeedService', () => {
     expect(mockPrisma.invoice.createMany).toHaveBeenCalled();
   });
 
+  it('should use default arguments', async () => {
+    mockPrisma.supplierRevenue.findFirst.mockResolvedValue({
+      supplierId: 'test-supplier',
+    });
+    mockPrisma.invoice.createMany.mockRejectedValueOnce(new Error('break'));
+
+    await expect(service.seedMillionInvoices()).rejects.toThrow('break');
+  });
+
   it('should handle various statuses and progress logging', async () => {
     mockPrisma.supplierRevenue.findFirst.mockResolvedValue({
       supplierId: 'test-supplier',

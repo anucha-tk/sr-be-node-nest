@@ -30,9 +30,11 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-sr_be_db}
       KC_DB_USERNAME: ${DB_USER:-postgres}
       KC_DB_PASSWORD: ${DB_PASSWORD:-postgres}
-    command: start-dev
+    command: start-dev --import-realm
     ports:
       - "${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - ./keycloak-init:/opt/keycloak/data/import
     healthcheck:
       test:
         ["CMD-SHELL", "curl -sf http://localhost:8080/health/ready || exit 1"]

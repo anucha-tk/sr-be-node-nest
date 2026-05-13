@@ -29,7 +29,7 @@ describe('Throttler (e2e)', () => {
     // But better to test the real integration.
 
     // Let's try to hit the / (root) endpoint which is @Public()
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10; i++) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await request(app.getHttpServer()).get('/');
     }

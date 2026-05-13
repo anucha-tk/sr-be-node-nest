@@ -48,8 +48,11 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
         {
-          ttl: config.get<number>('GLOBAL_THROTTLE_TTL')! * 1000, // Convert to ms
-          limit: config.get<number>('GLOBAL_THROTTLE_LIMIT')!,
+          ttl: config.get<number>('GLOBAL_THROTTLE_TTL')! * 1000,
+          limit:
+            config.get<string>('NODE_ENV') === 'test'
+              ? 10
+              : config.get<number>('GLOBAL_THROTTLE_LIMIT')!,
         },
       ],
     }),

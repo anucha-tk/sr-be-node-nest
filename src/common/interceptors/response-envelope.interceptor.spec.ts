@@ -36,4 +36,22 @@ describe('ResponseEnvelopeInterceptor', () => {
       done();
     });
   });
+
+  it('should not wrap Buffer data', (done) => {
+    const data = Buffer.from('test');
+    const context = {
+      switchToHttp: () => ({
+        getRequest: () => ({ correlationId: 'test-id' }),
+      }),
+    } as unknown as ExecutionContext;
+    const next = {
+      handle: () => of(data),
+    } as CallHandler;
+
+    interceptor.intercept(context, next).subscribe((result) => {
+      expect(result).toBe(data);
+      expect(Buffer.isBuffer(result)).toBe(true);
+      done();
+    });
+  });
 });

@@ -137,4 +137,22 @@ describe('ApiKeyGuard', () => {
 
     expect(await guard.canActivate(context)).toBe(true);
   });
+
+  it('should handle array API key header', async () => {
+    const context = {
+      getHandler: () => ({}),
+      getClass: () => ({}),
+      switchToHttp: () => ({
+        getRequest: () => ({ headers: { 'x-api-key': ['1.key', '2.key'] } }),
+      }),
+    } as unknown as ExecutionContext;
+
+    mockApiKeyService.validateKey.mockResolvedValue({
+      id: '1',
+      scopes: [],
+    });
+    mockReflector.getAllAndOverride.mockReturnValue([]);
+
+    expect(await guard.canActivate(context)).toBe(true);
+  });
 });

@@ -1,67 +1,78 @@
 # Supplier Revenue Dashboard (SR-BE-NODE-NEST)
 
-High-performance, audit-ready backend for financial data processing.
+ระบบหลังบ้านประสิทธิภาพสูง สำหรับประมวลผลข้อมูลรายได้และจัดการใบแจ้งหนี้ (Invoices) พร้อมระบบตรวจสอบ (Audit Trail) และความปลอดภัยระดับองค์กร
 
-## 🚀 Tech Stack
+## 🚀 เทคโนโลยีที่ใช้ (Tech Stack)
 
 - **Framework:** NestJS (v11)
 - **Runtime:** Node.js (v24)
-- **Database:** PostgreSQL (v17) via Prisma (v7.8.0)
+- **Database:** PostgreSQL (v17) ผ่าน Prisma (v7.8.0)
 - **Validation:** Zod + Nestjs-Zod
 - **Logging:** Pino + Nestjs-Pino
-- **Auth:** Keycloak (v26) + API Keys
+- **Auth:** Keycloak (v26) + API Keys (Dual Auth)
 - **Messaging:** Kafka (v4)
 - **Infra:** Docker Compose
 
-## 🛠️ Getting Started
+## 🛠️ เริ่มต้นใช้งาน (Getting Started)
 
-### 1. Prerequisites
+### 1. สิ่งที่ต้องเตรียม (Prerequisites)
 
-- Node.js v24+
+- Node.js v24 ขึ้นไป
 - Docker & Docker Compose
-- [Bun](https://bun.sh/) (Recommended)
+- [Bun](https://bun.sh/) (แนะนำสำหรับการรันสคริปต์ที่รวดเร็ว)
 
-### 2. Environment Setup
+### 2. ตั้งค่า Environment
 
-Copy template and fill values:
+คัดลอกไฟล์ต้นแบบและตั้งค่าตัวแปรต่างๆ:
 
 ```bash
 cp .env.example .env
 ```
 
-### 3. Infrastructure
+### 3. รันระบบ Infrastructure
 
-Spin up database, Keycloak, and Kafka:
+เริ่มต้นฐานข้อมูล PostgreSQL, Keycloak และ Kafka ด้วย Docker:
 
 ```bash
 docker compose up -d
 ```
 
-### 4. Application
+> [!NOTE]
+> **Keycloak Auto-Provisioning:** ระบบถูกตั้งค่าให้นำเข้า (Import) การตั้งค่า Realm, Client, Roles และ Users โดยอัตโนมัติจากโฟลเดอร์ `keycloak-init` เมื่อเริ่มต้นระบบครั้งแรก ไม่ต้องตั้งค่าเองในหน้า UI
+
+### 4. ติดตั้งและเริ่มรันแอปพลิเคชัน
 
 ```bash
+# 1. ติดตั้ง dependencies
 npm install
-npx prisma generate
+
+# 2. Sync database schema และ generate Prisma client
+npm run prisma:push
+npm run prisma:generate
+
+# 3. สร้าง API Key สำหรับใช้งานครั้งแรก (เลือกใช้ x-api-key แทน JWT ได้)
+# สคริปต์นี้จะสร้าง key และอัปเดตไฟล์ .env ในโฟลเดอร์ frontend ให้โดยอัตโนมัติ
+node scripts/seed-api-key.mjs
+
+# 4. (ทางเลือก) สร้างข้อมูลทดสอบ 1,000,000 รายการ เพื่อทดสอบประสิทธิภาพ
+npm run seed:million
+
+# 5. เริ่มรันเซิร์ฟเวอร์ในโหมดพัฒนา
 npm run start:dev
 ```
 
-## 🔐 Authentication & Authorization
+## 🔐 ระบบยืนยันตัวตน (Authentication)
 
-This project supports dual authentication: **Keycloak (JWT)** and **API Keys**. Every protected endpoint accepts either a Bearer token or an `x-api-key` header.
+ระบบรองรับการยืนยันตัวตน 2 รูปแบบ (**Dual Authentication**):
 
-### 1. Keycloak Setup
+### 1. Keycloak (JWT Token)
 
-1. **Access Admin UI**: [http://localhost:8080/admin](http://localhost:8080/admin) (Default: `admin`/`admin`)
-2. **Realm**: Ensure a realm named `sr-realm` exists.
-3. **Client**: Create a client `sr-be-client`.
-   - **Capability config**: Enable `Client authentication: Off`, `Authorization: Off`, `Authentication flow: Standard flow, Direct access grants`.
-   - **Valid Redirect URIs**: `*` (for development).
-4. **Roles**: Create roles `admin` and `supplier`.
-5. **Users**: Create a test user and assign a role in "Role mapping".
+ใช้สำหรับการเข้าใช้งานผ่านหน้าจอ (Browser) โดยมีผู้ใช้เริ่มต้นดังนี้:
 
-### 2. How to Login (Get JWT Token)
+- **Admin:** `test` / `12345678`
+- **Supplier:** `supplier` / `12345678`
 
-Obtain a token via `curl` using the test credentials:
+**วิธีขอ Token ผ่าน Terminal:**
 
 ```bash
 curl --location 'http://localhost:8080/realms/sr-realm/protocol/openid-connect/token' \
@@ -72,63 +83,42 @@ curl --location 'http://localhost:8080/realms/sr-realm/protocol/openid-connect/t
 --data-urlencode 'grant_type=password'
 ```
 
-Copy the `access_token` from the response.
+### 2. API Keys (Service-to-Service)
 
-### 3. Using the Token in Documentation
+ใช้สำหรับระบบอื่นๆ ที่ต้องการเรียกใช้ API โดยตรงผ่าน Header `x-api-key`
 
-1. Open **Scalar UI**: [http://localhost:3000/docs](http://localhost:3000/docs)
-2. Find the **Security** or **Authorize** section.
-3. Paste the token into the **bearer** field.
-4. Test endpoints in the **Test** tag (e.g., `GET /auth-test/protected`).
+- สร้าง Key ใหม่ได้ด้วยคำสั่ง: `node scripts/seed-api-key.mjs`
 
-### 4. Common Auth Issues (Troubleshooting)
+## 📖 เอกสารประกอบ API (Swagger/Scalar)
 
-- **401 Unauthorized:** If you get this even with a valid token, ensure `verifyTokenAudience: false` is set in `AuthModule` (required if Keycloak doesn't map the client to the audience).
-- **Public Client:** This project is configured for a Public Client (`sr-be-client`). Ensure "Client authentication" is **Off** in Keycloak.
-- **Offline Validation:** We use `TokenValidation.OFFLINE` for better performance and stability in local development.
+เมื่อรันระบบแล้ว สามารถเข้าดูเอกสารประกอบ API และทดสอบเรียกใช้งานได้ที่:
 
-## 📜 Scripts
+- **Scalar UI:** [http://localhost:3000/docs](http://localhost:3000/docs)
 
-| Action        | Command             |
-| :------------ | :------------------ |
-| **Dev**       | `npm run start:dev` |
-| **Build**     | `npm run build`     |
-| **Lint**      | `npm run lint`      |
-| **Test**      | `npm run test`      |
-| **E2E**       | `npm run test:e2e`  |
-| **Prisma UI** | `npx prisma studio` |
+## 📜 รายรายการสคริปต์ (Scripts)
 
-## 📊 System Diagrams
+| คำสั่ง                  | รายละเอียด                                            |
+| :---------------------- | :---------------------------------------------------- |
+| `npm run start:dev`     | รันแอปพลิเคชันในโหมด Watch (Development)              |
+| `npm run check:full`    | รัน Lint, Format, TSC และ Test ครบชุด (Quality Gate)  |
+| `npm run test:e2e`      | รันการทดสอบ End-to-End                                |
+| `npm run prisma:studio` | เปิดหน้า UI สำหรับจัดการข้อมูลในฐานข้อมูล             |
+| `npm run seed:million`  | รันตัวประมวลผลสร้างข้อมูล 1 ล้านรายการ (Bulk Seeding) |
 
-Detailed visualizations of the system's core engines:
+## 📊 แผนผังระบบ (Diagrams)
 
-- [🏗️ System Architecture](docs/diagrams/architect.md): High-level overview of event ingestion and data persistence.
-- [🔄 Logic Flow: Idempotency](docs/diagrams/flow-function.md): Sequence diagram of the exactly-once processing engine.
+- [🏗️ System Architecture](docs/diagrams/architect.md): ภาพรวมการรับเหตุการณ์ (Event Ingestion) และการจัดเก็บข้อมูล
+- [🔄 Logic Flow: Idempotency](docs/diagrams/flow-function.md): ลำดับขั้นตอนการประมวลผลข้อมูลแบบ Exactly-once
 
-## 🏗️ Development Status
+---
 
-Managed via BMad. See `_bmad-output/implementation-artifacts/sprint-status.yaml`.
+## 🛡️ มาตรฐานความปลอดภัย
 
-- **Epic 1: Secure Access & Documentation (Done)**
-  - [x] 1.1 Project Foundation & Infra Setup
-  - [x] 1.2 Keycloak Identity & RBAC
-  - [x] 1.3 API Key Security for Services
-  - [x] 1.4 Interactive Scalar API Docs
-- **Epic 2: Real-time Revenue Tracking (In Progress)**
-  - [x] 2.1 Kafka Consumer & Event Mapping
-  - [ ] 2.2 Idempotent Revenue Engine (Backlog)
-  - [ ] 2.3 Immutable Audit Trail (Backlog)
-  - [ ] 2.4 Fast Balance Visibility API (Backlog)
-- **Epic 3: Invoice History & Search (Backlog)**
-- **Epic 4: Enterprise Performance Analytics (Backlog)**
+- การยืนยันตัวตนด้วย JWT ผ่าน Keycloak
+- รองรับ API Key สำหรับบริการภายใน
+- การควบคุมการเข้าถึงตามบทบาท (RBAC)
+- ตรวจสอบความถูกต้องของข้อมูลด้วย Zod ทุกเลเยอร์
 
-## 🛡️ Security
-
-- JWT via Keycloak
-- API Key for internal services
-- RBAC enforcement
-- Input validation (Zod)
-
-## ⚖️ License
+## ⚖️ สัญญาอนุญาต
 
 UNLICENSED

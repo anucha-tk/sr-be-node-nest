@@ -15,6 +15,10 @@ describe('MathUtil', () => {
       expect(MathUtil.round(1.2345, 2)).toBe(1.23);
       expect(MathUtil.round(1.235, 2)).toBe(1.24);
     });
+
+    it('should use default decimals', () => {
+      expect(MathUtil.round(1.2345)).toBe(1.23);
+    });
   });
 
   describe('percentage', () => {

@@ -30,7 +30,12 @@ export class InvoiceController {
     @CurrentUser() user: KeycloakUser,
     @Query() query: InvoiceQueryDto,
   ) {
-    const { items, total } = await this.invoiceService.findAll(user.sub, query);
+    const isAdmin = user.roles?.includes('admin') ?? false;
+    const supplierId = isAdmin ? query.supplierId || null : user.sub;
+    const { items, total } = await this.invoiceService.findAll(
+      supplierId,
+      query,
+    );
 
     return {
       items,
@@ -56,7 +61,9 @@ export class InvoiceController {
       );
     }
 
-    const items = await this.invoiceService.exportAll(user.sub, query);
+    const isAdmin = user.roles?.includes('admin') ?? false;
+    const supplierId = isAdmin ? query.supplierId || null : user.sub;
+    const items = await this.invoiceService.exportAll(supplierId, query);
     const timestamp = new Date()
       .toISOString()
       .replace(/[:.]/g, '-')

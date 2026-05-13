@@ -10,6 +10,7 @@ export const InvoiceQuerySchema = z.object({
   offset: z.coerce.number().min(0).default(0),
   sort: z.string().optional(),
   format: z.enum(['json']).optional(),
+  supplierId: z.string().optional(),
 });
 
 export class InvoiceQueryDto extends createZodDto(InvoiceQuerySchema) {}

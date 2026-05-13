@@ -64,6 +64,7 @@ export class ApiKeyService {
   async createKey(
     name: string,
     scopes: string[],
+    supplierId?: string,
   ): Promise<ApiKey & { key: string }> {
     const existing = await this.prisma.apiKey.findUnique({ where: { name } });
     if (existing) {
@@ -83,6 +84,7 @@ export class ApiKeyService {
         keyHash,
         salt,
         scopes,
+        supplierId,
         isActive: true,
       },
     });

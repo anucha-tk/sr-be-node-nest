@@ -17,6 +17,10 @@ describe('SeedService', () => {
     revenueAuditLog: {
       createMany: jest.fn(),
     },
+    apiKey: {
+      findMany: jest.fn(),
+      updateMany: jest.fn(),
+    },
     $transaction: jest.fn((promises) => Promise.all(promises)),
   };
 
@@ -29,6 +33,7 @@ describe('SeedService', () => {
     }).compile();
 
     service = module.get<SeedService>(SeedService);
+    mockPrisma.apiKey.findMany.mockResolvedValue([]);
     jest.clearAllMocks();
   });
 
@@ -89,5 +94,21 @@ describe('SeedService', () => {
     await service.seedMillionInvoices(1, 1);
 
     expect(mockPrisma.supplierRevenue.create).toHaveBeenCalled();
+  });
+
+  it('should link existing API keys to the supplier', async () => {
+    mockPrisma.supplierRevenue.findFirst.mockResolvedValue({
+      supplierId: 'test-supplier',
+    });
+    mockPrisma.invoice.createMany.mockResolvedValue({ count: 1 });
+    mockPrisma.revenueAuditLog.createMany.mockResolvedValue({ count: 1 });
+    mockPrisma.apiKey.findMany.mockResolvedValue([{ id: 'key-1' }]);
+
+    await service.seedMillionInvoices(1, 1);
+
+    expect(mockPrisma.apiKey.updateMany).toHaveBeenCalledWith({
+      where: { supplierId: null },
+      data: { supplierId: 'test-supplier' },
+    });
   });
 });

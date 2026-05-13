@@ -101,5 +101,17 @@ export class SeedService {
     this.logger.log(
       `Seeding complete! Total: ${createdCount} records in ${totalTime.toFixed(1)}s.`,
     );
+
+    // Auto-link existing API keys to this supplier for convenience in dev
+    const apiKeys = await this.prisma.apiKey.findMany({
+      where: { supplierId: null },
+    });
+    if (apiKeys.length > 0) {
+      this.logger.log(`Linking ${apiKeys.length} API keys to ${supplierId}...`);
+      await this.prisma.apiKey.updateMany({
+        where: { supplierId: null },
+        data: { supplierId },
+      });
+    }
   }
 }

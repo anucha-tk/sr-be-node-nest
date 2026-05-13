@@ -73,7 +73,8 @@ export class ApiKeyGuard implements CanActivate {
     // RBAC Compatibility: Populate request.user so @Roles() works
     // We map scopes to roles for consistency with nest-keycloak-connect
     request.user = {
-      sub: `apikey:${keyRecord.id}`,
+      // Priority: Associated supplierId > API key identity
+      sub: keyRecord.supplierId || `apikey:${keyRecord.id}`,
       name: keyRecord.name,
       roles: keyRecord.scopes, // Map scopes to roles
       realm_access: { roles: keyRecord.scopes },

@@ -12,6 +12,7 @@ export const AllowedScopes = z.enum([
 export const CreateApiKeySchema = z.object({
   name: z.string().min(3).max(50),
   scopes: z.array(AllowedScopes).default([]),
+  supplierId: z.string().optional(),
 });
 
 export class CreateApiKeyDto extends createZodDto(CreateApiKeySchema) {}

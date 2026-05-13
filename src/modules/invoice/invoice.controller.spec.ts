@@ -75,6 +75,31 @@ describe('InvoiceController', () => {
         expect.objectContaining(mockQuery),
       );
     });
+
+    it('should allow admin to filter by supplierId', async () => {
+      const adminUser = { sub: 'ADMIN-001', roles: ['admin'] };
+      const adminQuery = { ...mockQuery, supplierId: 'TARGET-SUP' };
+      mockInvoiceService.findAll.mockResolvedValue({ items: [], total: 0 });
+
+      await controller.findAll(adminUser, adminQuery);
+
+      expect(mockInvoiceService.findAll).toHaveBeenCalledWith(
+        'TARGET-SUP',
+        expect.objectContaining(adminQuery),
+      );
+    });
+
+    it('should allow admin to see all if no supplierId provided', async () => {
+      const adminUser = { sub: 'ADMIN-001', roles: ['admin'] };
+      mockInvoiceService.findAll.mockResolvedValue({ items: [], total: 0 });
+
+      await controller.findAll(adminUser, mockQuery);
+
+      expect(mockInvoiceService.findAll).toHaveBeenCalledWith(
+        null,
+        expect.objectContaining(mockQuery),
+      );
+    });
   });
 
   describe('exportAll', () => {

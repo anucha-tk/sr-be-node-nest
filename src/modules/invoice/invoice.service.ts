@@ -7,7 +7,7 @@ import { Prisma } from '@prisma/client';
 export class InvoiceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(supplierId: string, query: InvoiceQueryDto) {
+  async findAll(supplierId: string | null, query: InvoiceQueryDto) {
     const { limit, offset, sort } = query;
     const where = this.buildWhereClause(supplierId, query);
 
@@ -28,7 +28,7 @@ export class InvoiceService {
   }
 
   async exportAll(
-    supplierId: string,
+    supplierId: string | null,
     query: Omit<InvoiceQueryDto, 'limit' | 'offset'>,
   ) {
     const where = this.buildWhereClause(supplierId, query);
@@ -41,12 +41,12 @@ export class InvoiceService {
   }
 
   private buildWhereClause(
-    supplierId: string,
+    supplierId: string | null,
     query: Pick<InvoiceQueryDto, 'status' | 'startDate' | 'endDate'>,
   ): Prisma.InvoiceWhereInput {
     const { status, startDate, endDate } = query;
     return {
-      supplierId,
+      ...(supplierId && { supplierId }),
       ...(status && { status }),
       ...(startDate || endDate
         ? {

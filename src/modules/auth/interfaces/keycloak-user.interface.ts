@@ -4,6 +4,7 @@ export interface KeycloakUser {
   preferred_username?: string;
   given_name?: string;
   family_name?: string;
+  roles?: string[];
   realm_access?: {
     roles: string[];
   };

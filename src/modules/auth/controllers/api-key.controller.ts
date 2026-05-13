@@ -25,6 +25,7 @@ export class ApiKeyController {
     const result = await this.apiKeyService.createKey(
       createDto.name,
       createDto.scopes,
+      createDto.supplierId,
     );
 
     // Explicitly exclude sensitive fields

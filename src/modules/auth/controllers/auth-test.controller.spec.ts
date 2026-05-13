@@ -40,7 +40,7 @@ describe('AuthTestController', () => {
   });
 
   it('should return protected message with user', () => {
-    const user = { sub: '123' };
+    const user = { sub: '123', roles: [] };
     expect(controller.getProtected(user)).toEqual({
       message: 'This is a protected endpoint',
       user,
@@ -48,7 +48,7 @@ describe('AuthTestController', () => {
   });
 
   it('should return admin-only message with user', () => {
-    const user = { sub: 'admin-123' };
+    const user = { sub: 'admin-123', roles: ['admin'] };
     expect(controller.getAdminOnly(user)).toEqual({
       message: 'This is an admin-only endpoint',
       user,
@@ -56,7 +56,7 @@ describe('AuthTestController', () => {
   });
 
   it('should return supplier-only message with user', () => {
-    const user = { sub: 'supplier-123' };
+    const user = { sub: 'supplier-123', roles: ['supplier'] };
     expect(controller.getSupplierOnly(user)).toEqual({
       message: 'This is a supplier-only endpoint',
       user,

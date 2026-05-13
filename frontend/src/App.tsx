@@ -8,6 +8,7 @@ import PerformanceLab from './components/PerformanceLab'
 import SecurityView from './components/SecurityView'
 import AuditTrailView from './components/AuditTrailView'
 import ApiDocsView from './components/ApiDocsView'
+import IdempotencyView from './components/IdempotencyView'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('intro')
@@ -44,6 +45,8 @@ export default function App() {
         return <AuditTrailView />
       case 'api-docs':
         return <ApiDocsView />
+      case 'idempotency':
+        return <IdempotencyView />
       default:
         return null
     }
@@ -57,6 +60,7 @@ export default function App() {
       case 'performance': return { title: 'Warp Speed', desc: 'ประสิทธิภาพการประมวลผลข้อมูล 1M+ เรคคอร์ด' }
       case 'audit': return { title: 'Paper Trail', desc: 'ความโปร่งใสและความถูกต้องของข้อมูล (Audit Log)' }
       case 'api-docs': return { title: 'Dev Portal', desc: 'หน้าต่างเชื่อมต่อสำหรับนักพัฒนา (Scalar/OpenAPI)' }
+      case 'idempotency': return { title: 'Safety Guard', desc: 'การป้องกันความผิดพลาดและระบบ Idempotency' }
       default: return { title: '', desc: '' }
     }
   }

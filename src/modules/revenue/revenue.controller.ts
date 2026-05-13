@@ -5,6 +5,7 @@ import {
   Inject,
   Logger,
   HttpCode,
+  Body,
 } from '@nestjs/common';
 import { EventPattern, Payload, ClientKafka } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -15,10 +16,18 @@ import { RevenueService } from './revenue.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { KeycloakUser } from '../auth/interfaces/keycloak-user.interface';
 import { RevenueResponseDto } from './dto/revenue-response.dto';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { Roles } from 'nest-keycloak-connect';
 import { ApiStandardResponse } from '../../common/docs/api-response.decorator';
 import * as crypto from 'crypto';
+
+interface DuplicateSimulationPayload {
+  eventId: string;
+  correlationId: string;
+  invoiceId: string;
+  supplierId: string;
+  amount: number;
+}
 
 @ApiTags('Revenue')
 @Controller('v1/suppliers')
@@ -92,6 +101,43 @@ export class RevenueController {
       success: true,
       message: 'Payment simulation event dispatched to Kafka',
       data: payload,
+    };
+  }
+
+  @Post('simulate-duplicate')
+  @HttpCode(200)
+  @Roles({ roles: ['admin'] })
+  @ApiOperation({
+    summary: 'Simulate a duplicate payment processing (Direct service call)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        eventId: { type: 'string' },
+        correlationId: { type: 'string' },
+        invoiceId: { type: 'string' },
+        supplierId: { type: 'string' },
+        amount: { type: 'number' },
+      },
+    },
+  })
+  async simulateDuplicate(@Body() payload: DuplicateSimulationPayload) {
+    const dto: RevenueEventDto = {
+      eventId: payload.eventId,
+      correlationId: payload.correlationId,
+      invoiceId: payload.invoiceId,
+      supplierId: payload.supplierId,
+      amount: payload.amount,
+      currency: 'USD',
+      timestamp: new Date().toISOString(),
+    };
+
+    const result = await this.revenueService.processRevenue(dto);
+
+    return {
+      success: true,
+      data: result,
     };
   }
 

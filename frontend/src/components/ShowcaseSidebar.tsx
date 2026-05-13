@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ShieldCheck, Activity, Zap, FileText, Code, Menu, X, Play, LayoutDashboard } from 'lucide-react'
+import { ShieldCheck, Activity, Zap, FileText, Code, Menu, X, Play, LayoutDashboard, Repeat } from 'lucide-react'
 
 const MENU_ITEMS = [
   { 
@@ -37,6 +37,12 @@ const MENU_ITEMS = [
     label: 'Dev Portal',
     subLabel: 'หน้าต่างสำหรับนักพัฒนา',
     icon: Code 
+  },
+  { 
+    id: 'idempotency', 
+    label: 'Safety Guard',
+    subLabel: 'ระบบป้องกันการจ่ายเงินซ้ำ',
+    icon: Repeat 
   },
 ]
 

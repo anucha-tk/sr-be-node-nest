@@ -92,8 +92,9 @@ describe('RevenueService', () => {
       mockAuditLog,
     );
 
-    await service.processRevenue(mockRevenueEvent);
+    const result = await service.processRevenue(mockRevenueEvent);
 
+    expect(result.status).toBe('processed');
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(prisma.$transaction).toHaveBeenCalled();
 
@@ -185,15 +186,16 @@ describe('RevenueService', () => {
     });
     (prisma.$transaction as jest.Mock).mockImplementation(transactionMock);
 
-    await service.processRevenue(mockRevenueEvent);
+    const result = await service.processRevenue(mockRevenueEvent);
 
+    expect(result.status).toBe('skipped');
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(prisma.supplierRevenue.upsert).not.toHaveBeenCalled();
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(notificationsGateway.notifyAuditLog).not.toHaveBeenCalled();
   });
 
-  it('should rethrow non-P2002 errors during transaction', async () => {
+  it('should return failed status for non-P2002 errors during transaction', async () => {
     const transactionMock = jest.fn(async (callback) => {
       (prisma.processedEvent.create as jest.Mock).mockRejectedValue(
         new Error('DB failure'),
@@ -203,18 +205,17 @@ describe('RevenueService', () => {
     });
     (prisma.$transaction as jest.Mock).mockImplementation(transactionMock);
 
-    await expect(service.processRevenue(mockRevenueEvent)).rejects.toThrow(
-      'DB failure',
-    );
+    const result = await service.processRevenue(mockRevenueEvent);
+    expect(result.status).toBe('failed');
+    expect(result.message).toContain('DB failure');
   });
 
-  it('should throw unknown errors outside transaction', async () => {
+  it('should return failed status for unknown errors outside transaction', async () => {
     (prisma.$transaction as jest.Mock).mockRejectedValue(
       'something went wrong',
     );
-    await expect(service.processRevenue(mockRevenueEvent)).rejects.toBe(
-      'something went wrong',
-    );
+    const result = await service.processRevenue(mockRevenueEvent);
+    expect(result.status).toBe('failed');
   });
 
   describe('getSupplierBalance', () => {

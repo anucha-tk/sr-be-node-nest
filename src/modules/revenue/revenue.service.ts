@@ -1,8 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { RevenueEventDto } from './dto/revenue-event.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, RevenueAuditLog } from '@prisma/client';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
+
+export interface ProcessResult {
+  status: 'processed' | 'skipped' | 'failed';
+  message: string;
+  auditLog?: RevenueAuditLog;
+}
 
 @Injectable()
 export class RevenueService {
@@ -13,9 +19,9 @@ export class RevenueService {
     private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
-  async processRevenue(dto: RevenueEventDto): Promise<void> {
+  async processRevenue(dto: RevenueEventDto): Promise<ProcessResult> {
     try {
-      await this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      return await this.prisma.$transaction(async (tx: Prisma.TransactionClient): Promise<ProcessResult> => {
         try {
           // 1. Attempt to record the event for idempotency
           await tx.processedEvent.create({
@@ -57,6 +63,12 @@ export class RevenueService {
           this.logger.log(
             `Processed revenue for supplier ${dto.supplierId}: +${dto.amount} (Balance: ${updatedRevenue.balance.minus(dto.amount).toString()} -> ${updatedRevenue.balance.toString()}) (Event: ${dto.eventId}, Correlation: ${dto.correlationId})`,
           );
+
+          return {
+            status: 'processed' as const,
+            message: 'Revenue processed successfully',
+            auditLog,
+          };
         } catch (error: unknown) {
           if (
             error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -65,7 +77,10 @@ export class RevenueService {
             this.logger.warn(
               `Event ${dto.eventId} already processed. Skipping balance update.`,
             );
-            return; // Exit transaction block
+            return {
+              status: 'skipped' as const,
+              message: 'Event already processed (Idempotency skip)',
+            };
           }
           throw error;
         }
@@ -76,7 +91,10 @@ export class RevenueService {
         `Failed to process revenue for event ${dto.eventId}: ${message}`,
         error instanceof Error ? error.stack : undefined,
       );
-      throw error;
+      return {
+        status: 'failed' as const,
+        message: `Processing failed: ${message}`,
+      };
     }
   }
 

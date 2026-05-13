@@ -8,20 +8,8 @@ export class InvoiceService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll(supplierId: string, query: InvoiceQueryDto) {
-    const { status, startDate, endDate, limit, offset, sort } = query;
-
-    const where: Prisma.InvoiceWhereInput = {
-      supplierId,
-      ...(status && { status }),
-      ...(startDate || endDate
-        ? {
-            createdAt: {
-              ...(startDate && { gte: new Date(startDate) }),
-              ...(endDate && { lte: new Date(endDate) }),
-            },
-          }
-        : {}),
-    };
+    const { limit, offset, sort } = query;
+    const where = this.buildWhereClause(supplierId, query);
 
     const [total, items] = await Promise.all([
       this.prisma.invoice.count({ where }),
@@ -34,13 +22,52 @@ export class InvoiceService {
     ]);
 
     return {
-      items: items.map((item) => ({
-        ...item,
-        amount: item.amount.toNumber(),
-        paidAt: item.paidAt?.toISOString() || null,
-        createdAt: item.createdAt.toISOString(),
-      })),
+      items: items.map((item) => this.mapToDto(item)),
       total,
+    };
+  }
+
+  async exportAll(
+    supplierId: string,
+    query: Omit<InvoiceQueryDto, 'limit' | 'offset'>,
+  ) {
+    const where = this.buildWhereClause(supplierId, query);
+    const items = await this.prisma.invoice.findMany({
+      where,
+      orderBy: query.sort ? this.parseSort(query.sort) : { createdAt: 'desc' },
+    });
+
+    return items.map((item) => this.mapToDto(item));
+  }
+
+  private buildWhereClause(
+    supplierId: string,
+    query: Pick<InvoiceQueryDto, 'status' | 'startDate' | 'endDate'>,
+  ): Prisma.InvoiceWhereInput {
+    const { status, startDate, endDate } = query;
+    return {
+      supplierId,
+      ...(status && { status }),
+      ...(startDate || endDate
+        ? {
+            createdAt: {
+              ...(startDate && { gte: new Date(startDate) }),
+              ...(endDate && { lte: new Date(endDate) }),
+            },
+          }
+        : {}),
+    };
+  }
+
+  private mapToDto(item: Prisma.InvoiceGetPayload<Record<string, never>>) {
+    return {
+      id: item.id,
+      invoiceNumber: item.invoiceNumber,
+      supplierId: item.supplierId,
+      amount: item.amount.toNumber(),
+      status: item.status,
+      paidAt: item.paidAt?.toISOString() || null,
+      createdAt: item.createdAt.toISOString(),
     };
   }
 

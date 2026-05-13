@@ -4,6 +4,7 @@ describe('CustomThrottlerGuard', () => {
   let guard: CustomThrottlerGuard;
 
   beforeEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     guard = new CustomThrottlerGuard({} as any, {} as any, {} as any);
   });
 

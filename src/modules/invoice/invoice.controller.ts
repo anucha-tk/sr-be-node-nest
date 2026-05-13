@@ -1,5 +1,13 @@
-import { Controller, Get, Query, HttpCode } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Query,
+  HttpCode,
+  Res,
+  BadRequestException,
+} from '@nestjs/common';
+import type { Response } from 'express';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { InvoiceService } from './invoice.service';
 import { InvoiceQueryDto } from './dto/invoice-query.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -30,5 +38,36 @@ export class InvoiceController {
       limit: query.limit,
       offset: query.offset,
     };
+  }
+
+  @Get('export')
+  @HttpCode(200)
+  @Roles({ roles: ['supplier', 'admin'] })
+  @ApiOperation({ summary: 'Export invoice history as JSON' })
+  @ApiQuery({ name: 'format', enum: ['json'], required: true })
+  async exportAll(
+    @CurrentUser() user: KeycloakUser,
+    @Query() query: InvoiceQueryDto,
+    @Res() res: Response,
+  ): Promise<Response> {
+    if (query.format !== 'json') {
+      throw new BadRequestException(
+        'Invalid format. Only "json" is supported.',
+      );
+    }
+
+    const items = await this.invoiceService.exportAll(user.sub, query);
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, '-')
+      .split('Z')[0];
+    const filename = `invoices_export_${timestamp}.json`;
+
+    res.set({
+      'Content-Type': 'application/json',
+      'Content-Disposition': `attachment; filename=${filename}`,
+    });
+
+    return res.json(items);
   }
 }

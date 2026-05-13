@@ -104,4 +104,41 @@ describe('InvoiceService', () => {
       );
     });
   });
+
+  describe('exportAll', () => {
+    const supplierId = 'SUP-001';
+    const mockInvoices = [
+      {
+        id: 'uuid-1',
+        invoiceNumber: 'INV-001',
+        supplierId,
+        amount: new Prisma.Decimal(100.5),
+        status: InvoiceStatus.PAID,
+        paidAt: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    it('should return all matching items without pagination', async () => {
+      mockPrismaService.invoice.findMany.mockResolvedValue(mockInvoices);
+
+      const query = { status: InvoiceStatus.PAID };
+      const result = await service.exportAll(supplierId, query);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].amount).toBe(100.5);
+      expect(mockPrismaService.invoice.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { supplierId, status: InvoiceStatus.PAID },
+        }),
+      );
+      expect(mockPrismaService.invoice.findMany).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          take: expect.any(Number),
+        }),
+      );
+    });
+  });
 });

@@ -1,83 +1,121 @@
-# Project Context: sr-be-node-nest
+---
+project_name: 'sr-be-node-nest'
+user_name: 'Anucha-tk'
+date: '2026-05-13'
+sections_completed:
+  [
+    'technology_stack',
+    'language_rules',
+    'framework_rules',
+    'testing_rules',
+    'quality_rules',
+    'workflow_rules',
+    'anti_patterns',
+  ]
+status: 'complete'
+rule_count: 40
+optimized_for_llm: true
+---
 
-This document provides critical architectural rules, implementation patterns, and technical guidelines for the sr-be-node-nest project. AI agents MUST strictly adhere to these rules to ensure consistency and quality.
+# Project Context for AI Agents
 
-## 🚀 Project Identity & Goals
+_This file contains critical rules and patterns that AI agents must follow when implementing code in this project. Focus on unobvious details that agents might otherwise miss._
 
-- **Project Name:** sr-be-node-nest (Supplier Revenue Dashboard Backend)
-- **Goal:** High-performance, event-driven financial dashboard processing 1M+ records with sub-second latency.
-- **Core Principles:** Speed as a Utility, Radical Transparency (Auditability), Zero-Defect Quality.
+---
 
-## 🛠️ Technology Stack
+## Technology Stack & Versions
 
-- **Framework:** NestJS (Standard Express Adapter)
-- **Database:** PostgreSQL 17 (Running in Docker)
-- **ORM:** Prisma v7.8.0 (Strict typing required)
-- **Validation:** `nestjs-zod` + `zod` v4.4.3
-- **Messaging:** Apache Kafka v4.2.0 (NestJS Microservices)
-- **Identity:** Keycloak v26.6.1 (OIDC)
-- **Documentation:** Scalar UI (`@scalar/nestjs`)
-- **Logging:** Pino (`nestjs-pino`)
+### Core Technologies
 
-## 📏 Naming & Structure Standards
+- **Backend:** NestJS v11.0.1 (Express), Node.js v24+, PostgreSQL 17
+- **Frontend:** React v19.2.6, Vite v8.0.12
+- **Database & ORM:** Prisma v7.8.0, PostgreSQL 17
+- **Messaging:** Apache Kafka (KafkaJS v2.2.4)
 
-- **Files:** `kebab-case` with functional suffix (e.g., `revenue.service.ts`).
-- **Classes:** `PascalCase` (e.g., `RevenueService`).
-- **Variables/Methods:** `camelCase`.
-- **Database Tables:** `PascalCase` (e.g., `Invoice`, `SupplierRevenue`).
-- **Database Columns:** `camelCase`.
-- **Database Indexes:** `idx_{tableName}_{columnName}`.
-- **API Endpoints:** `v1/` prefix, `kebab-case` plural (e.g., `GET /v1/supplier-revenues`).
-- **API Keys:** `camelCase`.
+### Key Dependencies
 
-## 🛡️ Authentication & Security
+- **Security:** Keycloak Connect v26.1.1, nest-keycloak-connect v1.10.1
+- **Validation:** nestjs-zod v5.3.0, zod v4.4.3
+- **Frontend UI:** Tailwind CSS v4.3.0, Framer Motion v12.38.0, Lucide React v1.14.0
+- **Visualization:** Recharts v3.8.1, React Flow v12.10.2, Mermaid v11.15.0
+- **Observability:** nestjs-pino v4.6.1, pino v10.3.1
 
-- **Hybrid Model:** Keycloak (User/Admin) + API Key (Service-to-Service).
-- **Default Policy:** Zero Trust (All routes protected by default unless marked `@Public()`).
-- **RBAC:** Use `@Roles('admin')` for administrative actions.
-- **API Key Storage:** Store hashed keys in database; never log raw keys.
+---
 
-## 📡 API Interaction Patterns (Standard Envelope)
+## Critical Implementation Rules
 
-All API responses MUST follow this structure:
+### Language-Specific Rules (TypeScript)
 
-```json
-{
-  "success": boolean,
-  "data": any,
-  "meta": {
-    "timestamp": "ISO 8601 UTC",
-    "executionTimeMs": number,
-    "pagination": { "limit": number, "offset": number, "total": number } | null
-  },
-  "error": {
-    "code": "BUSINESS_ERROR_CODE",
-    "message": "Human readable message",
-    "details": []
-  } | null
-}
-```
+- **Module System:** Use `nodenext` for both `module` and `moduleResolution`.
+- **Strictness:** Target `ES2023` with `strictNullChecks: true`.
+- **Exports:** Use **Named exports** for all NestJS components (Modules, Controllers, Services). Avoid default exports.
+- **Errors:** Use `Prisma.PrismaClientKnownRequestError` for database-specific errors (e.g., `P2002` for idempotency).
 
-- **Error Consistency:** Use Global Exception Filter to map all errors to this envelope.
-- **Dates:** Always return ISO 8601 format in UTC.
+### Framework-Specific Rules
 
-## ⚙️ Event-Driven Rules (Kafka)
+**NestJS (Backend)**
 
-- **Idempotency:** Every event MUST be checked against a `ProcessedEvent` table using `eventId` before processing.
-- **Observability:** Every event payload MUST include a `correlationId`.
-- **Atomicity:** Balance updates and audit logging MUST occur within an ACID transaction.
-- **Dead Letter Queue (DLQ):** Failed events must be routed to a DLQ for retry logic.
+- **Structure:** Maintain a **Feature-based modular structure** in `src/modules/{feature}`.
+- **Boundaries:** Cross-module communication MUST happen via Services. Controllers should not call other controllers.
+- **Access Control:** Use `@Public()` for open routes and `@Roles('admin')` for administrative tasks.
+- **Prisma:** Always inject `PrismaService` via constructor; never instantiate `PrismaClient` manually.
 
-## 🧪 Quality Guardrails
+**React (Frontend)**
 
-- **Test Coverage:** Minimum 80% (Jest/Supertest).
-- **Quality Gates:** Enforcement via Lefthook (Pre-commit lint/test).
-- **Clean Architecture:** Feature-based modular structure (`src/modules/{feature}`).
-- **Environment:** All `.env` variables MUST be validated via Zod at startup.
+- **Design:** Adhere to **Glassmorphism** aesthetics using the `glass-panel` utility and Tailwind 4.
+- **Motion:** Use `framer-motion` for all non-static UI transitions and interactive elements.
+- **Data:** Use the `fetchApi` helper in `src/api.ts` to ensure compatibility with the backend standard envelope.
+- **Icons:** Use `Lucide React` for all interface icons.
 
-## 🛑 Critical Implementation Reminders
+### Testing Rules
 
-- **No Lying:** Never claim a feature is complete if it doesn't satisfy the Acceptance Criteria in the story.
-- **No Magic Numbers:** Use constants or config values.
-- **No Empty Try-Catch:** Every caught error must be logged with Pino and returned via Standard Envelope.
-- **Performance:** Always use indexes for filtering on large datasets (1M+).
+- **Coverage:** Minimum **80% coverage** threshold for Branches, Functions, Lines, and Statements.
+- **Location:** Unit tests (`.spec.ts`) reside adjacent to code; E2E tests (`.e2e-spec.ts`) in `test/e2e/`.
+- **Idempotency:** Every financial operation test MUST cover the "duplicate event" scenario (P2002 handling).
+- **Mocks:** Use `jest.fn()` for `PrismaService` isolation.
+
+### Code Quality & Style Rules
+
+- **Quality Gates:** Commit only after `lefthook` successfully runs `lint`, `format`, `type-check`, and `test:cov`.
+- **Commits:** Strictly follow **Conventional Commits** (e.g., `feat:`, `fix:`, `refactor:`).
+- **Naming:**
+  - Files: `kebab-case.suffix.ts`
+  - Classes: `PascalCase`
+  - DB Tables: `PascalCase` (Prisma default)
+- **Docs:** Use `@ApiTags()` and `@ApiResponse()` for Scalar UI documentation.
+
+### Development Workflow Rules
+
+- **Infrastructure:** Always develop with `docker compose` to match production-like PostgreSQL, Keycloak, and Kafka environments.
+- **Environment:** Validate all `.env` variables via Zod at application startup.
+- **Migrations:** Use `prisma migrate dev` for schema changes; avoid `db push` in collaborative environments.
+- **Tracking:** Keep [sprint-status.yaml](file:///Users/anucha-tk/App/anucha-tk/sr-be-node-nest/_bmad-output/implementation-artifacts/sprint-status.yaml) updated as the single source of truth for progress.
+
+### Critical Don't-Miss Rules
+
+- **Money:** NEVER use `number` for financial calculations. Always use `Prisma.Decimal`.
+- **Idempotency:** Every Kafka event MUST be checked against `ProcessedEvent` table before processing.
+- **Performance:** Queries on 1M+ records MUST use Materialized Views or optimized B-Tree indexes.
+- **Atomicity:** Balance updates and audit logging MUST occur within a single ACID transaction.
+- **Logging:** Use `nestjs-pino` for all logs. Never log sensitive keys or raw secrets.
+- **Loading:** Always implement Skeleton Loaders for heavy data fetching to maintain high perceived performance.
+
+---
+
+## Usage Guidelines
+
+**For AI Agents:**
+
+- Read this file before implementing any code.
+- Follow ALL rules exactly as documented.
+- When in doubt, prefer the more restrictive option.
+- Update this file if new patterns emerge.
+
+**For Humans:**
+
+- Keep this file lean and focused on agent needs.
+- Update when technology stack changes.
+- Review quarterly for outdated rules.
+- Remove rules that become obvious over time.
+
+Last Updated: 2026-05-13

@@ -61,6 +61,19 @@ export class ApiKeyService {
     return keyRecord;
   }
 
+  async findAll(): Promise<Partial<ApiKey>[]> {
+    const keys = await this.prisma.apiKey.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return keys.map((key) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { keyHash, salt, ...safeKey } = key;
+      return safeKey;
+    });
+  }
+
   async createKey(
     name: string,
     scopes: string[],

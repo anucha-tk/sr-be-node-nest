@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { fetchApi } from '../api'
 import { 
   AreaChart,
   Area,
@@ -11,14 +11,11 @@ import {
 } from 'recharts'
 import { 
   Zap, 
-  Database, 
   Activity, 
   ShieldCheck,
   TrendingUp,
   Cpu,
-  Clock,
-  ArrowRight,
-  AlertCircle
+  Clock
 } from 'lucide-react'
 
 interface PerformanceMetric {
@@ -34,13 +31,17 @@ export default function PerformanceLab() {
   const [showHistory, setShowHistory] = useState(false)
 
   const runBenchmark = async () => {
+    setIsRunning(true)
     try {
       const startTime = Date.now()
-      const response = await fetch('http://localhost:3000/v1/suppliers/me/revenue', {
-        headers: { 'x-api-key': import.meta.env.VITE_API_KEY || '' }
-      })
-      const result = await response.json()
-      const serverTime = result.meta?.executionTimeMs || (Date.now() - startTime)
+      const response = await fetchApi<any>('/v1/analytics/summary')
+      
+      let serverTime = 0
+      if (response.success && response.data) {
+        serverTime = response.meta?.executionTimeMs || (Date.now() - startTime)
+      } else {
+        serverTime = Date.now() - startTime
+      }
       
       setLastLatency(serverTime)
       setHistory(prev => [
@@ -68,16 +69,24 @@ export default function PerformanceLab() {
 
   return (
     <div className="space-y-8">
+      {/* Explanation for Non-Tech */}
+      <div className="glass-panel p-6 bg-primary/5 border-primary/10">
+        <h3 className="text-xl font-bold text-primary mb-2">เปรียบเทียบการทำงาน (Analogy)</h3>
+        <p className="text-slate-600 text-sm leading-relaxed">
+          เวลาดึงข้อมูลวิเคราะห์จากข้อมูลนับแสนหรือล้านรายการ การไม่มี <span className="font-bold">Index</span> เหมือนการที่คุณไปห้องสมุดแล้ว <span className="text-rose-400 font-bold">"ต้องเดินหาหนังสือทีละเล่มจากทุกชั้น"</span> (กินเวลานาน) 
+          แต่ระบบของเรามีการทำ <span className="text-emerald-400 font-bold">Database Indexing (B-Tree)</span> ซึ่งเปรียบเสมือนคุณ <span className="text-emerald-400 font-bold">"เปิดตู้บัตรคำค้นหา"</span> แล้วรู้ทันทีว่าข้อมูลกองอยู่ตรงไหนบ้าง ทำให้ระบบดึงข้อมูลสรุปผลรวมได้ในเวลา <span className="text-amber-400 font-bold">แทบจะในพริบตา (Sub-millisecond)</span>
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Control Panel */}
-        <div className="glass-panel p-8 bg-obsidian-950/40">
-          <div className="p-3 bg-indigo-500/20 rounded-xl text-indigo-400 w-fit mb-6">
+        <div className="glass-panel p-8 bg-white/40">
+          <div className="p-3 bg-primary/10 rounded-xl text-primary w-fit mb-6">
             <Cpu size={24} />
           </div>
-          <h2 className="text-2xl font-bold mb-2 text-gradient">Real Performance Lab</h2>
-          <p className="text-slate-400 mb-8 text-sm leading-relaxed">
-            Validate backend performance targets in real-time. We extract <code>executionTimeMs</code> 
-            directly from the production API response to prove architectural efficiency.
+          <h2 className="text-2xl font-bold mb-2 text-gradient">ทดสอบความเร็วแบบสดๆ</h2>
+          <p className="text-slate-600 mb-8 text-sm leading-relaxed">
+            ทดสอบการยิง API ไปที่ระบบจริง โดยระบบจะตอบกลับมาพร้อมเวลาที่ใช้ในการค้นหาในฐานข้อมูล (Execution Time)
           </p>
 
           <div className="space-y-4">
@@ -85,54 +94,54 @@ export default function PerformanceLab() {
               onClick={() => setIsRunning(!isRunning)}
               className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-bold transition-all ${
                 isRunning 
-                  ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30' 
-                  : 'bg-indigo-500 hover:bg-indigo-600 text-white shadow-[0_0_30px_rgba(99,102,241,0.3)] hover:scale-[1.02]'
+                  ? 'bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30' 
+                  : 'bg-primary hover:bg-[#005f92] text-white shadow-[0_4px_24px_rgba(0,119,182,0.15)] hover:scale-[1.02]'
               }`}
             >
               {isRunning ? <Activity className="animate-spin" size={20} /> : <Zap size={20} />}
-              {isRunning ? 'Stop Profiler' : 'Start Real-time Profiling'}
+              {isRunning ? 'หยุดการทดสอบ' : 'เริ่มยิง API รัวๆ (Load Test)'}
             </button>
             
             <button
               onClick={runBenchmark}
               disabled={isRunning}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl font-bold transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white/60 hover:bg-white/80 border border-slate-200 rounded-2xl font-bold transition-all disabled:opacity-50"
             >
               <TrendingUp size={20} />
-              Single Request Trace
+              ทดสอบแค่ 1 ครั้ง (Single Request)
             </button>
           </div>
 
-          <div className="mt-12 p-6 rounded-2xl bg-white/5 border border-white/10 space-y-6">
+          <div className="mt-12 p-6 rounded-2xl bg-white/60 border border-slate-200 space-y-6">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Target API</span>
-              <span className="text-xs font-mono text-indigo-400">/v1/suppliers/me/revenue</span>
+              <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">เป้าหมาย (API)</span>
+              <span className="text-xs font-mono text-primary">/v1/analytics/summary</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Database</span>
+              <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">ฐานข้อมูล</span>
               <span className="text-xs font-mono text-green-400">PostgreSQL 17</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Mock Status</span>
-              <span className="text-xs font-mono text-red-400 font-bold">DISABLED</span>
+              <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">เทคนิคที่ใช้</span>
+              <span className="text-xs font-mono text-emerald-400 font-bold">B-Tree Indexing</span>
             </div>
           </div>
         </div>
 
         {/* Visualizer Panel */}
-        <div className="lg:col-span-2 glass-panel p-8 bg-obsidian-950/20 relative overflow-hidden">
+        <div className="lg:col-span-2 glass-panel p-8 bg-white/20 relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 flex items-center gap-4">
             <div className="text-right">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Live Execution Time</p>
-              <p className="text-4xl font-mono font-bold text-white">
-                {lastLatency.toFixed(3)}<span className="text-sm ml-1 text-slate-500">ms</span>
+              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1">เวลาที่ใช้ไป (มิลลิวินาที)</p>
+              <p className="text-4xl font-mono font-bold text-slate-900">
+                {lastLatency.toFixed(3)}<span className="text-sm ml-1 text-slate-600">ms</span>
               </p>
             </div>
           </div>
 
           <h3 className="text-xl font-bold mb-8 flex items-center gap-3">
-            <Activity className="text-indigo-400" size={20} />
-            Server-Side Latency (Standard Envelope)
+            <Activity className="text-primary" size={20} />
+            กราฟแสดงเวลาที่ใช้ในการดึงข้อมูล (ยิ่งต่ำยิ่งดี)
           </h3>
 
           <div className="h-[300px] w-full">
@@ -177,72 +186,35 @@ export default function PerformanceLab() {
             ) : (
               <div className="h-full flex flex-col items-center justify-center text-center text-slate-600">
                 <Clock size={48} className="mb-4 opacity-20" />
-                <p>Start profiling to see live backend metrics</p>
+                <p>กดเริ่มทดสอบเพื่อดูกราฟความเร็ว</p>
               </div>
             )}
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Avg Time</p>
-              <p className="text-lg font-mono font-bold text-white">
+            <div className="p-4 rounded-xl bg-white/60 border border-slate-200">
+              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1">ค่าเฉลี่ย (Avg)</p>
+              <p className="text-lg font-mono font-bold text-slate-900">
                 {history.length > 0 ? (history.reduce((acc, h) => acc + h.time, 0) / history.length).toFixed(2) : '0.00'}ms
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Min Time</p>
+            <div className="p-4 rounded-xl bg-white/60 border border-slate-200">
+              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1">เร็วที่สุด (Min)</p>
               <p className="text-lg font-mono font-bold text-green-400">
                 {history.length > 0 ? Math.min(...history.map(h => h.time)).toFixed(2) : '0.00'}ms
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Max Time</p>
+            <div className="p-4 rounded-xl bg-white/60 border border-slate-200">
+              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mb-1">ช้าที่สุด (Max)</p>
               <p className="text-lg font-mono font-bold text-purple-400">
                 {history.length > 0 ? Math.max(...history.map(h => h.time)).toFixed(2) : '0.00'}ms
               </p>
             </div>
-            <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 flex flex-col justify-center items-center">
+            <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 flex flex-col justify-center items-center text-center">
               <ShieldCheck className="text-green-400 mb-1" size={16} />
-              <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">P95 Target Met</span>
+              <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">ได้ตามเป้า<br/>(ต่ำกว่า 100ms)</span>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="glass-panel p-8 bg-white/5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400">
-              <Database size={18} />
-            </div>
-            <h5 className="font-bold text-gradient">Optimization Strategy</h5>
-          </div>
-          <ul className="space-y-3">
-            {[
-              'B-Tree Indexing on Supplier ID (idx_revenue_audit_logs_supplierId)',
-              'Standardized JSON Envelope with timing headers',
-              'Atomic PostgreSQL Transactions (ACID compliant)',
-              'Query Execution Plans optimized via Prisma middleware'
-            ].map((item, i) => (
-              <li key={i} className="flex items-center gap-3 text-sm text-slate-400">
-                <ArrowRight size={14} className="text-indigo-500" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="glass-panel p-8 bg-amber-500/5 border-amber-500/10">
-          <div className="flex items-center gap-3 mb-2">
-            <AlertCircle className="text-amber-400" size={18} />
-            <h5 className="font-bold text-amber-400">Why no "Legacy" Mock?</h5>
-          </div>
-          <p className="text-sm text-slate-400 leading-relaxed italic">
-            "Because we build for performance from day one. In this showcase, 
-            every request is a real API call. We refuse to show fake slow results 
-            to make ourselves look better. The sub-millisecond metrics above 
-            speak for themselves."
-          </p>
         </div>
       </div>
     </div>

@@ -50,7 +50,7 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
         {
-          ttl: config.get<number>('GLOBAL_THROTTLE_TTL')! * 1000,
+          ttl: (config.get<number>('GLOBAL_THROTTLE_TTL') || 60) * 1000,
           limit: 10,
         },
       ],

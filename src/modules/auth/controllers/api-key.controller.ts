@@ -1,4 +1,4 @@
-import { Controller, Post, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Post, Delete, Get, Body, Param } from '@nestjs/common';
 import { ApiKeyService } from '../services/api-key.service';
 import { CreateApiKeyDto } from '../dto/create-api-key.dto';
 import { Roles } from 'nest-keycloak-connect';
@@ -14,6 +14,14 @@ import {
 @Controller('v1/auth/api-keys')
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
+
+  @Get()
+  @Roles({ roles: ['admin'] })
+  @ApiOperation({ summary: 'Get all active API keys' })
+  // @ApiStandardResponse([ApiKeyResponseDto]) // Simplification for now
+  async findAll() {
+    return this.apiKeyService.findAll();
+  }
 
   @Post()
   @Roles({ roles: ['admin'] })

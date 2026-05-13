@@ -85,7 +85,38 @@
 
 ---
 
-## Implementation Roadmap (Enhanced)
+## D. Showcase Navigation Sidebar (The Use Cases - Thai Localization)
+
+แถบเมนูด้านซ้ายสำหรับนำเสนอหัวใจสำคัญทางเทคนิคของระบบ (Technical Showcase) โดยเน้นภาษาไทยเพื่อการสื่อสารที่ชัดเจนสำหรับผู้สัมภาษณ์
+
+### 1. Identity & Shield (ระบบความปลอดภัยและตัวตน)
+- **Tech Focus:** Keycloak OIDC, RBAC, API Key Auth.
+- **Visual:** สถานะการล็อกอิน, การถอดรหัส Token (JWT Inspection), และการจัดการ API Key.
+- **Narrative:** "ปกป้องข้อมูลทางการเงินด้วยมาตรฐาน OIDC และการกำหนดสิทธิ์การเข้าถึงระดับ Service-to-Service ผ่าน API Key อย่างละเอียด"
+
+### 2. Event Pulse (การประมวลผลแบบ Event-Driven)
+- **Tech Focus:** Kafka Consumer, Idempotency, Revenue Calculation.
+- **Visual:** แผนภาพ Interactive แสดงการไหลของข้อมูลจาก Kafka Topic ไปยังฐานข้อมูล พร้อม Log แบบ Real-time.
+- **Narrative:** "ระบบประมวลผลธุรกรรมที่แม่นยำและเชื่อถือได้ด้วยแนวคิด Exactly-once และกลไกป้องกันการประมวลผลซ้ำ (Idempotency)"
+
+### 3. Warp Speed (ประสิทธิภาพการประมวลผลข้อมูลขนาดใหญ่)
+- **Tech Focus:** SQL Indexing, Materialized Views, 1M+ Record handling.
+- **Visual:** กราฟเปรียบเทียบความเร็ว และตัวจับเวลาการรัน Query จริงในหน่วยมิลลิวินาที.
+- **Narrative:** "ดึงข้อมูลวิเคราะห์จากรายการธุรกรรมกว่า 1 ล้านเรคคอร์ด ภายในเวลาไม่ถึงวินาที ด้วยการทำ Indexing และ Query Optimization ขั้นสูง"
+
+### 4. Paper Trail (ความโปร่งใสและความถูกต้องของข้อมูล)
+- **Tech Focus:** Immutable Audit Logs, Database Constraints.
+- **Visual:** ตาราง Audit Trail ที่กรองข้อมูลได้ แสดงประวัติการเปลี่ยนแปลงที่แก้ไขไม่ได้ (Immutable).
+- **Narrative:** "สร้างความเชื่อมั่นและความโปร่งใสด้วยระบบบันทึกประวัติการทำงานที่ตรวจสอบได้และไม่สามารถเปลี่ยนแปลงได้ (Immutable Audit Trail)"
+
+### 5. Dev Portal (หน้าต่างเชื่อมต่อสำหรับนักพัฒนา)
+- **Tech Focus:** Scalar/OpenAPI, Standardized JSON, Rate Limiting.
+- **Visual:** หน้าเอกสาร API (Scalar UI) ที่สามารถทดลองเรียกใช้งานได้จริง.
+- **Narrative:** "ส่งมอบประสบการณ์ที่ดีให้นักพัฒนาด้วยเอกสาร API ตามมาตรฐาน OpenAPI พร้อมระบบควบคุมอัตราการเรียกใช้งาน (Rate Limiting)"
+
+---
+
+## E. Implementation Roadmap (Enhanced)
 
 1.  **Refine Design Tokens:** Update `index.css` and `tailwind.config.js` with the Midnight Obsidian palette.
 2.  **Architecture Map 2.0:** Replace static images with an interactive React-Flow diagram.

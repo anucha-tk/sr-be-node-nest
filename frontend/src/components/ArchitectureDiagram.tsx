@@ -21,22 +21,22 @@ const TechNode = ({ data }: any) => {
   return (
     <div className={`px-4 py-3 rounded-xl border transition-all ${
       data.selected 
-        ? 'bg-indigo-500/20 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.4)]' 
-        : 'bg-obsidian-950/80 border-white/10'
+        ? 'bg-primary/10 border-primary shadow-[0_4px_16px_rgba(0,119,182,0.15)]' 
+        : 'bg-white/80 border-slate-200'
     }`}>
-      <Handle type="target" position={Position.Top} className="!bg-indigo-500" />
+      <Handle type="target" position={Position.Top} className="!bg-primary" />
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${data.selected ? 'bg-indigo-500 text-white' : 'bg-white/5 text-indigo-400'}`}>
+        <div className={`p-2 rounded-lg ${data.selected ? 'bg-primary text-white' : 'bg-white/60 text-primary'}`}>
           <Icon size={18} />
         </div>
         <div>
-          <div className="text-[10px] uppercase tracking-tighter text-slate-500 font-bold leading-none mb-1">
+          <div className="text-[10px] uppercase tracking-tighter text-slate-600 font-bold leading-none mb-1">
             {data.category}
           </div>
-          <div className="text-sm font-bold text-slate-100">{data.label}</div>
+          <div className="text-sm font-bold text-slate-900">{data.label}</div>
         </div>
       </div>
-      <Handle type="source" position={Position.Bottom} className="!bg-indigo-500" />
+      <Handle type="source" position={Position.Bottom} className="!bg-primary" />
     </div>
   )
 }
@@ -85,34 +85,34 @@ const initialEdges: Edge[] = [
     target: 'nestjs', 
     animated: true, 
     label: 'Events',
-    style: { stroke: '#6366f1' },
+    style: { stroke: '#0077B6' },
     type: ConnectionLineType.SmoothStep,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#6366f1' }
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#0077B6' }
   },
   { 
     id: 'e2-3', 
     source: 'keycloak', 
     target: 'nestjs', 
     label: 'Auth',
-    style: { stroke: '#a855f7', strokeDasharray: '5,5' },
+    style: { stroke: '#00D2FF', strokeDasharray: '5,5' },
     type: ConnectionLineType.SmoothStep,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#a855f7' }
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#00D2FF' }
   },
   { 
     id: 'e3-4', 
     source: 'nestjs', 
     target: 'prisma', 
-    style: { stroke: '#6366f1' },
+    style: { stroke: '#0077B6' },
     type: ConnectionLineType.SmoothStep,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#6366f1' }
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#0077B6' }
   },
   { 
     id: 'e4-5', 
     source: 'prisma', 
     target: 'postgres', 
-    style: { stroke: '#6366f1' },
+    style: { stroke: '#0077B6' },
     type: ConnectionLineType.SmoothStep,
-    markerEnd: { type: MarkerType.ArrowClosed, color: '#6366f1' }
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#0077B6' }
   },
 ]
 
@@ -162,11 +162,11 @@ export default function ArchitectureDiagram() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Diagram Panel */}
-      <div className="lg:col-span-2 glass-panel p-4 min-h-[500px] relative overflow-hidden bg-obsidian-950/40">
+      <div className="lg:col-span-2 glass-panel p-4 min-h-[500px] relative overflow-hidden bg-white/40">
         <div className="absolute top-6 left-6 z-10 flex gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 border border-indigo-500/20 rounded-full">
-            <Activity className="text-indigo-400 animate-pulse" size={14} />
-            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Interactive Data Flow</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/5 border border-primary/10 rounded-full">
+            <Activity className="text-primary animate-pulse" size={14} />
+            <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Interactive Data Flow</span>
           </div>
           <button 
             onClick={triggerBeam}
@@ -185,15 +185,15 @@ export default function ArchitectureDiagram() {
           fitView
           className="bg-transparent"
         >
-          <Background color="#1e293b" gap={20} size={1} />
-          <Controls className="!bg-obsidian-950 !border-white/10 !fill-white" />
+          <Background color="#cbd5e1" gap={20} size={1} />
+          <Controls className="!bg-white !border-slate-200 !fill-slate-700" />
         </ReactFlow>
       </div>
 
       {/* Detail Panel */}
       <div className="flex flex-col gap-6">
         <h3 className="text-2xl font-bold flex items-center gap-2 text-gradient">
-          <Info className="text-indigo-400" />
+          <Info className="text-primary" />
           Technical Details
         </h3>
 
@@ -203,35 +203,35 @@ export default function ArchitectureDiagram() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="glass-panel p-6 flex-1 flex flex-col border-indigo-500/20"
+            className="glass-panel p-6 flex-1 flex flex-col border-primary/10"
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-[10px] uppercase tracking-wider text-indigo-400 font-bold">
+              <span className="px-2 py-0.5 rounded bg-primary/5 text-[10px] uppercase tracking-wider text-primary font-bold">
                 {selectedTech.category}
               </span>
               <div className="flex gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/40" />
-                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500/10" />
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                <div className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                <div className="w-1.5 h-1.5 rounded-full bg-primary/5" />
               </div>
             </div>
             
-            <h4 className="text-2xl font-bold mb-2 text-white">{selectedTech.name}</h4>
-            <div className="text-xs text-slate-500 font-mono mb-4">{selectedTech.version}</div>
+            <h4 className="text-2xl font-bold mb-2 text-slate-900">{selectedTech.name}</h4>
+            <div className="text-xs text-slate-600 font-mono mb-4">{selectedTech.version}</div>
             
-            <p className="text-slate-400 text-sm leading-relaxed mb-8">
+            <p className="text-slate-600 text-sm leading-relaxed mb-8">
               {selectedTech.description}
             </p>
 
             <div className="space-y-4 mb-8">
-              <div className="p-4 rounded-xl bg-obsidian-950/50 border border-white/5">
-                <div className="flex items-center gap-2 text-indigo-400 mb-2">
+              <div className="p-4 rounded-xl bg-white/60 border border-slate-100">
+                <div className="flex items-center gap-2 text-primary mb-2">
                   <Shield size={14} />
                   <span className="text-[10px] font-bold uppercase">Patterns Applied</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {['Idempotency', 'ACID', 'OIDC', 'DLQ'].slice(0, 3).map(p => (
-                    <span key={p} className="text-[10px] px-2 py-1 rounded-md bg-white/5 text-slate-400 border border-white/10">
+                    <span key={p} className="text-[10px] px-2 py-1 rounded-md bg-white/60 text-slate-600 border border-slate-200">
                       {p}
                     </span>
                   ))}
@@ -244,12 +244,12 @@ export default function ArchitectureDiagram() {
                 href={selectedTech.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 bg-indigo-500 hover:bg-indigo-600 rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] neon-glow"
+                className="flex items-center justify-center gap-2 w-full py-3 bg-primary hover:bg-[#005f92] text-white rounded-xl text-sm font-bold transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_4px_16px_rgba(0,119,182,0.15)]"
               >
                 Official Docs
                 <ExternalLink size={16} />
               </a>
-              <button className="flex items-center justify-center gap-2 w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold transition-all">
+              <button className="flex items-center justify-center gap-2 w-full py-3 bg-white/60 hover:bg-white/80 border border-slate-200 rounded-xl text-sm font-bold transition-all text-slate-900">
                 View Source Code
                 <Code2 size={16} />
               </button>

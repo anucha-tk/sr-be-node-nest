@@ -1,274 +1,182 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   TrendingUp, 
   Activity, 
-  Clock, 
-  DollarSign,
-  AlertCircle,
   CheckCircle2,
   Zap,
-  Share2,
-  ShieldCheck
+  RefreshCw,
+  Box,
+  Truck,
+  ShieldAlert,
+  Server
 } from 'lucide-react'
-
-interface BackendResponse<T> {
-  success: boolean
-  data: T
-  meta: {
-    timestamp: string
-    executionTimeMs: number
-  }
-  error: null | {
-    code: string
-    message: string
-  }
-}
-
-interface RevenueData {
-  balance: number
-  currency: string
-  metadata: {
-    lastUpdated: string
-  }
-}
+import { fetchApi } from '../api'
 
 export default function MetricsDashboard() {
   const [balance, setBalance] = useState<number | null>(null)
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
   const [latency, setLatency] = useState<number | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [isSimulating, setIsSimulating] = useState(false)
+  const [events, setEvents] = useState<any[]>([])
 
   const fetchBalance = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/v1/suppliers/me/revenue', {
-        headers: { 'x-api-key': import.meta.env.VITE_API_KEY || '' }
-      })
-      
-      const result: BackendResponse<RevenueData> = await response.json()
-      
-      if (response.ok && result.success) {
-        setBalance(result.data.balance)
-        setLastUpdated(result.data.metadata.lastUpdated)
-        setLatency(result.meta.executionTimeMs)
-        setError(null)
-      } else {
-        setError(result.error?.message || 'Failed to fetch data')
-      }
-    } catch (err) {
-      setError('Backend unreachable')
-    } finally {
-      setIsLoading(false)
+    const res = await fetchApi<any>('/v1/suppliers/me/revenue')
+    if (res.success && res.data) {
+      setBalance(res.data.balance)
+      setLatency(res.meta?.executionTimeMs || 0)
     }
   }
 
   useEffect(() => {
     fetchBalance()
-    const interval = setInterval(fetchBalance, 5000)
-    return () => clearInterval(interval)
   }, [])
 
   const simulateTransaction = async () => {
+    if (isSimulating) return
     setIsSimulating(true)
-    await fetchBalance()
-    // Small delay just for visual feedback of the "beam" trigger
-    setTimeout(() => setIsSimulating(false), 500)
+
+    // Call the new backend endpoint to trigger a Kafka event
+    const res = await fetchApi<any>('/v1/suppliers/simulate-payment', { method: 'POST' })
+    
+    if (res.success && res.data) {
+      // Add event to UI timeline
+      const newEvent = {
+        id: res.data.eventId,
+        amount: res.data.amount,
+        status: 'sending',
+        time: new Date().toLocaleTimeString()
+      }
+      setEvents(prev => [newEvent, ...prev].slice(0, 5))
+
+      // Simulate the flow through the system
+      setTimeout(() => {
+        setEvents(prev => prev.map(e => e.id === newEvent.id ? { ...e, status: 'checking' } : e))
+      }, 1000)
+
+      setTimeout(() => {
+        setEvents(prev => prev.map(e => e.id === newEvent.id ? { ...e, status: 'saved' } : e))
+        fetchBalance() // Refresh balance after "saving"
+        setIsSimulating(false)
+      }, 2500)
+    } else {
+      setIsSimulating(false)
+    }
   }
 
   return (
     <div className="space-y-8">
-      {error && (
-        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3 text-red-400 text-sm">
-          <AlertCircle size={18} />
-          {error}
-        </div>
-      )}
+      {/* Explanation for Non-Tech */}
+      <div className="glass-panel p-6 bg-primary/5 border-primary/10">
+        <h3 className="text-xl font-bold text-primary mb-2">เปรียบเทียบการทำงาน (Analogy)</h3>
+        <p className="text-slate-600 text-sm leading-relaxed">
+          ระบบ <span className="font-bold">Event-Driven (Kafka)</span> เปรียบเสมือน <span className="text-emerald-400 font-bold">"สายพานลำเลียงพัสดุขนาดใหญ่"</span> 
+          เมื่อมีเงินโอนเข้ามา (พัสดุ) ระบบจะไม่รบกวนการทำงานของหน้าร้าน แต่จะโยนลงสายพานทันที 
+          จากนั้นจะมี <span className="text-amber-400 font-bold">"พนักงานตรวจรับ (Idempotency)"</span> คอยเช็คว่าพัสดุชิ้นนี้เคยรับไปแล้วหรือยัง เพื่อป้องกันการบวกเงินซ้ำซ้อน 
+          ก่อนจะนำไปเก็บลงคลัง (Database) อย่างปลอดภัย
+        </p>
+      </div>
 
-      {/* Primary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <motion.div 
-          whileHover={{ y: -5 }}
-          className="glass-panel p-6 border-green-500/10"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-green-500/20 rounded-lg text-green-400">
-              <DollarSign size={20} />
-            </div>
-            <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">Live Balance</span>
-          </div>
-          <div className="text-3xl font-bold text-white">
-            {isLoading && balance === null ? (
-              <span className="animate-pulse text-slate-700">---</span>
-            ) : (
-              `$${balance?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || '0.00'}`
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Step 1: The Conveyor Belt (Kafka) */}
+        <motion.div className="glass-panel p-6 flex flex-col items-center text-center">
+          <div className="p-4 bg-blue-500/20 rounded-full text-blue-400 mb-4 relative">
+            <Truck size={32} />
+            {isSimulating && (
+              <motion.div 
+                animate={{ x: [0, 50, 0] }} 
+                transition={{ duration: 1.5, repeat: Infinity }}
+                className="absolute -bottom-2 -right-2 text-slate-900 bg-blue-500 rounded-full p-1 shadow-lg"
+              >
+                <Box size={14} />
+              </motion.div>
             )}
           </div>
-          <div className="mt-2 text-xs text-slate-500 flex items-center gap-1">
-            <TrendingUp size={12} className="text-green-400" />
-            Direct from PostgreSQL 17
-          </div>
+          <h4 className="font-bold text-lg mb-1">1. สายพานรับข้อมูล</h4>
+          <p className="text-xs text-slate-600 mb-4">เทคโนโลยี: Apache Kafka</p>
+          <p className="text-sm text-slate-600">รองรับรายการโอนเงินนับแสนรายการต่อวินาที โดยไม่ทำให้ระบบล่ม</p>
+          
+          <button
+            onClick={simulateTransaction}
+            disabled={isSimulating}
+            className={`mt-auto w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+              isSimulating ? 'bg-slate-700 text-slate-300 cursor-not-allowed' : 'bg-primary hover:bg-[#005f92] text-white shadow-[0_4px_16px_rgba(0,119,182,0.15)]'
+            }`}
+          >
+            {isSimulating ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} />}
+            {isSimulating ? 'กำลังลำเลียงข้อมูล...' : 'จำลองมีเงินโอนเข้า 500$'}
+          </button>
         </motion.div>
 
-        <motion.div 
-          whileHover={{ y: -5 }}
-          className="glass-panel p-6 border-indigo-500/10"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400">
-              <Activity size={20} />
-            </div>
-            <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">BE Latency</span>
+        {/* Step 2: The Inspector (Idempotency) */}
+        <motion.div className="glass-panel p-6 flex flex-col items-center text-center relative overflow-hidden">
+          <div className={`p-4 rounded-full mb-4 transition-colors duration-500 ${
+            events[0]?.status === 'checking' ? 'bg-amber-500/40 text-amber-500 scale-110 shadow-[0_4px_24px_rgba(245,158,11,0.3)]' : 'bg-slate-100 text-slate-500'
+          }`}>
+            <ShieldAlert size={32} />
           </div>
-          <div className="text-3xl font-bold text-white">
-            {latency === null ? '---' : `${latency.toFixed(3)}ms`}
-          </div>
-          <div className="mt-2 text-xs text-slate-500 flex items-center gap-1">
-            <Zap size={12} className="text-indigo-400" />
-            Backend Execution Time
-          </div>
+          <h4 className="font-bold text-lg mb-1">2. ตรวจสอบความซ้ำซ้อน</h4>
+          <p className="text-xs text-slate-600 mb-4">เทคโนโลยี: Idempotency Key</p>
+          <p className="text-sm text-slate-600">ตรวจสอบว่ารายการโอนเงินนี้ (รหัสอ้างอิง) เคยถูกบวกเข้าบัญชีไปแล้วหรือไม่ ถ้าซ้ำจะปัดตกทันที</p>
         </motion.div>
 
-        <motion.div 
-          whileHover={{ y: -5 }}
-          className="glass-panel p-6 border-purple-500/10"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-purple-500/20 rounded-lg text-purple-400">
-              <Share2 size={20} />
-            </div>
-            <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">Event Health</span>
+        {/* Step 3: The Vault (Database) */}
+        <motion.div className="glass-panel p-6 flex flex-col items-center text-center border-t-4 border-emerald-500">
+          <div className={`p-4 rounded-full mb-4 transition-colors duration-500 ${
+            events[0]?.status === 'saved' ? 'bg-emerald-500/40 text-emerald-600 scale-110 shadow-[0_4px_24px_rgba(16,185,129,0.3)]' : 'bg-emerald-100 text-emerald-600'
+          }`}>
+            <Server size={32} />
           </div>
-          <div className="text-3xl font-bold text-white">100%</div>
-          <div className="mt-2 text-xs text-slate-500">Kafka Cluster: Stable</div>
-        </motion.div>
+          <h4 className="font-bold text-lg mb-1">3. ยอดเงินสุทธิในคลัง</h4>
+          <p className="text-xs text-slate-600 mb-4">เทคโนโลยี: PostgreSQL Transaction</p>
 
-        <motion.div 
-          whileHover={{ y: -5 }}
-          className="glass-panel p-6 border-slate-500/10"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-slate-500/20 rounded-lg text-slate-400">
-              <Clock size={20} />
+          <div className="w-full mt-auto bg-white/60 p-4 rounded-xl border border-emerald-500/20">
+            <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-1 flex items-center justify-center gap-1">
+              <TrendingUp size={12} /> ยอดเงินล่าสุด
             </div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Last Sync</span>
+            <div className="text-3xl font-bold text-slate-900">
+              {balance === null ? '---' : `$${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+            </div>
+            <div className="text-xs text-slate-600 mt-2 flex items-center justify-center gap-1">
+              <Activity size={12} /> อัปเดตใช้เวลา {latency || 0} ms
+            </div>
           </div>
-          <div className="text-xl font-medium text-slate-300">
-            {lastUpdated ? new Date(lastUpdated).toLocaleTimeString() : '---'}
-          </div>
-          <div className="mt-2 text-xs text-slate-500 text-gradient">Verified Integrity</div>
         </motion.div>
       </div>
 
-      {/* Interactive Showcase Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="glass-panel p-8 relative overflow-hidden bg-obsidian-950/40">
-          <div className="absolute top-0 right-0 p-4">
-            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
-              <div className={`w-2 h-2 rounded-full ${error ? 'bg-red-500' : 'bg-green-500 animate-pulse'}`} />
-              <span className="text-[10px] font-medium text-slate-400 uppercase">
-                {error ? 'System Offline' : 'Backend Live'}
-              </span>
-            </div>
-          </div>
-          
-          <h3 className="text-2xl font-bold mb-2 text-gradient">Real-time Data Sync</h3>
-          <p className="text-slate-400 mb-8 max-w-md">
-            This dashboard communicates directly with the NestJS backend. 
-            All performance metrics are calculated per-request and returned in the API response metadata.
-          </p>
-
-          <div className="flex gap-4">
-            <button
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('kafka-beam'))
-                simulateTransaction()
-              }}
-              disabled={isSimulating}
-              className={`flex-1 relative group flex items-center justify-center gap-3 px-8 py-4 bg-indigo-500 hover:bg-indigo-600 rounded-2xl font-bold transition-all ${
-                isSimulating ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(99,102,241,0.3)]'
-              }`}
-            >
-              <Zap size={24} className="group-hover:animate-bounce" />
-              {isSimulating ? 'Syncing...' : 'Fetch Real-time Performance'}
-            </button>
-          </div>
-
-          <div className="mt-12 space-y-4">
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 group hover:border-indigo-500/30 transition-all">
-              <div className="p-2 rounded-lg bg-indigo-500/20 text-indigo-400">
-                <Share2 size={18} />
-              </div>
-              <div className="text-sm">
-                <p className="font-medium group-hover:text-indigo-300">Kafka Processing Path</p>
-                <p className="text-slate-500 text-xs">Event-driven balance updates (Exactly-once)</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10 group hover:border-green-500/30 transition-all">
-              <div className="p-2 rounded-lg bg-green-500/20 text-green-400">
-                <ShieldCheck size={18} />
-              </div>
-              <div className="text-sm">
-                <p className="font-medium group-hover:text-green-300">Data Integrity</p>
-                <p className="text-slate-500 text-xs">Verified by Immutable Audit Logs in PostgreSQL</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-panel p-8 bg-obsidian-950/40">
-          <h3 className="text-2xl font-bold mb-6 text-gradient">Real Performance Matrix</h3>
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between mb-2 text-sm">
-                <span className="text-slate-400">Backend Execution (ms)</span>
-                <span className={`${error ? 'text-red-400' : 'text-green-400'} font-mono font-bold`}>
-                  {latency ? `${latency.toFixed(3)}ms` : '0.000ms'}
-                </span>
-              </div>
-              <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                <div className={`h-full ${error ? 'bg-red-500 w-[10%]' : 'bg-green-500 w-full'} transition-all duration-500`} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-2 text-sm">
-                <span className="text-slate-400">Database Engine (Prisma/PG17)</span>
-                <span className={`${error ? 'text-slate-600' : 'text-indigo-400'} font-mono font-bold`}>
-                  {error ? 'Unknown' : 'Optimized'}
-                </span>
-              </div>
-              <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                <div className={`h-full ${error ? 'w-0' : 'bg-indigo-500 w-full'} transition-all duration-500`} />
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-2 text-sm">
-                <span className="text-slate-400">Messaging Core (Kafka)</span>
-                <span className={`${error ? 'text-slate-600' : 'text-purple-400'} font-mono font-bold`}>
-                  {error ? 'Unknown' : 'Stable'}
-                </span>
-              </div>
-              <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                <div className={`h-full ${error ? 'w-0' : 'bg-purple-500 w-full'} transition-all duration-500`} />
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-12 p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-start gap-4 shadow-inner">
-            <Zap className="text-indigo-400 shrink-0" size={24} />
-            <div>
-              <h4 className="font-bold text-indigo-400 mb-1 italic">Enterprise Performance Standard</h4>
-              <p className="text-slate-400 text-xs leading-relaxed">
-                We measure **Actual Server-Side Execution Time**. 
-                Current metrics show that our architecture maintains sub-millisecond 
-                latency even during complex transaction reconciliation.
-              </p>
-            </div>
-          </div>
+      {/* Event Log */}
+      <div className="glass-panel p-6">
+        <h4 className="font-bold text-lg mb-4 flex items-center gap-2">
+          <Activity className="text-primary" size={20} />
+          ประวัติเหตุการณ์บนสายพาน (Live Event Log)
+        </h4>
+        <div className="space-y-2">
+          <AnimatePresence>
+            {events.length === 0 && (
+              <div className="text-center text-slate-600 py-4 text-sm">ยังไม่มีรายการ กรุณากดจำลองโอนเงิน</div>
+            )}
+            {events.map(evt => (
+              <motion.div 
+                key={evt.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="flex items-center justify-between p-3 bg-white/60 rounded-lg border border-slate-100"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-slate-600">{evt.time}</span>
+                  <span className="text-sm font-mono text-slate-600">{evt.id}</span>
+                  <span className="text-emerald-600 font-bold">+${evt.amount}</span>
+                </div>
+                <div>
+                  {evt.status === 'sending' && <span className="text-xs bg-blue-500/20 text-blue-600 px-2 py-1 rounded flex items-center gap-1"><Truck size={12}/> วิ่งบนสายพาน</span>}
+                  {evt.status === 'checking' && <span className="text-xs bg-amber-500/20 text-amber-600 px-2 py-1 rounded flex items-center gap-1"><ShieldAlert size={12}/> กำลังคัดกรอง</span>}
+                  {evt.status === 'saved' && <span className="text-xs bg-emerald-500/20 text-emerald-600 px-2 py-1 rounded flex items-center gap-1"><CheckCircle2 size={12}/> บันทึกสำเร็จ</span>}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     </div>
   )
 }
-

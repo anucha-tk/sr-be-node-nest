@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { RevenueModule } from './modules/revenue/revenue.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
@@ -44,6 +45,7 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
     PrismaModule,
     RevenueModule,
     InvoiceModule,
+    AnalyticsModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [

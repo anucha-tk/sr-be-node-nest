@@ -2,12 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { RevenueEventDto } from './dto/revenue-event.dto';
 import { Prisma } from '@prisma/client';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 @Injectable()
 export class RevenueService {
   private readonly logger = new Logger(RevenueService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsGateway: NotificationsGateway,
+  ) {}
 
   async processRevenue(dto: RevenueEventDto): Promise<void> {
     try {
@@ -31,7 +35,7 @@ export class RevenueService {
           });
 
           // 3. Create immutable audit log using fresh state
-          await tx.revenueAuditLog.create({
+          const auditLog = await tx.revenueAuditLog.create({
             data: {
               supplierId: dto.supplierId,
               invoiceId: dto.invoiceId,
@@ -40,6 +44,14 @@ export class RevenueService {
               previousBalance: updatedRevenue.balance.minus(dto.amount),
               newBalance: updatedRevenue.balance,
             },
+          });
+
+          // 4. Notify via WebSockets
+          this.notificationsGateway.notifyAuditLog(auditLog);
+          this.notificationsGateway.notifyBalanceUpdate({
+            supplierId: dto.supplierId,
+            balance: updatedRevenue.balance.toNumber(),
+            lastUpdated: auditLog.createdAt,
           });
 
           this.logger.log(

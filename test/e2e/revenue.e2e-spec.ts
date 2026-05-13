@@ -17,6 +17,7 @@ import { HttpExceptionFilter } from '../../src/common/filters/http-exception.fil
 import { ResponseEnvelopeInterceptor } from '../../src/common/interceptors/response-envelope.interceptor';
 import { Reflector, APP_GUARD } from '@nestjs/core';
 import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
+import { NotificationsGateway } from '../../src/modules/notifications/notifications.gateway';
 
 @Injectable()
 class MockGuard implements CanActivate {
@@ -52,6 +53,13 @@ class MockGuard implements CanActivate {
     { provide: ResourceGuard, useClass: MockGuard },
     { provide: RoleGuard, useClass: MockGuard },
     { provide: 'KAFKA_SERVICE', useValue: { emit: jest.fn() } },
+    {
+      provide: NotificationsGateway,
+      useValue: {
+        notifyAuditLog: jest.fn(),
+        notifyBalanceUpdate: jest.fn(),
+      },
+    },
   ],
   exports: [
     'KEYCLOAK_INSTANCE',
@@ -62,6 +70,7 @@ class MockGuard implements CanActivate {
     ResourceGuard,
     RoleGuard,
     'KAFKA_SERVICE',
+    NotificationsGateway,
   ],
 })
 class MockAuthModule {}

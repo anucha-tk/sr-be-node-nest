@@ -73,3 +73,5 @@ development_status:
   5-4-deployment-presentation-mode: done
   5-5-premium-ui-refinement-and-storytelling: done
   epic-5-retrospective: done
+  epic-6: in-progress
+  6-1-real-time-websocket-audit-log: in-progress

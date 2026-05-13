@@ -3,10 +3,12 @@ import { RevenueService } from './revenue.service';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { RevenueEventDto } from './dto/revenue-event.dto';
 import { Prisma } from '@prisma/client';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 describe('RevenueService', () => {
   let service: RevenueService;
   let prisma: PrismaService;
+  let notificationsGateway: NotificationsGateway;
 
   const mockRevenueEvent: RevenueEventDto = {
     eventId: 'evt-123',
@@ -38,11 +40,20 @@ describe('RevenueService', () => {
             },
           },
         },
+        {
+          provide: NotificationsGateway,
+          useValue: {
+            notifyAuditLog: jest.fn(),
+            notifyBalanceUpdate: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<RevenueService>(RevenueService);
     prisma = module.get<PrismaService>(PrismaService);
+    notificationsGateway =
+      module.get<NotificationsGateway>(NotificationsGateway);
   });
 
   it('should be defined', () => {
@@ -67,6 +78,19 @@ describe('RevenueService', () => {
       supplierId: mockRevenueEvent.supplierId,
       balance: expectedNewBalance,
     });
+    const mockAuditLog = {
+      id: 'log-123',
+      createdAt: new Date(),
+      supplierId: mockRevenueEvent.supplierId,
+      invoiceId: mockRevenueEvent.invoiceId,
+      correlationId: mockRevenueEvent.correlationId,
+      amount: mockRevenueEvent.amount,
+      previousBalance,
+      newBalance: expectedNewBalance,
+    };
+    (prisma.revenueAuditLog.create as jest.Mock).mockResolvedValue(
+      mockAuditLog,
+    );
 
     await service.processRevenue(mockRevenueEvent);
 
@@ -101,6 +125,13 @@ describe('RevenueService', () => {
         newBalance: expectedNewBalance,
       },
     });
+
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(notificationsGateway.notifyAuditLog).toHaveBeenCalledWith(
+      mockAuditLog,
+    );
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(notificationsGateway.notifyBalanceUpdate).toHaveBeenCalled();
   });
 
   it('should create audit log with zero previous balance if supplier does not exist', async () => {
@@ -114,6 +145,12 @@ describe('RevenueService', () => {
     (prisma.supplierRevenue.upsert as jest.Mock).mockResolvedValue({
       supplierId: mockRevenueEvent.supplierId,
       balance: new Prisma.Decimal(mockRevenueEvent.amount),
+    });
+    (prisma.revenueAuditLog.create as jest.Mock).mockResolvedValue({
+      id: 'log-123',
+      createdAt: new Date(),
+      previousBalance: new Prisma.Decimal(0),
+      newBalance: new Prisma.Decimal(mockRevenueEvent.amount),
     });
 
     await service.processRevenue(mockRevenueEvent);
@@ -152,6 +189,8 @@ describe('RevenueService', () => {
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(prisma.supplierRevenue.upsert).not.toHaveBeenCalled();
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(notificationsGateway.notifyAuditLog).not.toHaveBeenCalled();
   });
 
   it('should rethrow non-P2002 errors during transaction', async () => {

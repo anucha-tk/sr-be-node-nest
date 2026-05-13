@@ -1,52 +1,84 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { FileSearch, Clock, CheckCircle2, Lock } from 'lucide-react'
+import { FileSearch, Clock, CheckCircle2, Lock, Zap } from 'lucide-react'
 import { fetchApi } from '../api'
+import { useWebSockets } from '../hooks/useWebSockets'
+
+interface AuditLog {
+  id: string;
+  correlationId: string;
+  amount: number;
+  previousBalance: number;
+  newBalance: number;
+  createdAt: string;
+}
+
+interface MappedAudit {
+  id: string;
+  correlationId: string;
+  action: string;
+  details: string;
+  time: string;
+  status: string;
+}
 
 export default function AuditTrailView() {
-  const [audits, setAudits] = useState<any[]>([])
+  const [audits, setAudits] = useState<MappedAudit[]>([])
   const [loading, setLoading] = useState(true)
+  const { isConnected, subscribe } = useWebSockets()
 
-  const loadData = async () => {
-    const res = await fetchApi<any>('/v1/suppliers/audit-logs')
+  const mapAuditItem = useCallback((item: AuditLog): MappedAudit => ({
+    id: item.id,
+    correlationId: item.correlationId,
+    action: 'UPDATE_BALANCE',
+    details: `เพิ่มเงิน $${item.amount} (ยอดเดิม: $${item.previousBalance} ➔ ยอดใหม่: $${item.newBalance})`,
+    time: new Date(item.createdAt).toLocaleTimeString(),
+    status: 'success'
+  }), [])
+
+  const loadData = useCallback(async () => {
+    const res = await fetchApi<AuditLog[]>('/v1/suppliers/audit-logs')
     if (res.success && Array.isArray(res.data)) {
-      setAudits(res.data.map((item: any) => ({
-        id: item.id,
-        correlationId: item.correlationId,
-        action: 'UPDATE_BALANCE',
-        details: `เพิ่มเงิน $${item.amount} (ยอดเดิม: $${item.previousBalance} ➔ ยอดใหม่: $${item.newBalance})`,
-        time: new Date(item.createdAt).toLocaleTimeString(),
-        status: 'success'
-      })))
-    } else if (res.data && Array.isArray(res.data)) { // fallback if success isn't strictly true but data is an array
-      setAudits(res.data.map((item: any) => ({
-        id: item.id,
-        correlationId: item.correlationId,
-        action: 'UPDATE_BALANCE',
-        details: `เพิ่มเงิน $${item.amount} (ยอดเดิม: $${item.previousBalance} ➔ ยอดใหม่: $${item.newBalance})`,
-        time: new Date(item.createdAt).toLocaleTimeString(),
-        status: 'success'
-      })))
+      setAudits(res.data.map(mapAuditItem))
+    } else if (res.data && Array.isArray(res.data)) {
+      setAudits((res.data as AuditLog[]).map(mapAuditItem))
     }
     setLoading(false)
-  }
+  }, [mapAuditItem])
 
   useEffect(() => {
-    loadData()
-    const interval = setInterval(loadData, 3000)
-    return () => clearInterval(interval)
-  }, [])
+    void loadData()
+  }, [loadData])
+
+  useEffect(() => {
+    const unsubscribe = subscribe('audit_log_created', (newLog: AuditLog) => {
+      console.log('New audit log received via WebSocket:', newLog)
+      setAudits((prev) => [mapAuditItem(newLog), ...prev.slice(0, 19)])
+    })
+
+    return () => {
+      if (unsubscribe) unsubscribe()
+    }
+  }, [subscribe, mapAuditItem])
 
   return (
     <div className="space-y-8">
       {/* Explanation for Non-Tech */}
       <div className="glass-panel p-6 bg-amber-50 border-amber-200">
-        <h3 className="text-xl font-bold text-amber-600 mb-2">เปรียบเทียบการทำงาน (Analogy)</h3>
+        <h3 className="text-xl font-bold text-amber-600 mb-2 flex items-center gap-2">
+          เปรียบเทียบการทำงาน (Analogy)
+          {isConnected && (
+            <span className="ml-auto flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-wider animate-pulse">
+              <Zap size={10} /> Live WebSocket Connected
+            </span>
+          )}
+        </h3>
         <p className="text-slate-600 text-sm leading-relaxed">
           ระบบ <span className="font-bold">Audit Log</span> แบบ <span className="text-amber-600 font-bold">Immutable (แก้ไขไม่ได้)</span> เปรียบเสมือน <span className="text-rose-600 font-bold">"สมุดข่อยโบราณที่เขียนด้วยหมึกฝังลึก"</span> 
-          ทุกครั้งที่มีการเปลี่ยนตัวเลขยอดเงินในบัญชี ระบบจะบังคับให้จดประวัติลงสมุดเล่มนี้เสมอ โดยบันทึกว่า ใครทำอะไร ยอดเดิมเท่าไหร่ และยอดใหม่เท่าไหร่ 
-          ซึ่ง <span className="text-emerald-600 font-bold">ไม่มีใครสามารถกลับมาลบ หรือแก้ไขประวัติบรรทัดที่เขียนไปแล้วได้ (แม้แต่โปรแกรมเมอร์เองก็ตาม)</span> 
-          เพื่อความโปร่งใสและใช้ตรวจสอบย้อนหลังได้ 100%
+          ทุกครั้งที่มีการเปลี่ยนตัวเลขยอดเงินในบัญชี ระบบจะบังคับให้จดประวัติลงสมุดเล่มนี้เสมอ 
+          <span className="block mt-2 font-semibold text-primary italic">
+            *ตอนนี้เปิดใช้งาน Real-time WebSocket: ข้อมูลจะเด้งขึ้นหน้าจอทันทีที่มีการบันทึกสำเร็จโดยไม่ต้องกด Refresh!
+          </span>
         </p>
       </div>
 
@@ -90,7 +122,7 @@ export default function AuditTrailView() {
                 <motion.tr 
                   initial={{ opacity: 0, backgroundColor: 'rgba(245, 158, 11, 0.2)' }}
                   animate={{ opacity: 1, backgroundColor: 'rgba(0, 0, 0, 0)' }}
-                  transition={{ duration: 1 }}
+                  transition={{ duration: 1.5 }}
                   key={log.id} 
                   className="border-b border-slate-100 hover:bg-white/60 transition-colors"
                 >
@@ -115,4 +147,3 @@ export default function AuditTrailView() {
     </div>
   )
 }
-

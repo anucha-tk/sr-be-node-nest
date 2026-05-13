@@ -9,6 +9,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
 import { RevenueModule } from './modules/revenue/revenue.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
@@ -46,6 +47,7 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
     RevenueModule,
     InvoiceModule,
     AnalyticsModule,
+    NotificationsModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [

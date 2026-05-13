@@ -3,35 +3,42 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Key, Lock, CheckCircle2, Info, X, FileJson } from 'lucide-react'
 import { fetchApi } from '../api'
 
+interface ApiKey {
+  id: string;
+  name: string;
+  isActive: boolean;
+  scopes: string[];
+}
+
 export default function SecurityView() {
-  const [apiKeys, setApiKeys] = useState<any[]>([])
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
   const [loadingKeys, setLoadingKeys] = useState(true)
   
   const [showJwtModal, setShowJwtModal] = useState(false)
-  const [jwtData, setJwtData] = useState<any>(null)
+  const [jwtData, setJwtData] = useState<Record<string, unknown> | null>(null)
   const [loadingJwt, setLoadingJwt] = useState(false)
 
   useEffect(() => {
     const loadApiKeys = async () => {
       setLoadingKeys(true)
       // Call the real endpoint we just added
-      const res = await fetchApi<any[]>('/v1/auth/api-keys')
+      const res = await fetchApi<ApiKey[]>('/v1/auth/api-keys')
       if (res.success && Array.isArray(res.data)) {
         setApiKeys(res.data)
       } else if (res.data) {
         // If data is returned directly or inside an object
-        setApiKeys(Array.isArray(res.data) ? res.data : [])
+        setApiKeys(Array.isArray(res.data) ? (res.data as ApiKey[]) : [])
       }
       setLoadingKeys(false)
     }
-    loadApiKeys()
+    void loadApiKeys()
   }, [])
 
   const handleInspectJwt = async () => {
     setShowJwtModal(true)
     setLoadingJwt(true)
     // Fetch the actual current payload the backend sees
-    const res = await fetchApi<any>('/auth-test/protected')
+    const res = await fetchApi<{ user: Record<string, unknown> }>('/auth-test/protected')
     if (res.success && res.data) {
       setJwtData(res.data.user)
     } else {
@@ -77,7 +84,7 @@ export default function SecurityView() {
           </div>
 
           <button 
-            onClick={handleInspectJwt}
+            onClick={() => { void handleInspectJwt() }}
             className="w-full flex items-center justify-center gap-2 py-2 bg-white/60 hover:bg-white/80 rounded-lg text-sm font-medium transition-colors border border-slate-200"
           >
             <FileJson size={16} />

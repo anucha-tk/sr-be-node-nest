@@ -30,11 +30,11 @@ export default function PerformanceLab() {
   const [lastLatency, setLastLatency] = useState<number>(0)
   const [showHistory, setShowHistory] = useState(false)
 
-  const runBenchmark = async () => {
+  const runBenchmark = useCallback(async () => {
     setIsRunning(true)
     try {
       const startTime = Date.now()
-      const response = await fetchApi<any>('/v1/analytics/summary')
+      const response = await fetchApi<Record<string, unknown>>('/v1/analytics/summary')
       
       let serverTime = 0
       if (response.success && response.data) {
@@ -56,16 +56,19 @@ export default function PerformanceLab() {
     } catch (err) {
       console.error('Benchmark failed', err)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    let interval: any
+    let interval: ReturnType<typeof setInterval> | undefined
     if (isRunning) {
-      runBenchmark()
-      interval = setInterval(runBenchmark, 1500)
+      const timer = setTimeout(() => { void runBenchmark() }, 0)
+      interval = setInterval(() => { void runBenchmark() }, 1500)
+      return () => { 
+        clearTimeout(timer)
+        if (interval) clearInterval(interval) 
+      }
     }
-    return () => clearInterval(interval)
-  }, [isRunning])
+  }, [isRunning, runBenchmark])
 
   return (
     <div className="space-y-8">

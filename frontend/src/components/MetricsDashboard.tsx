@@ -17,26 +17,29 @@ export default function MetricsDashboard() {
   const [balance, setBalance] = useState<number | null>(null)
   const [latency, setLatency] = useState<number | null>(null)
   const [isSimulating, setIsSimulating] = useState(false)
-  const [events, setEvents] = useState<any[]>([])
+  const [events, setEvents] = useState<Array<{ id: string; amount: number; status: string; time: string }>>([])
 
-  const fetchBalance = async () => {
-    const res = await fetchApi<any>('/v1/suppliers/me/revenue')
+  const fetchBalance = useCallback(async () => {
+    const res = await fetchApi<{ balance: number }>('/v1/suppliers/me/revenue')
     if (res.success && res.data) {
       setBalance(res.data.balance)
       setLatency(res.meta?.executionTimeMs || 0)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    fetchBalance()
-  }, [])
+    const timer = setTimeout(() => {
+      void fetchBalance()
+    }, 0)
+    return () => { clearTimeout(timer) }
+  }, [fetchBalance])
 
   const simulateTransaction = async () => {
     if (isSimulating) return
     setIsSimulating(true)
 
     // Call the new backend endpoint to trigger a Kafka event
-    const res = await fetchApi<any>('/v1/suppliers/simulate-payment', { method: 'POST' })
+    const res = await fetchApi<{ eventId: string; amount: number }>('/v1/suppliers/simulate-payment', { method: 'POST' })
     
     if (res.success && res.data) {
       // Add event to UI timeline

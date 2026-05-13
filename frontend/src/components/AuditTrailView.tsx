@@ -47,7 +47,10 @@ export default function AuditTrailView() {
   }, [mapAuditItem])
 
   useEffect(() => {
-    void loadData()
+    const timer = setTimeout(() => {
+      void loadData()
+    }, 0)
+    return () => clearTimeout(timer)
   }, [loadData])
 
   useEffect(() => {

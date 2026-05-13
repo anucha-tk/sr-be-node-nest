@@ -13,10 +13,10 @@ import {
 import '@xyflow/react/dist/style.css'
 import { motion, AnimatePresence } from 'framer-motion'
 import { TECH_STACK } from '../data/tech-stack'
-import { Info, ExternalLink, Code2, Cpu, Database, Shield, Zap } from 'lucide-react'
+import { Info, ExternalLink, Code2, Cpu, Database, Shield, Zap, Activity } from 'lucide-react'
 
 // Custom Node Styling
-const TechNode = ({ data }: any) => {
+const TechNode = ({ data }: { data: { icon?: React.ElementType; selected?: boolean; category: string; label: string } }) => {
   const Icon = data.icon || Cpu
   return (
     <div className={`px-4 py-3 rounded-xl border transition-all ${
@@ -119,7 +119,7 @@ const initialEdges: Edge[] = [
 export default function ArchitectureDiagram() {
   const [nodes, setNodes] = useState(initialNodes)
   const [edges, setEdges] = useState(initialEdges)
-  const [selectedTech, setSelectedTech] = useState<any>(TECH_STACK.find(t => t.id === 'nestjs'))
+  const [selectedTech, setSelectedTech] = useState<{ id: string; name: string; category: string; version: string; description: string; link: string }>(TECH_STACK.find(t => t.id === 'nestjs')!)
 
   const triggerBeam = useCallback(() => {
     // Stage 1: Kafka -> NestJS
@@ -143,10 +143,10 @@ export default function ArchitectureDiagram() {
 
   useEffect(() => {
     window.addEventListener('kafka-beam', triggerBeam)
-    return () => window.removeEventListener('kafka-beam', triggerBeam)
+    return () => { window.removeEventListener('kafka-beam', triggerBeam) }
   }, [triggerBeam])
 
-  const onNodeClick = useCallback((_: any, node: Node) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     const tech = TECH_STACK.find(t => t.id === node.data.id)
     if (tech) {
       setSelectedTech(tech)
@@ -260,6 +260,3 @@ export default function ArchitectureDiagram() {
     </div>
   )
 }
-
-import { Activity } from 'lucide-react'
-

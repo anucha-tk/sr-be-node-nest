@@ -27,7 +27,8 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ### Core Technologies
 
-- **Backend:** NestJS v11.0.1 (Express), Node.js v24+, PostgreSQL 17
+- **Runtime:** Bun v1.2+, Node.js v24+ (Fallback)
+- **Backend:** NestJS v11.0.1 (Express), PostgreSQL 17
 - **Frontend:** React v19.2.6, Vite v8.0.12
 - **Database & ORM:** Prisma v7.8.0, PostgreSQL 17
 - **Messaging:** Apache Kafka (KafkaJS v2.2.4)
@@ -76,7 +77,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 ### Code Quality & Style Rules
 
-- **Quality Gates:** Commit only after `lefthook` successfully runs `lint`, `format`, `type-check`, and `test:cov`.
+- **Quality Gates:** Commit only after `lefthook` successfully runs `bun check:full` (runs `lint`, `format`, `type-check`, and `test:cov`).
 - **Commits:** Strictly follow **Conventional Commits** (e.g., `feat:`, `fix:`, `refactor:`).
 - **Naming:**
   - Files: `kebab-case.suffix.ts`
@@ -88,7 +89,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 
 - **Infrastructure:** Always develop with `docker compose` to match production-like PostgreSQL, Keycloak, and Kafka environments.
 - **Environment:** Validate all `.env` variables via Zod at application startup.
-- **Migrations:** Use `prisma migrate dev` for schema changes; avoid `db push` in collaborative environments.
+- **Migrations:** Use `bun prisma:migrate` for schema changes; avoid `bun prisma:push` in collaborative environments.
 - **Tracking:** Keep [sprint-status.yaml](file:///Users/anucha-tk/App/anucha-tk/sr-be-node-nest/_bmad-output/implementation-artifacts/sprint-status.yaml) updated as the single source of truth for progress.
 
 ### Critical Don't-Miss Rules
@@ -99,6 +100,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Atomicity:** Balance updates and audit logging MUST occur within a single ACID transaction.
 - **Logging:** Use `nestjs-pino` for all logs. Never log sensitive keys or raw secrets.
 - **Loading:** Always implement Skeleton Loaders for heavy data fetching to maintain high perceived performance.
+- **Runtime Optimization:** Prefer `bun` for faster cold starts and high-performance I/O operations.
 
 ---
 

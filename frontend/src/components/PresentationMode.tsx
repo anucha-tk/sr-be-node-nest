@@ -80,8 +80,8 @@ export default function PresentationMode({ onClose }: { onClose: () => void }) {
 
   const slide = SLIDES[currentSlide]
 
-  const next = () => setCurrentSlide((prev) => Math.min(prev + 1, SLIDES.length - 1))
-  const prev = () => setCurrentSlide((prev) => Math.max(prev - 1, 0))
+  const next = useCallback(() => setCurrentSlide((prev) => Math.min(prev + 1, SLIDES.length - 1)), [])
+  const prev = useCallback(() => setCurrentSlide((prev) => Math.max(prev - 1, 0)), [])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -90,8 +90,8 @@ export default function PresentationMode({ onClose }: { onClose: () => void }) {
       if (e.key === 'Escape') onClose()
     }
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+    return () => { window.removeEventListener('keydown', handleKeyDown) }
+  }, [next, prev, onClose])
 
   return (
     <motion.div

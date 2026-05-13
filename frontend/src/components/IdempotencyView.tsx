@@ -63,7 +63,8 @@ export default function IdempotencyView() {
       } else {
         addLog('error', 'API Request failed');
       }
-    } catch (err) {
+    } catch (err: unknown) {
+      console.error(err)
       addLog('error', 'Network error');
     } finally {
       setLoading(false)

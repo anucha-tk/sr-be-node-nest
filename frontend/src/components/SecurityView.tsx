@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shield, Key, Lock, CheckCircle2, Info, X, FileJson } from 'lucide-react'
+import { Shield, Key, X, FileJson, Zap, AlertTriangle, ShieldAlert } from 'lucide-react'
 import { fetchApi } from '../api'
 
 interface ApiKey {
@@ -8,6 +8,17 @@ interface ApiKey {
   name: string;
   isActive: boolean;
   scopes: string[];
+}
+
+interface RateLimitLog {
+  id: number;
+  status: number;
+  message: string;
+  time: string;
+}
+
+interface ProtectedResponse {
+  user: Record<string, unknown>;
 }
 
 export default function SecurityView() {
@@ -18,137 +29,245 @@ export default function SecurityView() {
   const [jwtData, setJwtData] = useState<Record<string, unknown> | null>(null)
   const [loadingJwt, setLoadingJwt] = useState(false)
 
+  // Rate Limit Demo State
+  const [rateLimitLogs, setRateLimitLogs] = useState<RateLimitLog[]>([])
+  const [isAttacking, setIsAttacking] = useState(false)
+  const [blockedUntil, setBlockedUntil] = useState<number | null>(null)
+  const [now, setNow] = useState(() => Date.now())
+
+  const mountedRef = useRef(true)
+
   useEffect(() => {
-    const loadApiKeys = async () => {
-      setLoadingKeys(true)
-      // Call the real endpoint we just added
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
+
+  useEffect(() => {
+    const fetchData = async () => {
       const res = await fetchApi<ApiKey[]>('/v1/auth/api-keys')
-      if (res.success && Array.isArray(res.data)) {
-        setApiKeys(res.data)
-      } else if (res.data) {
-        // If data is returned directly or inside an object
-        setApiKeys(Array.isArray(res.data) ? (res.data as ApiKey[]) : [])
+      if (mountedRef.current) {
+        if (res.success && Array.isArray(res.data)) {
+          setApiKeys(res.data)
+        } else if (res.data && Array.isArray(res.data)) {
+          setApiKeys(res.data as ApiKey[])
+        }
+        setLoadingKeys(false)
       }
-      setLoadingKeys(false)
     }
-    void loadApiKeys()
+    const timer = setTimeout(() => {
+      void fetchData()
+    }, 0)
+    return () => clearTimeout(timer)
   }, [])
 
   const handleInspectJwt = async () => {
     setShowJwtModal(true)
     setLoadingJwt(true)
-    // Fetch the actual current payload the backend sees
-    const res = await fetchApi<{ user: Record<string, unknown> }>('/auth-test/protected')
-    if (res.success && res.data) {
-      setJwtData(res.data.user)
-    } else {
-      setJwtData({ error: "Failed to fetch JWT context from backend" })
+    const res = await fetchApi<ProtectedResponse>('/auth-test/protected')
+    if (mountedRef.current) {
+      if (res.success && res.data) {
+        setJwtData(res.data.user)
+      } else {
+        setJwtData({ error: "Failed to fetch JWT context from backend" })
+      }
+      setLoadingJwt(false)
     }
-    setLoadingJwt(false)
   }
 
+  const simulateAttack = useCallback(async () => {
+    if (isAttacking) return
+    setIsAttacking(true)
+    
+    // Attempt 10 rapid requests
+    for (let i = 0; i < 10; i++) {
+      try {
+        const response = await fetch('/api/v1/security-showcase/rate-limit-test')
+        const data = await response.json() as { message: string }
+        
+        if (mountedRef.current) {
+          setRateLimitLogs(prev => [{
+            id: Date.now() + i,
+            status: response.status,
+            message: response.status === 429 ? 'BLOCK: Rate Limit Exceeded' : data.message || 'Allowed',
+            time: new Date().toLocaleTimeString()
+          }, ...prev.slice(0, 9)])
+
+          if (response.status === 429) {
+            setBlockedUntil(Date.now() + 60000)
+            break
+          }
+        }
+      } catch (err: unknown) {
+        console.error(err)
+      }
+      await new Promise(resolve => setTimeout(resolve, 150))
+    }
+    
+    if (mountedRef.current) {
+      setIsAttacking(false)
+    }
+  }, [isAttacking])
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const currentNow = Date.now()
+      if (mountedRef.current) {
+        setNow(currentNow)
+        if (blockedUntil && currentNow > blockedUntil) {
+          setBlockedUntil(null)
+        }
+      }
+    }, 1000)
+    return () => { clearInterval(timer) }
+  }, [blockedUntil])
+
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-        {/* OIDC Panel */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-panel p-6"
-        >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-primary/10 rounded-lg text-primary">
-              <Shield size={24} />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold">ระบบตรวจบัตรพนักงาน</h3>
-              <p className="text-sm text-slate-600">เทคโนโลยี: Keycloak OIDC</p>
-            </div>
-          </div>
-
-          <p className="text-slate-600 text-sm mb-6 leading-relaxed">
-            ทำหน้าที่เสมือน <span className="text-primary font-bold">"พนักงานรักษาความปลอดภัยหน้าตึก"</span> คอยตรวจสอบว่าคนที่เข้ามาเป็นพนักงานตัวจริงหรือไม่ และมีสิทธิ์เข้าถึงข้อมูลระดับไหน เพื่อป้องกันผู้บุกรุก
-          </p>
-          
-          <div className="bg-white/60 p-4 rounded-xl border border-slate-100 mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-600">สถานะระบบการตรวจ</span>
-              <span className="flex items-center gap-1 text-emerald-400 text-sm font-bold">
-                <CheckCircle2 size={14} /> ทำงานปกติ (Active)
-              </span>
-            </div>
-            <div className="text-xs font-mono text-slate-600 break-all flex items-center gap-2">
-              <Info size={14} className="text-primary" />
-              ศูนย์ออกบัตร: auth.internal.corp
-            </div>
-          </div>
-
-          <button 
-            onClick={() => { void handleInspectJwt() }}
-            className="w-full flex items-center justify-center gap-2 py-2 bg-white/60 hover:bg-white/80 rounded-lg text-sm font-medium transition-colors border border-slate-200"
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
+        <div className="space-y-6">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-panel p-6"
           >
-            <FileJson size={16} />
-            สุ่มตรวจสอบข้อมูลบัตรผ่าน (Inspect JWT)
-          </button>
-        </motion.div>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-primary/10 rounded-lg text-primary">
+                <Shield size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">ระบบตรวจบัตรพนักงาน</h3>
+                <p className="text-sm text-slate-600">เทคโนโลยี: Keycloak OIDC</p>
+              </div>
+            </div>
 
-        {/* API Key Panel */}
+            <p className="text-slate-600 text-sm mb-6 leading-relaxed">
+              ทำหน้าที่เสมือน <span className="text-primary font-bold">"พนักงานรักษาความปลอดภัยหน้าตึก"</span> ตรวจสอบว่าพนักงานมีสิทธิ์เข้าถึงข้อมูลระดับไหน
+            </p>
+            
+            <button 
+              onClick={() => { void handleInspectJwt() }}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-white/60 hover:bg-white/80 rounded-xl text-sm font-bold transition-all border border-slate-200"
+            >
+              <FileJson size={16} />
+              สุ่มตรวจสอบข้อมูลบัตรผ่าน (Inspect JWT)
+            </button>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+            className="glass-panel p-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-600">
+                <Key size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold">กุญแจผ่านทางสำหรับระบบ</h3>
+                <p className="text-sm text-slate-600">เทคโนโลยี: API Key Security</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+              {loadingKeys ? (
+                <div className="text-center text-slate-600 text-sm py-4">กำลังโหลดข้อมูลกุญแจ...</div>
+              ) : (
+                apiKeys.map((key) => (
+                  <div key={key.id} className="p-3 bg-white/40 rounded-lg border border-slate-100">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-sm font-bold">{key.name}</span>
+                      <span className="text-[10px] text-emerald-600 font-bold">ACTIVE</span>
+                    </div>
+                    <div className="flex gap-1">
+                      {key.scopes?.map(s => (
+                        <span key={s} className="text-[9px] bg-slate-200 px-1.5 py-0.5 rounded uppercase">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        </div>
+
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
           className="glass-panel p-6 flex flex-col"
         >
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-emerald-500/20 rounded-lg text-emerald-400">
-              <Key size={24} />
+            <div className="p-3 bg-rose-500/10 rounded-lg text-rose-600">
+              <ShieldAlert size={24} />
             </div>
             <div>
-              <h3 className="text-xl font-bold">กุญแจผ่านทางสำหรับระบบ</h3>
-              <p className="text-sm text-slate-600">เทคโนโลยี: API Key Security</p>
+              <h3 className="text-xl font-bold">ระบบป้องกันการโจมตี</h3>
+              <p className="text-sm text-slate-600">เทคโนโลยี: Smart Rate Limiting (429)</p>
             </div>
           </div>
 
-          <p className="text-slate-600 text-sm mb-6 leading-relaxed">
-            เวลา <span className="text-emerald-400 font-bold">"ระบบคอมพิวเตอร์ด้วยกันเอง"</span> ต้องการขอข้อมูล จะใช้กุญแจพิเศษนี้แทนการพิมพ์รหัสผ่าน โดยเราสามารถระบุได้ว่ากุญแจแต่ละดอกทำอะไรได้บ้าง
-          </p>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6">
+            <h4 className="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+              <Zap size={14} className="text-amber-500" /> 
+              โจทย์: ลองถล่มยิง API รัวๆ (Brute Force Simulation)
+            </h4>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              ระบบกำหนดให้ยิงได้ไม่เกิน <span className="font-bold text-rose-600">5 ครั้งต่อนาที</span> 
+              หากยิงเกิน ระบบจะส่ง <span className="font-bold text-rose-600">HTTP 429 Too Many Requests</span> กลับมาทันทีเพื่อเซฟเครื่อง Server
+            </p>
+          </div>
 
-          <div className="space-y-3 flex-1 overflow-y-auto pr-2">
-            {loadingKeys ? (
-              <div className="text-center text-slate-600 text-sm py-4">กำลังโหลดข้อมูลกุญแจ...</div>
-            ) : apiKeys.length === 0 ? (
-              <div className="text-center text-slate-600 text-sm py-4">ไม่พบกุญแจในระบบ</div>
+          <button
+            disabled={isAttacking || !!blockedUntil}
+            onClick={() => { void simulateAttack() }}
+            className={`w-full py-4 rounded-xl font-bold transition-all mb-6 flex items-center justify-center gap-2 ${
+              blockedUntil 
+                ? 'bg-rose-100 text-rose-600 cursor-not-allowed' 
+                : 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-200'
+            }`}
+          >
+            {blockedUntil ? (
+              <>
+                <AlertTriangle size={18} /> ติดโทษแบน: รอ {Math.ceil((blockedUntil - now) / 1000)} วินาที
+              </>
             ) : (
-              apiKeys.map((key) => (
-                <div key={key.id} className="flex flex-col p-3 bg-white/60 rounded-lg border border-slate-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Lock size={14} className="text-slate-600" />
-                      <span className="text-sm font-bold text-slate-600">{key.name}</span>
-                    </div>
-                    {key.isActive && (
-                      <span className="flex items-center gap-1 text-[10px] text-emerald-600 uppercase font-bold tracking-wider">
-                        <CheckCircle2 size={10} /> Active
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {key.scopes?.map((scope: string) => (
-                      <span key={scope} className={`text-xs px-2 py-1 rounded ${
-                        scope === 'admin' ? 'bg-primary/10 text-primary' : 'bg-slate-500/20 text-slate-600'
-                      }`}>
-                        สิทธิ์: {scope}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))
+              <>
+                <Zap size={18} /> เริ่มการโจมตี (Flood API)
+              </>
             )}
+          </button>
+
+          <div className="flex-1 bg-slate-900 rounded-xl p-4 font-mono text-[11px] overflow-hidden flex flex-col">
+            <div className="text-slate-500 mb-2 border-b border-slate-800 pb-2 flex justify-between">
+              <span>RATE_LIMIT_FIREWALL_LOG</span>
+              <span className="animate-pulse text-emerald-500">● LIVE</span>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-2 custom-scrollbar">
+              <AnimatePresence initial={false}>
+                {rateLimitLogs.map(log => (
+                  <motion.div 
+                    key={log.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`flex justify-between items-center ${log.status === 429 ? 'text-rose-400 font-bold' : 'text-slate-400'}`}
+                  >
+                    <span>[{log.time}] GET /rate-limit-test</span>
+                    <span className={`px-1.5 py-0.5 rounded text-[9px] ${log.status === 429 ? 'bg-rose-500 text-white' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                      {log.status}
+                    </span>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              {rateLimitLogs.length === 0 && (
+                <div className="h-full flex items-center justify-center text-slate-700 italic">
+                  No activity detected
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       </div>
 
-      {/* JWT Inspection Modal */}
       <AnimatePresence>
         {showJwtModal && (
           <motion.div 
@@ -172,14 +291,10 @@ export default function SecurityView() {
               
               <div className="flex items-center gap-3 mb-4">
                 <FileJson className="text-primary" size={24} />
-                <h3 className="text-xl font-bold">ข้อมูลบัตรผ่านที่ถูกแกะรอย (Decoded JWT/Context)</h3>
+                <h3 className="text-xl font-bold">Decoded Security Context</h3>
               </div>
               
-              <p className="text-slate-600 text-sm mb-6">
-                นี่คือข้อมูลที่ระบบ Backend มองเห็นเมื่อมีการยืนยันตัวตนเข้ามา ซึ่งจะใช้ในการพิจารณาสิทธิ์การเข้าถึง API
-              </p>
-
-              <div className="bg-black/50 p-4 rounded-xl border border-slate-100 overflow-x-auto">
+              <div className="bg-black/80 p-4 rounded-xl border border-slate-100 overflow-x-auto">
                 {loadingJwt ? (
                   <div className="text-center text-slate-600 py-8">กำลังถอดรหัสข้อมูล...</div>
                 ) : (
@@ -192,6 +307,6 @@ export default function SecurityView() {
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   )
 }

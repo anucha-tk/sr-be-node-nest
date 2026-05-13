@@ -42,17 +42,8 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
     await Promise.resolve({ context, throttlerLimitDetail });
     throw new HttpException(
       {
-        success: false,
-        data: null,
-        meta: {
-          timestamp: new Date().toISOString(),
-          executionTimeMs: 0,
-        },
-        error: {
-          code: 'THROTTLED',
-          message: 'Rate limit exceeded. Please try again later.',
-          details: [],
-        },
+        message: 'Rate limit exceeded. Please try again later.',
+        error: 'ERR_RATE_LIMIT_EXCEEDED',
       },
       HttpStatus.TOO_MANY_REQUESTS,
     );

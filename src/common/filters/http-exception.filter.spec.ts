@@ -18,7 +18,7 @@ describe('HttpExceptionFilter', () => {
     mockArgumentsHost = {
       switchToHttp: jest.fn().mockReturnValue({
         getResponse: () => mockResponse as Response,
-        getRequest: () => ({}),
+        getRequest: () => ({ correlationId: 'test-id' }),
       }),
     } as unknown as ArgumentsHost;
   });
@@ -40,7 +40,7 @@ describe('HttpExceptionFilter', () => {
         success: false,
         error: expect.objectContaining({
           message: message,
-          code: 'BAD_REQUEST',
+          code: 'INVALID_REQUEST',
         }),
       }),
     );
@@ -55,9 +55,12 @@ describe('HttpExceptionFilter', () => {
     expect(mockResponse.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
+        meta: expect.objectContaining({
+          correlationId: 'test-id',
+        }),
         error: expect.objectContaining({
           message: 'Http Exception', // Fallback to exception.message
-          code: 'BAD_REQUEST', // Fallback to HttpStatus[status]
+          code: 'INVALID_REQUEST', // Fallback to HttpStatus[status]
         }),
       }),
     );

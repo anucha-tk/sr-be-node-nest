@@ -6,17 +6,21 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { RequestWithMetadata } from '../interfaces/request-with-metadata.interface';
+import { StandardEnvelope } from '../interfaces/api-response.interface';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<RequestWithMetadata>();
+    const correlationId = request.correlationId || 'unknown';
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
     let code = 'INTERNAL_SERVER_ERROR';
-    let details: any[] = [];
+    let details: unknown[] = [];
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -25,7 +29,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const resObj = exceptionResponse as Record<string, unknown>;
         message = (resObj.message as string) || exception.message;
-        code = (resObj.error as string) || code;
+        const errorVal = resObj.error || resObj.code;
+        if (typeof errorVal === 'string') {
+          code = errorVal.toUpperCase().replace(/\s/g, '_');
+        }
 
         if (Array.isArray(resObj.message)) {
           details = resObj.message;
@@ -39,7 +46,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
 
       // Final mapping of status codes to specific business codes if not already set
-      if (code === 'INTERNAL_SERVER_ERROR' || code === HttpStatus[status]) {
+      const isDefaultCode =
+        code === 'INTERNAL_SERVER_ERROR' ||
+        code === HttpStatus[status] ||
+        code === (HttpStatus[status] || '').replace(/_/g, ' ');
+
+      if (isDefaultCode) {
         switch (status) {
           case HttpStatus.UNAUTHORIZED:
             code = 'AUTH_REQUIRED';
@@ -50,8 +62,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
           case HttpStatus.NOT_FOUND:
             code = 'RESOURCE_NOT_FOUND';
             break;
+          case HttpStatus.TOO_MANY_REQUESTS:
+            code = 'ERR_RATE_LIMIT_EXCEEDED';
+            break;
+          case HttpStatus.BAD_REQUEST:
+            code = 'INVALID_REQUEST';
+            break;
           default:
-            code = HttpStatus[status] || 'INTERNAL_SERVER_ERROR';
+            code = (
+              HttpStatus[status] || 'INTERNAL_SERVER_ERROR'
+            ).toUpperCase();
         }
       }
     } else if (exception instanceof Error) {
@@ -59,18 +79,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // You could add logging for unhandled errors here
     }
 
-    response.status(status).json({
+    const body: StandardEnvelope<null> = {
       success: false,
       data: null,
       meta: {
         timestamp: new Date().toISOString(),
         executionTimeMs: 0,
+        correlationId,
       },
       error: {
         code,
         message,
         details,
       },
-    });
+    };
+
+    response.status(status).json(body);
   }
 }

@@ -1,5 +1,5 @@
 # generated: 2026-05-11
-# last_updated: 2026-05-12
+# last_updated: 2026-05-13
 # project: sr-be-node-nest
 # project_key: NOKEY
 # tracking_system: file-system
@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-05-11
-last_updated: 2026-05-12
+last_updated: 2026-05-13
 project: sr-be-node-nest
 project_key: NOKEY
 tracking_system: file-system
@@ -58,7 +58,7 @@ development_status:
   3-1-filterable-invoice-history-api: done
   3-2-api-rate-limiting: done
   3-3-standardized-json-export: done
-  3-4-consumer-ready-rest-api: backlog
+  3-4-consumer-ready-rest-api: done
   epic-3-retrospective: optional
   epic-4: backlog
   4-1-million-record-seeding-engine: backlog

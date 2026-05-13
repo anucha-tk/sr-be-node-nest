@@ -30,15 +30,17 @@ describe('Throttler (e2e)', () => {
 
     // Let's try to hit the / (root) endpoint which is @Public()
     for (let i = 0; i < 100; i++) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       await request(app.getHttpServer()).get('/');
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const res = await request(app.getHttpServer()).get('/');
     expect(res.status).toBe(429);
     expect(res.body).toMatchObject({
       success: false,
       error: {
-        code: 'THROTTLED',
+        code: 'ERR_RATE_LIMIT_EXCEEDED',
         message: 'Rate limit exceeded. Please try again later.',
       },
     });

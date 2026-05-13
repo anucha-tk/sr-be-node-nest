@@ -110,7 +110,7 @@ describe('InvoiceController', () => {
         json: jest.fn().mockReturnThis(),
       } as unknown as Response;
 
-      await controller.exportAll(mockUser, mockQuery, mockRes);
+      const result = await controller.exportAll(mockUser, mockQuery, mockRes);
 
       expect(mockRes.set).toHaveBeenCalledWith({
         'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ describe('InvoiceController', () => {
         ),
       });
 
-      expect(mockRes.json).toHaveBeenCalledWith(mockItems);
+      expect(result).toEqual(mockItems);
       expect(mockInvoiceService.exportAll).toHaveBeenCalledWith(
         mockUser.sub,
         expect.objectContaining(mockQuery),

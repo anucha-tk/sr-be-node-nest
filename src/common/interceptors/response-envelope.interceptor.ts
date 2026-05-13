@@ -7,31 +7,18 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-export interface ResponseEnvelope<T> {
-  success: boolean;
-  data: T;
-  meta: {
-    timestamp: string;
-    executionTimeMs: number;
-    pagination?: {
-      limit: number;
-      offset: number;
-      total: number;
-    } | null;
-  };
-  error: null;
-}
+import { RequestWithMetadata } from '../interfaces/request-with-metadata.interface';
+import { StandardEnvelope } from '../interfaces/api-response.interface';
 
 @Injectable()
 export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
   T,
-  ResponseEnvelope<T> | T | StreamableFile
+  StandardEnvelope<T> | T | StreamableFile
 > {
   intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Observable<ResponseEnvelope<T> | T | StreamableFile> {
+  ): Observable<StandardEnvelope<T> | T | StreamableFile> {
     const startTime = performance.now();
 
     return next.handle().pipe(
@@ -69,18 +56,23 @@ export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
           };
         }
 
-        return {
+        const request = context
+          .switchToHttp()
+          .getRequest<RequestWithMetadata>();
+        const correlationId = request.correlationId || 'unknown';
+
+        const result: StandardEnvelope<T> = {
           success: true,
           data: responseData,
           meta: {
             timestamp: new Date().toISOString(),
-            executionTimeMs: parseFloat(
-              (performance.now() - startTime).toFixed(3),
-            ),
+            executionTimeMs: performance.now() - startTime,
             pagination,
+            correlationId,
           },
           error: null,
         };
+        return result;
       }),
     );
   }

@@ -48,8 +48,8 @@ export class InvoiceController {
   async exportAll(
     @CurrentUser() user: KeycloakUser,
     @Query() query: InvoiceQueryDto,
-    @Res() res: Response,
-  ): Promise<Response> {
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<any[]> {
     if (query.format !== 'json') {
       throw new BadRequestException(
         'Invalid format. Only "json" is supported.',
@@ -68,6 +68,6 @@ export class InvoiceController {
       'Content-Disposition': `attachment; filename=${filename}`,
     });
 
-    return res.json(items);
+    return items;
   }
 }

@@ -21,7 +21,7 @@ export class ApiKeyController {
   @ApiStandardResponse(ApiKeyResponseDto)
   async create(
     @Body() createDto: CreateApiKeyDto,
-  ): Promise<{ success: boolean; data: Partial<ApiKey> & { key: string } }> {
+  ): Promise<Partial<ApiKey> & { key: string }> {
     const result = await this.apiKeyService.createKey(
       createDto.name,
       createDto.scopes,
@@ -31,23 +31,15 @@ export class ApiKeyController {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { keyHash: _k, salt: _s, ...metadata } = result;
 
-    return {
-      success: true,
-      data: metadata,
-    };
+    return metadata;
   }
 
   @Delete(':id')
   @Roles({ roles: ['admin'] })
   @ApiOperation({ summary: 'Revoke an API key' })
   @ApiStandardResponse(ApiKeyRevokeResponseDto)
-  async revoke(
-    @Param('id') id: string,
-  ): Promise<{ success: boolean; data: { id: string } }> {
+  async revoke(@Param('id') id: string): Promise<{ id: string }> {
     await this.apiKeyService.revokeKey(id);
-    return {
-      success: true,
-      data: { id },
-    };
+    return { id };
   }
 }

@@ -39,11 +39,10 @@ describe('ApiKeyController', () => {
       mockApiKeyService.createKey.mockResolvedValue(mockResult);
 
       const result = await controller.create({ name: 'test', scopes: [] });
-      expect(result.success).toBe(true);
-      expect(result.data).toHaveProperty('id');
-      expect(result.data).toHaveProperty('key');
-      expect(result.data).not.toHaveProperty('keyHash');
-      expect(result.data).not.toHaveProperty('salt');
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('key');
+      expect(result).not.toHaveProperty('keyHash');
+      expect(result).not.toHaveProperty('salt');
     });
   });
 
@@ -52,7 +51,7 @@ describe('ApiKeyController', () => {
       mockApiKeyService.revokeKey.mockResolvedValue({});
 
       const result = await controller.revoke('1');
-      expect(result).toEqual({ success: true, data: { id: '1' } });
+      expect(result).toEqual({ id: '1' });
     });
   });
 });

@@ -26,11 +26,8 @@ export class ApiKeyService {
 
     if (!id) {
       throw new UnauthorizedException({
-        success: false,
-        error: {
-          code: 'ERR_INVALID_API_KEY_FORMAT',
-          message: 'Invalid API key format. Expected id.key',
-        },
+        message: 'Invalid API key format. Expected id.key',
+        error: 'ERR_INVALID_API_KEY_FORMAT',
       });
     }
 
@@ -40,11 +37,8 @@ export class ApiKeyService {
 
     if (!keyRecord) {
       throw new UnauthorizedException({
-        success: false,
-        error: {
-          code: 'ERR_INVALID_API_KEY',
-          message: 'Invalid API key provided',
-        },
+        message: 'Invalid API key provided',
+        error: 'ERR_INVALID_API_KEY',
       });
     }
 
@@ -52,21 +46,15 @@ export class ApiKeyService {
 
     if (hash !== keyRecord.keyHash) {
       throw new UnauthorizedException({
-        success: false,
-        error: {
-          code: 'ERR_INVALID_API_KEY',
-          message: 'Invalid API key provided',
-        },
+        message: 'Invalid API key provided',
+        error: 'ERR_INVALID_API_KEY',
       });
     }
 
     if (!keyRecord.isActive || keyRecord.revokedAt) {
       throw new UnauthorizedException({
-        success: false,
-        error: {
-          code: 'ERR_API_KEY_INACTIVE',
-          message: 'API key is deactivated or revoked',
-        },
+        message: 'API key is deactivated or revoked',
+        error: 'ERR_API_KEY_INACTIVE',
       });
     }
 
@@ -80,11 +68,8 @@ export class ApiKeyService {
     const existing = await this.prisma.apiKey.findUnique({ where: { name } });
     if (existing) {
       throw new ConflictException({
-        success: false,
-        error: {
-          code: 'ERR_DUPLICATE_KEY_NAME',
-          message: `API key with name "${name}" already exists`,
-        },
+        message: `API key with name "${name}" already exists`,
+        error: 'ERR_DUPLICATE_KEY_NAME',
       });
     }
 
@@ -112,11 +97,8 @@ export class ApiKeyService {
     const key = await this.prisma.apiKey.findUnique({ where: { id } });
     if (!key) {
       throw new NotFoundException({
-        success: false,
-        error: {
-          code: 'ERR_KEY_NOT_FOUND',
-          message: 'API key not found',
-        },
+        message: 'API key not found',
+        error: 'ERR_KEY_NOT_FOUND',
       });
     }
 

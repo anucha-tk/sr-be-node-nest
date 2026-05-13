@@ -54,4 +54,33 @@ describe('ResponseEnvelopeInterceptor', () => {
       done();
     });
   });
+
+  it('should handle paginated response', (done) => {
+    const data = {
+      items: [{ id: 1 }],
+      total: 100,
+      limit: 10,
+      offset: 0,
+    };
+    const context = {
+      switchToHttp: () => ({
+        getRequest: () => ({ correlationId: 'test-id' }),
+      }),
+    } as unknown as ExecutionContext;
+    const next = {
+      handle: () => of(data),
+    } as CallHandler;
+
+    interceptor.intercept(context, next).subscribe((result) => {
+      const enveloped = result as StandardEnvelope<any[]>;
+      expect(enveloped.success).toBe(true);
+      expect(enveloped.data).toEqual(data.items);
+      expect(enveloped.meta.pagination).toEqual({
+        total: 100,
+        limit: 10,
+        offset: 0,
+      });
+      done();
+    });
+  });
 });

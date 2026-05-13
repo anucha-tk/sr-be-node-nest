@@ -84,6 +84,7 @@ describe('Analytics (e2e)', () => {
               aggregate: jest.fn(),
               groupBy: jest.fn(),
             },
+            $queryRaw: jest.fn(),
           },
         },
       ],
@@ -125,12 +126,21 @@ describe('Analytics (e2e)', () => {
     expect(response.body.meta.executionTimeMs).toBeDefined();
   });
 
-  it('GET /v1/analytics/summary should be forbidden for supplier', async () => {
-    // Note: In this mock environment, the MockGuard always returns true for canActivate.
-    // To test real RBAC, we'd need a more complex MockGuard that checks @Roles decorator.
-    // However, the UnifiedRoleGuard in the real app handles this.
-    // For this e2e, we'll assume the guard works if we were using real Keycloak.
-    // Since we are mocking the guards to always return true, we can't easily test Forbidden here
-    // unless we implement the role check logic in MockGuard.
+  it('GET /v1/analytics/trends should return trends for admin', async () => {
+    currentRole = 'admin';
+    (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([
+      { period: '2026-01', totalAmount: 1000 },
+    ]);
+    (prisma.invoice.aggregate as jest.Mock)
+      .mockResolvedValueOnce({ _sum: { amount: 1000 } }) // Current
+      .mockResolvedValueOnce({ _sum: { amount: 800 } }); // Previous
+
+    const response = await request(app.getHttpServer() as string)
+      .get('/v1/analytics/trends?granularity=monthly')
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.trends).toHaveLength(1);
+    expect(response.body.data.comparison.growthPercentage).toBe(25);
   });
 });

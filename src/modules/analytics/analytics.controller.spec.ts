@@ -14,6 +14,7 @@ describe('AnalyticsController', () => {
           provide: AnalyticsService,
           useValue: {
             getSummary: jest.fn(),
+            getTrends: jest.fn(),
           },
         },
       ],
@@ -41,6 +42,28 @@ describe('AnalyticsController', () => {
       expect(result).toEqual(mockSummary);
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.getSummary).toHaveBeenCalled();
+    });
+  });
+
+  describe('getTrends', () => {
+    it('should return service trends', async () => {
+      const mockTrends = {
+        trends: [{ label: '2026-01', value: 1000 }],
+        comparison: {
+          previousValue: 800,
+          currentValue: 1000,
+          growthPercentage: 25,
+        },
+      };
+      (service.getTrends as jest.Mock).mockResolvedValue(mockTrends);
+
+      const result = await controller.getTrends({ granularity: 'monthly' });
+
+      expect(result).toEqual(mockTrends);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(service.getTrends).toHaveBeenCalledWith({
+        granularity: 'monthly',
+      });
     });
   });
 });

@@ -17,6 +17,7 @@ describe('AnalyticsService', () => {
               aggregate: jest.fn(),
               groupBy: jest.fn(),
             },
+            $queryRaw: jest.fn(),
           },
         },
       ],
@@ -70,6 +71,86 @@ describe('AnalyticsService', () => {
         totalPending: 0,
         supplierCount: 0,
       });
+    });
+  });
+
+  describe('getTrends', () => {
+    it('should return trend data with comparison', async () => {
+      const mockRawTrends = [
+        { period: '2026-01', totalAmount: 1000 },
+        { period: '2026-02', totalAmount: 1500 },
+      ];
+
+      // Mocking $queryRaw and aggregate
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce(mockRawTrends);
+      (prisma.invoice.aggregate as jest.Mock)
+        .mockResolvedValueOnce({ _sum: { amount: 2500 } }) // Current
+        .mockResolvedValueOnce({ _sum: { amount: 800 } }); // Previous
+
+      const result = await service.getTrends({ granularity: 'monthly' });
+
+      expect(result.trends).toHaveLength(2);
+      expect(result.trends[0]).toEqual({ label: '2026-01', value: 1000 });
+      expect(result.comparison.growthPercentage).toBeGreaterThan(0);
+      expect(result.comparison.previousValue).toBe(800);
+    });
+
+    it('should handle daily granularity', async () => {
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([]);
+      (prisma.invoice.aggregate as jest.Mock).mockResolvedValue({
+        _sum: { amount: 0 },
+      });
+
+      const result = await service.getTrends({ granularity: 'daily' });
+      expect(result.trends).toEqual([]);
+    });
+
+    it('should handle yearly granularity (fallback branch)', async () => {
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([]);
+      (prisma.invoice.aggregate as jest.Mock).mockResolvedValue({
+        _sum: { amount: 0 },
+      });
+
+      // 'yearly' will hit the else block in getTrends
+      const result = await service.getTrends({
+        granularity: 'yearly',
+      });
+      expect(result.trends).toEqual([]);
+    });
+
+    it('should handle zero growth (previousValue equals currentValue)', async () => {
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([
+        { period: '2026-01', totalAmount: 1000 },
+      ]);
+      (prisma.invoice.aggregate as jest.Mock)
+        .mockResolvedValueOnce({ _sum: { amount: 1000 } })
+        .mockResolvedValueOnce({ _sum: { amount: 1000 } });
+
+      const result = await service.getTrends({ granularity: 'monthly' });
+      expect(result.comparison.growthPercentage).toBe(0);
+    });
+
+    it('should handle negative growth (previousValue > currentValue)', async () => {
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([
+        { period: '2026-01', totalAmount: 500 },
+      ]);
+      (prisma.invoice.aggregate as jest.Mock)
+        .mockResolvedValueOnce({ _sum: { amount: 500 } })
+        .mockResolvedValueOnce({ _sum: { amount: 1000 } });
+
+      const result = await service.getTrends({ granularity: 'monthly' });
+      expect(result.comparison.growthPercentage).toBe(-50);
+    });
+
+    it('should handle null aggregate sums in getTrends', async () => {
+      (prisma.$queryRaw as jest.Mock).mockResolvedValueOnce([]);
+      (prisma.invoice.aggregate as jest.Mock).mockResolvedValue({
+        _sum: { amount: null },
+      });
+
+      const result = await service.getTrends({ granularity: 'monthly' });
+      expect(result.comparison.currentValue).toBe(0);
+      expect(result.comparison.previousValue).toBe(0);
     });
   });
 });

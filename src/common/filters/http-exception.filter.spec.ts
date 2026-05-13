@@ -183,4 +183,49 @@ describe('HttpExceptionFilter', () => {
       }),
     );
   });
+
+  it('should handle TOO_MANY_REQUESTS', () => {
+    const status = HttpStatus.TOO_MANY_REQUESTS;
+    const exception = new HttpException('Rate limit exceeded', status);
+
+    filter.catch(exception, mockArgumentsHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          code: 'ERR_RATE_LIMIT_EXCEEDED',
+        }),
+      }),
+    );
+  });
+
+  it('should handle NOT_FOUND', () => {
+    const status = HttpStatus.NOT_FOUND;
+    const exception = new HttpException('Not found', status);
+
+    filter.catch(exception, mockArgumentsHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          code: 'RESOURCE_NOT_FOUND',
+        }),
+      }),
+    );
+  });
+
+  it('should handle HttpException with non-standard status and default code mapping', () => {
+    const status = HttpStatus.PAYMENT_REQUIRED;
+    const exception = new HttpException('Payment Required', status);
+
+    filter.catch(exception, mockArgumentsHost);
+
+    expect(mockResponse.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        error: expect.objectContaining({
+          code: 'PAYMENT_REQUIRED',
+        }),
+      }),
+    );
+  });
 });

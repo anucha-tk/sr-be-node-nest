@@ -5,12 +5,15 @@
 ## 🚀 เทคโนโลยีที่ใช้ (Tech Stack)
 
 - **Framework:** NestJS (v11)
-- **Runtime:** Node.js (v24)
+- **Runtime:** Node.js (v24) / [Bun](https://bun.sh/) (Recommended for development scripts)
 - **Database:** PostgreSQL (v17) ผ่าน Prisma (v7.8.0)
-- **Validation:** Zod + Nestjs-Zod
-- **Logging:** Pino + Nestjs-Pino
-- **Auth:** Keycloak (v26) + API Keys (Dual Auth)
 - **Messaging:** Kafka (v4)
+- **Observability:**
+  - **Metrics:** Prometheus + prom-client
+  - **Tracing:** OpenTelemetry + Jaeger
+  - **Logging:** Pino + Nestjs-Pino
+- **Auth:** Keycloak (v26) + API Keys (Dual Auth)
+- **Validation:** Zod + Nestjs-Zod
 - **Infra:** Docker Compose
 
 ## 🛠️ เริ่มต้นใช้งาน (Getting Started)
@@ -18,8 +21,8 @@
 ### 1. สิ่งที่ต้องเตรียม (Prerequisites)
 
 - Node.js v24 ขึ้นไป
+- [Bun](https://bun.sh/) (แนะนำสำหรับการรันสคริปต์และ Quality Gate ที่รวดเร็ว)
 - Docker & Docker Compose
-- [Bun](https://bun.sh/) (แนะนำสำหรับการรันสคริปต์ที่รวดเร็ว)
 
 ### 2. ตั้งค่า Environment
 
@@ -31,35 +34,43 @@ cp .env.example .env
 
 ### 3. รันระบบ Infrastructure
 
-เริ่มต้นฐานข้อมูล PostgreSQL, Keycloak และ Kafka ด้วย Docker:
+เริ่มต้นฐานข้อมูล PostgreSQL, Keycloak, Kafka และ Jaeger ด้วย Docker:
 
 ```bash
 docker compose up -d
 ```
 
 > [!NOTE]
-> **Keycloak Auto-Provisioning:** ระบบถูกตั้งค่าให้นำเข้า (Import) การตั้งค่า Realm, Client, Roles และ Users โดยอัตโนมัติจากโฟลเดอร์ `keycloak-init` เมื่อเริ่มต้นระบบครั้งแรก ไม่ต้องตั้งค่าเองในหน้า UI
+> **Keycloak Auto-Provisioning:** ระบบถูกตั้งค่าให้นำเข้า (Import) การตั้งค่า Realm, Client, Roles และ Users โดยอัตโนมัติจากโฟลเดอร์ `keycloak-init` เมื่อเริ่มต้นระบบครั้งแรก
 
 ### 4. ติดตั้งและเริ่มรันแอปพลิเคชัน
 
 ```bash
 # 1. ติดตั้ง dependencies
-npm install
+bun install  # หรือ npm install
 
 # 2. Sync database schema และ generate Prisma client
-npm run prisma:push
-npm run prisma:generate
+bun run prisma:push
+bun run prisma:generate
 
-# 3. สร้าง API Key สำหรับใช้งานครั้งแรก (เลือกใช้ x-api-key แทน JWT ได้)
-# สคริปต์นี้จะสร้าง key และอัปเดตไฟล์ .env ในโฟลเดอร์ frontend ให้โดยอัตโนมัติ
-node scripts/seed-api-key.mjs
+# 3. สร้าง API Key สำหรับใช้งานครั้งแรก
+bun scripts/seed-api-key.mjs
 
-# 4. (ทางเลือก) สร้างข้อมูลทดสอบ 1,000,000 รายการ เพื่อทดสอบประสิทธิภาพ
-npm run seed:million
+# 4. (ทางเลือก) สร้างข้อมูลทดสอบ 1,000,000 รายการ
+bun run seed:million
 
 # 5. เริ่มรันเซิร์ฟเวอร์ในโหมดพัฒนา
-npm run start:dev
+bun run start:dev
 ```
+
+## 📊 การตรวจสอบระบบ (Observability)
+
+ระบบมาพร้อมกับความสามารถในการตรวจสอบแบบ Real-time:
+
+1. **System Pulse Dashboard:** แสดงผล Metrics สำคัญ (CPU, Memory, Traffic) แบบสดๆ ผ่าน WebSocket ในหน้า UI
+2. **Prometheus Metrics:** ดูข้อมูลดิบได้ที่ `/v1/observability/metrics-summary`
+3. **Jaeger Tracing:** ติดตาม Flow ของ Request และ Kafka Events ได้ที่ [http://localhost:16686](http://localhost:16686)
+4. **Audit Trail:** ระบบบันทึกการเปลี่ยนแปลงที่สำคัญทั้งหมดในฐานข้อมูล
 
 ## 🔐 ระบบยืนยันตัวตน (Authentication)
 
@@ -87,37 +98,25 @@ curl --location 'http://localhost:8080/realms/sr-realm/protocol/openid-connect/t
 
 ใช้สำหรับระบบอื่นๆ ที่ต้องการเรียกใช้ API โดยตรงผ่าน Header `x-api-key`
 
-- สร้าง Key ใหม่ได้ด้วยคำสั่ง: `node scripts/seed-api-key.mjs`
-
-## 📖 เอกสารประกอบ API (Swagger/Scalar)
-
-เมื่อรันระบบแล้ว สามารถเข้าดูเอกสารประกอบ API และทดสอบเรียกใช้งานได้ที่:
+## 📖 เอกสารประกอบ API
 
 - **Scalar UI:** [http://localhost:3000/docs](http://localhost:3000/docs)
 
-## 📜 รายรายการสคริปต์ (Scripts)
+## 📜 รายการสคริปต์ (Scripts)
 
-| คำสั่ง                  | รายละเอียด                                            |
-| :---------------------- | :---------------------------------------------------- |
-| `npm run start:dev`     | รันแอปพลิเคชันในโหมด Watch (Development)              |
-| `npm run check:full`    | รัน Lint, Format, TSC และ Test ครบชุด (Quality Gate)  |
-| `npm run test:e2e`      | รันการทดสอบ End-to-End                                |
-| `npm run prisma:studio` | เปิดหน้า UI สำหรับจัดการข้อมูลในฐานข้อมูล             |
-| `npm run seed:million`  | รันตัวประมวลผลสร้างข้อมูล 1 ล้านรายการ (Bulk Seeding) |
+| คำสั่ง                  | รายละเอียด                                        |
+| :---------------------- | :------------------------------------------------ |
+| `bun run start:dev`     | รันแอปพลิเคชันในโหมด Watch                        |
+| `bun run check:full`    | รัน Quality Gate ครบชุด (Lint, Format, TSC, Test) |
+| `bun run test:cov`      | รัน Unit Test พร้อมสรุป Coverage                  |
+| `bun run prisma:studio` | เปิดหน้า UI สำหรับจัดการข้อมูลในฐานข้อมูล         |
 
-## 📊 แผนผังระบบ (Diagrams)
+## 📐 แผนผังระบบ (Diagrams)
 
-- [🏗️ System Architecture](docs/diagrams/architect.md): ภาพรวมการรับเหตุการณ์ (Event Ingestion) และการจัดเก็บข้อมูล
-- [🔄 Logic Flow: Idempotency](docs/diagrams/flow-function.md): ลำดับขั้นตอนการประมวลผลข้อมูลแบบ Exactly-once
+- [🏗️ System Architecture](docs/diagrams/architect.md)
+- [🔄 Logic Flow: Idempotency](docs/diagrams/flow-function.md)
 
 ---
-
-## 🛡️ มาตรฐานความปลอดภัย
-
-- การยืนยันตัวตนด้วย JWT ผ่าน Keycloak
-- รองรับ API Key สำหรับบริการภายใน
-- การควบคุมการเข้าถึงตามบทบาท (RBAC)
-- ตรวจสอบความถูกต้องของข้อมูลด้วย Zod ทุกเลเยอร์
 
 ## ⚖️ สัญญาอนุญาต
 

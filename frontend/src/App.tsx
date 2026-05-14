@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ArchitectureDiagram from './components/ArchitectureDiagram'
 import MetricsDashboard from './components/MetricsDashboard'
+import PrometheusDashboard from './components/PrometheusDashboard'
 import PresentationMode from './components/PresentationMode'
 import ShowcaseSidebar from './components/ShowcaseSidebar'
 import PerformanceLab from './components/PerformanceLab'
@@ -40,6 +41,8 @@ export default function App() {
         return <SecurityView />
       case 'event-flow':
         return <MetricsDashboard />
+      case 'observability':
+        return <PrometheusDashboard />
       case 'performance':
         return <PerformanceLab />
       case 'audit':
@@ -58,6 +61,7 @@ export default function App() {
       case 'intro': return { title: 'Intro & Architecture', desc: 'ภาพรวมระบบและเทคโนโลยีหลักที่ใช้' }
       case 'security': return { title: 'Identity & Shield', desc: 'ระบบความปลอดภัยและตัวตน' }
       case 'event-flow': return { title: 'Event Pulse', desc: 'การประมวลผลแบบ Event-Driven (Kafka)' }
+      case 'observability': return { title: 'Infrastructure Pulse', desc: 'สถานะและการใช้ทรัพยากรของระบบในรูปแบบ Prometheus Metrics' }
       case 'performance': return { title: 'Warp Speed', desc: 'ประสิทธิภาพการประมวลผลข้อมูล 1M+ เรคคอร์ด' }
       case 'audit': return { title: 'Paper Trail', desc: 'ความโปร่งใสและความถูกต้องของข้อมูล (Audit Log)' }
       case 'api-docs': return { title: 'Dev Portal', desc: 'หน้าต่างเชื่อมต่อสำหรับนักพัฒนา (Scalar/OpenAPI)' }

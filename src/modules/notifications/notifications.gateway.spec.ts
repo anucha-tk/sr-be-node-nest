@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationsGateway } from './notifications.gateway';
 import { Server, Socket } from 'socket.io';
+import { getToken } from '@willsoto/nestjs-prometheus';
 
 describe('NotificationsGateway', () => {
   let gateway: NotificationsGateway;
@@ -9,7 +10,16 @@ describe('NotificationsGateway', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [NotificationsGateway],
+      providers: [
+        NotificationsGateway,
+        {
+          provide: getToken('active_socket_connections'),
+          useValue: {
+            inc: jest.fn(),
+            dec: jest.fn(),
+          },
+        },
+      ],
     }).compile();
 
     gateway = module.get<NotificationsGateway>(NotificationsGateway);
@@ -43,6 +53,7 @@ describe('NotificationsGateway', () => {
 
       gateway.handleConnection(client);
       expect(client.disconnect).not.toHaveBeenCalled();
+      expect(gateway['socketGauge'].inc).toHaveBeenCalled();
     });
   });
 
@@ -52,6 +63,7 @@ describe('NotificationsGateway', () => {
       const loggerSpy = jest.spyOn(gateway['logger'], 'log');
       gateway.handleDisconnect(client);
       expect(loggerSpy).toHaveBeenCalledWith('Client disconnected: 123');
+      expect(gateway['socketGauge'].dec).toHaveBeenCalled();
     });
   });
 

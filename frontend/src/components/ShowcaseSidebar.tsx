@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ShieldCheck, Activity, Zap, FileText, Code, Menu, X, Play, LayoutDashboard, Repeat } from 'lucide-react'
+import { ShieldCheck, Activity, Zap, FileText, Code, Menu, X, Play, LayoutDashboard, Repeat, BarChart3 } from 'lucide-react'
 
 const MENU_ITEMS = [
   { 
@@ -19,6 +19,12 @@ const MENU_ITEMS = [
     label: 'Event Pulse',
     subLabel: 'การประมวลผลแบบ Event-Driven',
     icon: Activity 
+  },
+  { 
+    id: 'observability', 
+    label: 'System Pulse',
+    subLabel: 'สถานะและการทำงานของระบบ',
+    icon: BarChart3 
   },
   { 
     id: 'performance', 

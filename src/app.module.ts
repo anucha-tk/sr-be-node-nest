@@ -4,6 +4,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor';
+import { MetricsInterceptor } from './common/interceptors/metrics.interceptor';
 import { trace, context } from '@opentelemetry/api';
 import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
@@ -11,6 +12,7 @@ import { RevenueModule } from './modules/revenue/revenue.module';
 import { InvoiceModule } from './modules/invoice/invoice.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { ObservabilityModule } from './modules/observability/observability.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
@@ -22,6 +24,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 import { CorrelationIdMiddleware } from './common/middleware/correlation-id.middleware';
 import { NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
   imports: [
@@ -58,6 +61,7 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
     InvoiceModule,
     AnalyticsModule,
     NotificationsModule,
+    ObservabilityModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [
@@ -66,6 +70,12 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
           limit: 10,
         },
       ],
+    }),
+    PrometheusModule.register({
+      path: '/metrics',
+      defaultMetrics: {
+        enabled: true,
+      },
     }),
   ],
   controllers: [AppController],
@@ -98,6 +108,10 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseEnvelopeInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
   ],
 })

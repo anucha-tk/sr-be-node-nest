@@ -8,6 +8,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger, OnModuleInit } from '@nestjs/common';
+import { InjectMetric } from '@willsoto/nestjs-prometheus';
+import { Gauge } from 'prom-client';
 
 @WebSocketGateway({
   cors: {
@@ -19,6 +21,11 @@ export class NotificationsGateway
 {
   @WebSocketServer()
   server: Server;
+
+  constructor(
+    @InjectMetric('active_socket_connections')
+    private readonly socketGauge: Gauge<string>,
+  ) {}
 
   private readonly logger = new Logger(NotificationsGateway.name);
 
@@ -48,10 +55,12 @@ export class NotificationsGateway
     }
 
     this.logger.log(`Client connected: ${client.id}`);
+    this.socketGauge.inc();
   }
 
   handleDisconnect(client: Socket) {
     this.logger.log(`Client disconnected: ${client.id}`);
+    this.socketGauge.dec();
   }
 
   notifyAuditLog(payload: any) {

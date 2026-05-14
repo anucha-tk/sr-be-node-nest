@@ -4,6 +4,7 @@ import { RevenueService } from './revenue.service';
 import { Logger } from '@nestjs/common';
 import { of } from 'rxjs';
 import { KAFKA_TOPICS } from '../kafka/kafka.constants';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 
 describe('RevenueController', () => {
   let controller: RevenueController;
@@ -17,6 +18,10 @@ describe('RevenueController', () => {
     getSupplierBalance: jest.fn(),
   };
 
+  const mockNotificationsGateway = {
+    notifySystemPulse: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RevenueController],
@@ -28,6 +33,10 @@ describe('RevenueController', () => {
         {
           provide: RevenueService,
           useValue: mockRevenueService,
+        },
+        {
+          provide: NotificationsGateway,
+          useValue: mockNotificationsGateway,
         },
       ],
     }).compile();

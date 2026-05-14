@@ -45,6 +45,7 @@ describe('RevenueService', () => {
           useValue: {
             notifyAuditLog: jest.fn(),
             notifyBalanceUpdate: jest.fn(),
+            notifySystemPulse: jest.fn(),
           },
         },
       ],

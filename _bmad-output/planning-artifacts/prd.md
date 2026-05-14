@@ -14,6 +14,7 @@ stepsCompleted:
     'step-09-functional',
     'step-10-nonfunctional',
     'step-11-polish',
+    'step-12-complete',
   ]
 inputDocuments: ['JD.md', 'README.md']
 documentCounts:

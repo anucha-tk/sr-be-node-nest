@@ -61,6 +61,20 @@ export class RevenueService {
               lastUpdated: auditLog.createdAt,
             });
 
+            // Pulse: Kafka Consumed
+            this.notificationsGateway.notifySystemPulse({
+              type: 'KAFKA_CONSUMED',
+              label: `Consumed event ${dto.eventId.substring(0, 8)}...`,
+              metadata: { topic: 'invoice.paid', eventId: dto.eventId },
+            });
+
+            // Pulse: DB Commit
+            this.notificationsGateway.notifySystemPulse({
+              type: 'DB_COMMIT',
+              label: `Committed revenue for ${dto.supplierId.substring(0, 8)}...`,
+              metadata: { auditLogId: auditLog.id },
+            });
+
             this.logger.log(
               `Processed revenue for supplier ${dto.supplierId}: +${dto.amount} (Balance: ${updatedRevenue.balance.minus(dto.amount).toString()} -> ${updatedRevenue.balance.toString()}) (Event: ${dto.eventId}, Correlation: ${dto.correlationId})`,
             );

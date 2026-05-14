@@ -8,6 +8,7 @@ import {
   Body,
 } from '@nestjs/common';
 import { EventPattern, Payload, ClientKafka } from '@nestjs/microservices';
+import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { firstValueFrom } from 'rxjs';
 import { InvoicePaidSchema } from './schemas/invoice-paid.schema';
 import { RevenueEventDto } from './dto/revenue-event.dto';
@@ -37,6 +38,7 @@ export class RevenueController {
   constructor(
     @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
     private readonly revenueService: RevenueService,
+    private readonly notificationsGateway: NotificationsGateway,
   ) {}
 
   @Get('me/revenue')
@@ -98,6 +100,13 @@ export class RevenueController {
       this.kafkaClient.emit(KAFKA_TOPICS.INVOICE_PAID, payload),
     );
 
+    // Pulse: Kafka Produced
+    this.notificationsGateway.notifySystemPulse({
+      type: 'KAFKA_PRODUCED',
+      label: `Produced event for ${invoiceId}`,
+      metadata: { topic: KAFKA_TOPICS.INVOICE_PAID, eventId },
+    });
+
     this.logger.log(`Simulated payment event sent to Kafka: ${eventId}`);
 
     return {
@@ -140,6 +149,12 @@ export class RevenueController {
 
   @EventPattern(KAFKA_TOPICS.INVOICE_PAID)
   async handleInvoicePaid(@Payload() data: unknown) {
+    // Pulse: Trace Started
+    this.notificationsGateway.notifySystemPulse({
+      type: 'TRACE_STARTED',
+      label: `Tracing event processing flow...`,
+    });
+
     try {
       // Validate with Zod
       const validated = InvoicePaidSchema.parse(data);

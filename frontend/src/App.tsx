@@ -9,6 +9,7 @@ import SecurityView from './components/SecurityView'
 import AuditTrailView from './components/AuditTrailView'
 import ApiDocsView from './components/ApiDocsView'
 import IdempotencyView from './components/IdempotencyView'
+import SystemPulseSidebar from './components/SystemPulseSidebar'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('intro')
@@ -120,6 +121,8 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      <SystemPulseSidebar />
     </div>
   )
 }

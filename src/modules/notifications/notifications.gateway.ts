@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { trace, context } from '@opentelemetry/api';
 import {
   WebSocketGateway,
   WebSocketServer,
@@ -60,15 +62,16 @@ export class NotificationsGateway
     this.server.emit('balance_updated', payload);
   }
 
-  notifySystemPulse(payload: {
-    type: string;
-    label: string;
-    timestamp?: string;
-    metadata?: Record<string, any>;
-  }) {
-    this.server.emit('system_pulse', {
-      ...payload,
-      timestamp: payload.timestamp || new Date().toISOString(),
-    });
+  notifySystemPulse(data: any): void {
+    const span = trace.getSpan(context.active());
+    const traceId = span?.spanContext().traceId;
+
+    const payload = {
+      ...data,
+      traceId,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.server.emit('system_pulse', payload);
   }
 }

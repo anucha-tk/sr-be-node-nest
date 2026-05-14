@@ -4,6 +4,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor';
+import { trace, context } from '@opentelemetry/api';
 import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './shared/prisma/prisma.module';
 import { RevenueModule } from './modules/revenue/revenue.module';
@@ -38,6 +39,15 @@ import { NestModule, MiddlewareConsumer } from '@nestjs/common';
           pinoHttp: {
             transport: !isProduction ? { target: 'pino-pretty' } : undefined,
             level: !isProduction ? 'debug' : 'info',
+            mixin() {
+              const span = trace.getSpan(context.active());
+              if (!span) return {};
+              const spanContext = span.spanContext();
+              return {
+                trace_id: spanContext.traceId,
+                span_id: spanContext.spanId,
+              };
+            },
           },
         };
       },

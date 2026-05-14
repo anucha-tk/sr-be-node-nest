@@ -79,5 +79,6 @@ development_status:
   6-3-security-showcase: done
   epic-7: in-progress
   7-1-websocket-gateway-pulse-sidebar-ui: done
-  7-2-opentelemetry-integration-jaeger-setup: backlog
+  7-2-opentelemetry-integration-jaeger-setup: done
   7-3-prometheus-metrics-pulse-dashboard-ui: backlog
+

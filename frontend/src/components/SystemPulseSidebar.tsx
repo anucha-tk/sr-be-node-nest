@@ -8,6 +8,7 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { useSocket } from '../hooks/useSocket';
 
@@ -16,6 +17,7 @@ interface PulseEvent {
   type: 'KAFKA_PRODUCED' | 'KAFKA_CONSUMED' | 'DB_COMMIT' | 'TRACE_STARTED';
   label: string;
   timestamp: string;
+  traceId?: string;
   metadata?: any;
 }
 
@@ -114,9 +116,22 @@ export default function SystemPulseSidebar() {
                       <p className="text-xs font-medium text-slate-900 leading-tight">
                         {event.label}
                       </p>
-                      <p className="text-[9px] text-slate-400 mt-1">
-                        {new Date(event.timestamp).toLocaleTimeString()}
-                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-[9px] text-slate-400">
+                          {new Date(event.timestamp).toLocaleTimeString()}
+                        </p>
+                        {event.traceId && (
+                          <a
+                            href={`http://localhost:16686/trace/${event.traceId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 text-[9px] font-bold text-primary hover:text-primary/70 transition-colors bg-primary/10 px-1.5 py-0.5 rounded"
+                          >
+                            <span>DEEP DIVE</span>
+                            <ExternalLink size={8} />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </motion.div>

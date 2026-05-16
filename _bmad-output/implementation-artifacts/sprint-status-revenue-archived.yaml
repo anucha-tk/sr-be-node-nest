@@ -1,5 +1,5 @@
-# generated: 2026-05-16
-# last_updated: 2026-05-16
+# generated: 2026-05-11
+# last_updated: 2026-05-13
 # project: sr-be-node-nest
 # project_key: NOKEY
 # tracking_system: file-system
@@ -34,41 +34,51 @@
 # - Developer typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-05-16
-last_updated: 2026-05-16
+generated: 2026-05-11
+last_updated: 2026-05-13
 project: sr-be-node-nest
 project_key: NOKEY
 tracking_system: file-system
 story_location: {project-root}/_bmad-output/implementation-artifacts
 
 development_status:
-  epic-1: backlog
-  1-1-project-initialization-infrastructure-setup: backlog
-  1-2-core-identity-security-integration: backlog
-  1-3-high-volume-data-seeding-engine: backlog
-  1-4-api-standards-health-monitoring: backlog
-  epic-1-retrospective: optional
-  epic-2: backlog
-  2-1-elasticsearch-mapping-edge-n-gram-analyzer: backlog
-  2-2-command-palette-search-api-fuzzy-multi-match: backlog
-  2-3-cmd-k-search-interface-frontend: backlog
-  2-4-search-result-visualization-performance-ux: backlog
-  epic-2-retrospective: optional
-  epic-3: backlog
-  3-1-event-driven-cdc-ingestion-kafka-producer: backlog
-  3-2-idempotent-elastic-sync-consumer: backlog
-  3-3-live-activity-feed-api-sse: backlog
-  3-4-real-time-activity-ui-audit-trail: backlog
-  epic-3-retrospective: optional
-  epic-4: backlog
-  4-1-elasticsearch-aggregation-api-stats-metrics: backlog
-  4-2-interactive-faceting-filter-api: backlog
-  4-3-insights-dashboard-ui-recharts-integration: backlog
-  4-4-real-time-chart-updates-drill-down: backlog
-  epic-4-retrospective: optional
-  epic-5: backlog
-  5-1-interactive-architecture-map-component: backlog
-  5-2-live-performance-lab-benchmarking: backlog
-  5-3-security-identity-vault-demo: backlog
-  5-4-presentation-mode-storytelling-ui: backlog
-  epic-5-retrospective: optional
+  epic-1: done
+  1-1-project-foundation-infra-setup: done
+  1-2-keycloak-identity-rbac: done
+  1-3-api-key-security-for-services: done
+  1-4-interactive-scalar-api-docs: done
+  epic-1-retrospective: done
+  epic-2: done
+  2-1-kafka-consumer-event-mapping: done
+  2-2-idempotent-revenue-engine: done
+  2-3-immutable-audit-trail: done
+  2-4-fast-balance-visibility-api: done
+  epic-2-retrospective: done
+  epic-3: done
+  3-1-filterable-invoice-history-api: done
+  3-2-api-rate-limiting: done
+  3-3-standardized-json-export: done
+  3-4-consumer-ready-rest-api: done
+  epic-3-retrospective: done
+  epic-4: done
+  4-1-million-record-seeding-engine: done
+  4-2-real-time-admin-summary-api: done
+  4-3-time-series-trend-analysis: done
+  4-4-advanced-sql-index-optimization: done
+  epic-4-retrospective: done
+  epic-5: done
+  5-1-premium-react-showcase-scaffold: done
+  5-2-interactive-architecture-tech-stack: done
+  5-3-live-metrics-demo-dashboard: done
+  5-4-deployment-presentation-mode: done
+  5-5-premium-ui-refinement-and-storytelling: done
+  epic-5-retrospective: done
+  epic-6: done
+  6-1-real-time-websocket-audit-log: done
+  6-2-live-idempotency-proof: done
+  6-3-security-showcase: done
+  epic-7: in-progress
+  7-1-websocket-gateway-pulse-sidebar-ui: done
+  7-2-opentelemetry-integration-jaeger-setup: done
+  7-3-prometheus-metrics-pulse-dashboard-ui: done
+

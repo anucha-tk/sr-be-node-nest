@@ -1,13 +1,16 @@
 ---
-stepsCompleted: [1, 2, 3, 4, 5, 6, 7]
-inputDocuments: ["prd.md", "ux-design-specification.md", "ux-api-mockups.html", "implementation-readiness-report-2026-05-11.md"]
+stepsCompleted: [1, 2, 3, 4, 5, 6, 7, 8]
+inputDocuments: ["prd.md", "product-brief-elasticsearch.md", "ux-design-specification.md", "implementation-readiness-report-2026-05-16.md", "project-context.md"]
 workflowType: 'architecture'
 project_name: 'sr-be-node-nest'
 user_name: 'Anucha-tk'
-date: '2026-05-11'
+date: '2026-05-16'
+lastStep: 8
+status: 'complete'
+completedAt: '2026-05-16'
 ---
 
-# Architecture Decision Document
+# Architecture Decision Document: Elasticsearch Showcase
 
 _This document builds collaboratively through step-by-step discovery. Sections are appended as we work through each architectural decision together._
 
@@ -16,168 +19,179 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 ### Requirements Overview
 
 **Functional Requirements:**
-- **Identity & Access**: ระบบ Auth แบบ Hybrid (JWT/OIDC + API Keys) และ RBAC เพื่อรองรับทั้ง User และ External Services
-- **Event-Driven Revenue**: การประมวลผลรายได้ผ่าน Kafka ที่ต้องรับประกันความถูกต้อง 100% (No duplicates)
-- **Enterprise Analytics**: ระบบสรุปข้อมูลรายได้และแนวโน้มที่ต้องทำงานได้รวดเร็วบนฐานข้อมูลขนาดใหญ่
+- **Advanced Search Experience**: ระบบต้องรองรับการค้นหาผ่าน Command Palette (Cmd+K) ที่มีประสิทธิภาพสูงด้วย Elasticsearch (Autocomplete, Fuzzy, Relevance Scoring)
+- **Asynchronous Data Ingestion**: การซิงค์ข้อมูลจาก PostgreSQL ไปยัง Elasticsearch ต้องผ่าน Kafka โดยใช้รูปแบบ Change Data Capture (CDC) เพื่อลดภาระของฐานข้อมูลหลัก
+- **Insight Explorer Dashboard**: ระบบวิเคราะห์ข้อมูลที่ใช้ Elasticsearch Aggregations เพื่อคำนวณสถิติจากข้อมูลนับล้านชุดแบบ Real-time
 
 **Non-Functional Requirements:**
-- **High-Performance Read**: รองรับข้อมูลระดับ 1M+ records โดยมี latency < 1s ผ่านการทำ Indexing และ Materialized Views
-- **Audit-Ready**: ระบบ Audit log แบบ Immutable และการทำ Transaction Tracing ทั่วทั้งระบบ
-- **Zero-Defect Quality**: บังคับใช้ Quality Gates (80% coverage) และ Clean Architecture อย่างเข้มงวด
+- **Sub-second Performance**: Latency สำหรับการค้นหาต้อง < 100ms (p95) และการวิเคราะห์ข้อมูลต้อง < 1,000ms
+- **Distributed Reliability**: การประมวลผล Kafka ต้องเป็นแบบ Idempotent และรองรับ Bulk Indexing ที่อัตรา > 10,000 docs/sec
+- **Premium Observability**: สถาปัตยกรรมต้องเปิดเผยสถานะภายใน (Internal State) ผ่าน Dashboard รวมถึง Sync Lag และ Cluster Health
 
 **Scale & Complexity:**
-- **Primary domain**: Fintech / Enterprise API
-- **Complexity level**: High (Distributed Systems)
-- **Estimated architectural components**: ~8-10 modules (Auth, Kafka, Revenue, Analytics, Audit, etc.)
+- โครงสร้างข้อมูลมีความซับซ้อนสูง เนื่องจากต้องจัดการ Mapping และ Analyzers ใน Elasticsearch ให้สอดคล้องกับธุรกิจ Fintech
+- ต้องจัดการกับข้อมูลปริมาณมหาศาล (1M - 10M records) โดยไม่ลดทอนประสิทธิภาพ
+
+- Primary domain: Fintech + Search & Analytics Engine
+- Complexity level: High (Event-driven, Big Data Indexing)
+- Estimated architectural components: ~6-8 Core Services (Ingestion, Search API, Analytics, Sync Monitor, etc.)
 
 ### Technical Constraints & Dependencies
-- **Runtime**: NestJS (Node.js)
-- **Data**: Prisma ORM / PostgreSQL
-- **Messaging**: Apache Kafka (Real-time processing)
-- **Identity**: Keycloak (OIDC Provider)
-- **Documentation**: Scalar UI
+
+- **Platform Constraints**: ต้องทำงานภายใต้ Bun Runtime และ NestJS v11
+- **Data Foundation**: PostgreSQL 17 (Source of Truth) และ Elasticsearch 8.x (Read Model)
+- **Infrastructure**: ต้องรันผ่าน Docker Compose ทั้งหมดสำหรับการพัฒนาในเครื่อง (Local Dev)
+- **Legacy Integration**: ต้องบูรณาการเข้ากับระบบ Service Registry เดิมที่มีอยู่แล้วในระบบ
 
 ### Cross-Cutting Concerns Identified
-- **Distributed Idempotency**: การป้องกันการคำนวณซ้ำซ้อนในสถาปัตยกรรมแบบ Event-driven
-- **Observability**: การใช้ Correlation IDs และ Structured Logging เพื่อติดตาม Transaction ตั้งแต่ต้นจนจบ
-- **Global Error Handling**: การส่งกลับ Rich Error Objects ตามมาตรฐาน UX Spec
+
+- **Schema Evolution**: การจัดการเมื่อ Schema ใน Postgres เปลี่ยนแปลงและต้องอัปเดต Elastic Index Mapping
+- **Error Propagation**: การจัดการข้อผิดพลาดในระบบ Distributed (เช่น Kafka ล่ม หรือ Elastic Index เต็ม)
+- **Performance Budgeting**: การควบคุม Resource usage ของ Elasticsearch ไม่ให้กระทบกับ Service อื่นๆ ในเครื่อง
 
 ## Starter Template Evaluation
 
 ### Primary Technology Domain
 
-API/Backend (NestJS) based on project requirements analysis.
+**Full-stack (API-heavy Backend with Motion-rich Frontend)** based on project requirements analysis.
 
 ### Starter Options Considered
 
-- **NestJS CLI (Official)**: Standard Express-based setup. Best for "Senior Showcase" due to flexibility and stability.
-- **NestJS Fastify**: High-performance alternative, but the user opted for the standard Express adapter for now to ensure compatibility and standard patterns.
+- **NestJS CLI (Official)**: มาตรฐานสำหรับการพัฒนา Backend ระดับ Enterprise รองรับการขยายตัว (Scalability) ได้ดีที่สุด
+- **Vite React-TS Template**: มาตรฐานสำหรับการพัฒนา Frontend ที่รวดเร็วและรองรับ React 19 ได้อย่างสมบูรณ์
+- **Aceternity UI / Magic UI (Optional)**: สำหรับใช้เป็น Library เสริมในส่วนของ Motion Components
 
-### Selected Starter: NestJS CLI (Standard Express)
+### Selected Starter: NestJS CLI + Vite React-TS
 
 **Rationale for Selection:**
-The user has already initialized the project using the official NestJS CLI. This provides a clean, standard foundation that aligns with the requirement for "Senior Level" showcase development, allowing for full control over subsequent integrations (Prisma, Kafka, Keycloak).
+เนื่องจากโปรเจกต์ต้องการแสดงความเป็น "Senior Showcase" การใช้เครื่องมือมาตรฐาน (Standard CLI) แล้วนำมาบูรณาการเทคโนโลยีที่ซับซ้อน (Kafka, Elasticsearch, Framer Motion) ด้วยตนเอง จะแสดงให้เห็นถึงความเข้าใจในระดับรากฐานได้ดีกว่าการใช้ Boilerplate สำเร็จรูปที่มีความซับซ้อนเกินไป
 
-**Initialization Command:**
+**Initialization Commands:**
 
+**Backend (Manual Setup for Elastic):**
 ```bash
-nest new sr-be-node-nest
+# Add Elasticsearch to existing NestJS project
+bun add @nestjs/elasticsearch @elastic/elasticsearch
+```
+
+**Frontend (Modern Stack Setup):**
+```bash
+# Set up modern frontend stack
+bun install framer-motion tailwindcss @tailwindcss/vite
 ```
 
 **Architectural Decisions Provided by Starter:**
 
 **Language & Runtime:**
-- TypeScript v5.x with default strictness.
-- Node.js environment.
+- **Bun v1.2+**: เป็น Runtime หลักเพื่อประสิทธิภาพสูงสุด
+- **TypeScript v5.x**: พร้อม Strict Null Checks และ Named Exports
 
 **Styling Solution:**
-- N/A (Backend API).
+- **Tailwind CSS v4.0**: ใช้ CSS-first approach และรองรับการทำ Glassmorphism ได้ง่ายขึ้น
 
 **Build Tooling:**
-- Webpack (Nest CLI default).
+- **Vite v8.0**: เพื่อความรวดเร็วในขั้นตอน Development และการทำ HMR
 
 **Testing Framework:**
-- Jest (configured for unit and e2e tests).
+- **Jest (Backend) & Vitest (Frontend)**: เพื่อรักษามาตรฐาน Coverage > 80%
 
 **Code Organization:**
-- Standard NestJS Modular Architecture (src/main.ts, app.module.ts).
+- **Feature-based Modular Structure**: แยกส่วนงานตาม Bounded Context (Search, Sync, Analytics)
 
 **Development Experience:**
-- Hot reloading via npm run start:dev.
-- Linting and formatting (ESLint/Prettier).
+- **Docker Compose**: สำหรับการจัดการ Infrastructure (Postgres, Kafka, Elastic) ทั้งหมดในจุดเดียว
 
-**Note:** Project initialization has been completed as the foundation for the architectural decisions.
+**Note:** Project initialization using these commands should be the first implementation story.
 
 ## Core Architectural Decisions
 
 ### Decision Priority Analysis
 
 **Critical Decisions (Block Implementation):**
-- **Data Foundation**: ใช้ PostgreSQL 17 และ Prisma v7.8.0 ร่วมกับ `nestjs-zod` สำหรับการทำ Schema Validation ที่เข้มงวด
-- **Security Backbone**: ใช้ Keycloak (OIDC) ร่วมกับ API Key Strategy (Custom Guard) เพื่อความปลอดภัยระดับ Enterprise
-- **Event-Driven Core**: ใช้ Kafka ผ่าน NestJS Microservices และระบบ Idempotency เพื่อความแม่นยำของข้อมูลรายได้
+- **Elasticsearch Indexing Strategy**: ใช้ **Manual Mapping** ร่วมกับ **Custom Analyzers (Edge N-gram)** เพื่อความแม่นยำของระบบ Autocomplete ใน Command Palette
+- **Event-Driven CDC Pattern**: ใช้ **Kafka** เป็นตัวกลางในการ Sync ข้อมูลจาก PostgreSQL ไปยัง Elasticsearch แบบ Real-time โดยใช้ **Hard Delete** ใน Elastic เมื่อข้อมูลต้นทางถูกลบ (เพื่อความสะอาดของ Read Model)
+- **High-Performance Analytics**: ใช้ **Elasticsearch Aggregations** สำหรับหน้า Dashboard เพื่อแสดงผลสถิติแบบ Real-time บนข้อมูล 1M+ records
 
 **Important Decisions (Shape Architecture):**
-- **Orchestration**: แยก Infrastructure (DB, Keycloak, Kafka) ออกเป็น Docker Containers เพื่อความง่ายในการจัดการ
-- **Quality Standards**: บังคับใช้ Quality Gates ผ่าน Lefthook, Jest และ Supertest (E2E)
-- **Observability**: ใช้ Pino สำหรับ Structured Logging และ Correlation IDs ทั่วทั้งระบบ
+- **Unified Search API**: ออกแบบ Endpoint เดียวที่รองรับการค้นหาข้าม Entity (Cross-entity Search) เพื่อรองรับประสบการณ์การใช้งานแบบ Command Palette
+- **Server-Sent Events (SSE)**: ใช้สำหรับการทำ Live Activity Feed เพื่อลดความซับซ้อนและประหยัด Resource เมื่อเทียบกับ WebSockets
 
 ### Data Architecture
-- **Database**: PostgreSQL 17 (LTS) - รันผ่าน Docker
-- **ORM**: Prisma v7.8.0 - เน้น Type-safety และประสิทธิภาพการ Query 1M+ Records
-- **Validation**: `nestjs-zod` - ป้องกันข้อมูลผิดพลาดตั้งแต่ระดับ Entry point
-- **Migration**: Prisma Migrate
+
+- **Elasticsearch (v8.17.3)**: ทำหน้าที่เป็น Read Model หลักสำหรับการค้นหาและวิเคราะห์ข้อมูล
+- **Manual Mapping**: กำหนดฟิลด์ `keyword` สำหรับ ID/Status และ `text` พร้อม `edge_ngram` analyzer สำหรับชื่อและคำค้นหา
+- **Bulk Indexing**: ใช้ระบบ Batch Processing ผ่าน Kafka เพื่อรองรับการนำเข้าข้อมูลขนาดใหญ่ (>10,000 docs/sec)
 
 ### Authentication & Security
-- **Identity Provider**: Keycloak v26.6.1 (Dockerized)
-- **Integration**: `nest-keycloak-connect` สำหรับการจัดการสิทธิ์ User/Admin
-- **Service Access**: API Key Guard พร้อมการเก็บ Key แบบ Hashed ใน Database และระบบ Scopes
-- **Encryption**: ข้อมูลที่อ่อนไหวจะถูกเข้ารหัสตามมาตรฐาน TLS 1.2+ และ DB Hashing
+
+- **Keycloak OIDC**: จัดการ Identity ทั่วทั้งระบบ โดย Elasticsearch Search API จะต้องมีการตรวจสอบสิทธิ์ (RBAC) ก่อนการเข้าถึง
+- **Data Masking**: บังคับใช้ในระดับ Service Layer ก่อนส่งผลลัพธ์การค้นหาจาก Elasticsearch กลับไปยังผู้ใช้
 
 ### API & Communication Patterns
-- **Messaging**: Apache Kafka v4.2.0 - ประมวลผลธุรกรรมแบบ Asynchronous
-- **Idempotency**: ระบบตรวจสอบ Message ID เพื่อป้องกันการคำนวณซ้ำ
-- **Documentation**: Scalar UI (`@scalar/nestjs`) - เน้นประสบการณ์ที่ดีของนักพัฒนา
-- **Consistency**: Global Exception Filter สำหรับการส่งกลับ Standard JSON Envelope
+
+- **Search API (REST)**: รองรับพารามิเตอร์ `q` (query), `filters`, และ `page` โดยส่งกลับผลลัพธ์ในรูปแบบ Standard Envelope
+- **Sync Lag Monitoring**: มี API พิเศษสำหรับตรวจสอบความหน่วงระหว่าง PostgreSQL และ Elasticsearch เพื่อความโปร่งใสในระบบ Distributed
 
 ### Infrastructure & Deployment
-- **Local Dev**: Docker Compose สำหรับรัน Services ทั้งหมด
-- **Quality Control**: Lefthook (Git Hooks) และ 80% Test Coverage Target (Jest + Supertest)
-- **Observability**: Pino Logging + Correlation IDs สำหรับการทำ Transaction Tracing
-- **Config**: NestJS ConfigModule พร้อม Zod Validation สำหรับ `.env`
 
+- **Docker-Compose Environment**: Infrastructure ทั้งหมด (Postgres, Kafka, Elastic 8.17.3, Keycloak) รันผ่าน Docker เพื่อความง่ายในการพัฒนาและ Demo
+- **Health Indicators**: ทุก Service ต้องมี `/health` endpoint ที่ตรวจสอบสถานะการเชื่อมต่อกับ Elasticsearch และ Kafka
 
 ## Implementation Patterns & Consistency Rules
+
+### Pattern Categories Defined
+
+**Critical Conflict Points Identified:** 12 areas where AI agents could make different choices (Naming, Indexing, Sync Logic, etc.)
 
 ### Naming Patterns
 
 **Database Naming Conventions:**
-- **Tables**: `PascalCase` (เช่น `Invoice`, `SupplierRevenue`)
-- **Columns**: `camelCase` (เช่น `invoiceId`, `totalAmount`)
-- **Indexes**: `idx_{tableName}_{columnName}`
+- **Postgres Tables**: `PascalCase` (เช่น `ProcessedEvent`)
+- **Postgres Columns**: `camelCase` (เช่น `eventId`)
+- **Elasticsearch Indices**: `kebab-case` พร้อม versioning (เช่น `transactions-v1`)
 
 **API Naming Conventions:**
-- **Endpoints**: `kebab-case` และเป็นพหูพจน์ (เช่น `/v1/supplier-revenues`)
+- **Endpoints**: `kebab-case` พหูพจน์ (เช่น `/v1/search-analytics`)
 - **Query Params**: `camelCase`
-- **Versioning**: ต้องมี `v1/` นำหน้าเสมอ
 
 **Code Naming Conventions:**
-- **Files**: `kebab-case` พร้อม suffix (เช่น `revenue.controller.ts`, `create-revenue.dto.ts`)
-- **Classes**: `PascalCase` (เช่น `RevenueService`)
-- **Methods/Variables**: `camelCase`
+- **Files**: `kebab-case.suffix.ts` (เช่น `elastic-sync.service.ts`)
+- **Classes/Interfaces**: `PascalCase` (เช่น `SearchResponseDto`)
 
 ### Structure Patterns
 
 **Project Organization:**
-- **Modular Architecture**: แยกตาม Feature (Domain-driven modules)
-- **Shared**: Utilities ทั่วไปเก็บใน `src/common` หรือ `src/shared`
+- **Feature Modules**: เก็บไว้ใน `src/modules/{feature_name}`
+- **Search Definitions**: Mapping และ Analyzers เก็บใน `src/modules/search/definitions/`
 
 **File Structure Patterns:**
-- **Tests**: Unit tests (`.spec.ts`) อยู่คู่กับไฟล์โค้ด, Integration/E2E อยู่ใน `test/`
-- **DTOs**: อยู่ในโฟลเดอร์ `dto/` ภายในแต่ละ module
+- **Unit Tests**: อยู่คู่กับไฟล์หลัก (เช่น `search.service.spec.ts`)
+- **DTOs**: อยู่ในโฟลเดอร์ `dto/` ภายในแต่ละโมดูล
 
 ### Format Patterns
 
 **API Response Formats:**
-- ใช้ **Standard Envelope** ทุกครั้ง: `{ "success": true, "data": {}, "meta": {}, "error": null }`
-- **Error Format**: `{ "code": "STRING", "message": "Human readable", "details": [] }`
+- ใช้ออบเจกต์มาตรฐาน: `{ success: boolean, data: T, meta: any, error: any }`
 
 **Data Exchange Formats:**
-- **Date/Time**: ISO 8601 (UTC)
-- **JSON Fields**: `camelCase`
+- **JSON**: `camelCase` สำหรับคีย์ทั้งหมด
+- **Date/Time**: ISO 8601 (UTC) เสมอ
 
 ### Communication Patterns
 
-**Event System Patterns (Kafka):**
-- **Event Naming**: `domain.action` (เช่น `invoice.paid`)
-- **Payload**: ต้องมี `correlationId` และ `timestamp` เสมอ
+**Event System Patterns:**
+- **Topic Naming**: `showcase.{domain}.{action}`
+- **Payload**: ต้องมี `correlationId`, `timestamp`, และ `actorId`
 
 ### Process Patterns
 
 **Error Handling Patterns:**
-- ใช้ **Global Exception Filter** เพื่อแปลง Error ทั้งหมดให้เป็น Standard Envelope
-- ห้ามใช้ `try-catch` แบบว่างเปล่า ต้องมี Logging (Pino) เสมอ
+- ใช้ **nestjs-pino** สำหรับการ Log ทุก Error พร้อม `correlationId`
+- ห้ามคืนค่า Stack Trace ไปยัง Client
 
+**Enforcement Guidelines:**
+- ทุก AI Agent ต้องทำการเช็ค Idempotency ก่อนการประมวลผล Kafka Event
+- ห้ามใช้ Default Export โดยเด็ดขาด
 
 ## Project Structure & Boundaries
 
@@ -186,65 +200,97 @@ nest new sr-be-node-nest
 ```text
 sr-be-node-nest/
 ├── src/
-│   ├── main.ts                 # Entry point & Scalar UI Config
-│   ├── app.module.ts           # Root Module
-│   ├── common/                 # Shared logic across modules
-│   │   ├── decorators/         # Custom decorators (e.g. @GetUser)
-│   │   ├── filters/            # Global Exception Filters (Envelope Standard)
-│   │   ├── guards/             # API Key Guard, Keycloak Guards
-│   │   ├── interceptors/       # Logging & Transform Interceptors
-│   │   ├── middleware/         # Correlation ID Middleware
-│   │   └── utils/              # Helper functions
-│   ├── config/                 # Zod-validated Environment Config
-│   ├── modules/                # Feature-based Modules (Bounded Contexts)
-│   │   ├── auth/               # Keycloak & User Management
-│   │   ├── revenue/            # Revenue Calculation & Idempotency
-│   │   ├── invoice/            # Invoice & Payment tracking
-│   │   ├── analytics/          # High-performance Analytics
-│   │   └── kafka/              # Shared Kafka Producer/Consumer logic
-│   └── shared/                 # Shared Services (e.g. PrismaService, PinoService)
+│   ├── main.ts                     # Entry point & Scalar UI Config
+│   ├── app.module.ts               # Root Module
+│   ├── common/                     # Global Shared logic
+│   │   ├── decorators/             # @Public(), @Roles()
+│   │   ├── filters/                # Global Exception Filters (Envelope Standard)
+│   │   ├── guards/                 # Keycloak Guards
+│   │   ├── interceptors/           # Pino Logging & Transform Interceptors
+│   │   └── utils/                  # fetchApi, string helpers
+│   ├── config/                     # Zod-validated Environment Config
+│   ├── modules/                    # Feature-based Modules
+│   │   ├── auth/                   # Keycloak & RBAC logic
+│   │   ├── search/                 # Command Palette & Search API
+│   │   │   ├── definitions/        # Elasticsearch Mappings & Analyzers
+│   │   │   ├── search.controller.ts
+│   │   │   └── search.service.ts
+│   │   ├── sync/                   # Kafka CDC & Bulk Ingestion Engine
+│   │   │   ├── kafka.consumer.ts
+│   │   │   └── elastic-sync.service.ts
+│   │   ├── analytics/              # Aggregations & Insight Engine
+│   │   └── health/                 # Sync Lag & Cluster Status Monitoring
+│   └── shared/                     # Cross-module shared services (PrismaService, ElasticService)
 ├── prisma/
-│   ├── schema.prisma           # Database Schema (PostgreSQL)
-│   └── seed.ts                 # Large Dataset Seeding (1M+ records)
+│   ├── schema.prisma               # PostgreSQL Schema (Source of Truth)
+│   └── seed.ts                     # 1M+ Records Seeding logic
+├── docker/
+│   ├── docker-compose.yml          # Postgres, Kafka, Elastic 8.17.3, Kibana
+│   └── elasticsearch.yml           # Custom Elastic configuration
 ├── test/
-│   ├── e2e/                    # Supertest scenarios
-│   └── fixtures/               # Test data
-├── docker-compose.yml          # Postgres, Keycloak, Kafka, Zookeeper
-├── lefthook.yml                # Pre-commit Quality Gates
-└── .env.example
+│   ├── e2e/                        # Cross-module integration tests
+│   └── fixtures/                   # Shared test data
+├── .env.example
+├── lefthook.yml                    # Quality Gate configuration
+└── README.md
 ```
-
-### Requirements to Structure Mapping
-
-- **Identity & Access (FR1-3)**: จัดการใน `modules/auth/` และ `common/guards/`
-- **Event-Driven Revenue (FR4-10)**: หัวใจสำคัญอยู่ที่ `modules/revenue/` โดยใช้ `modules/kafka/` เป็นทางผ่านข้อมูล
-- **Invoice Management (FR11-14)**: จัดการใน `modules/invoice/`
-- **Enterprise Analytics (FR15-18)**: ใช้ `modules/analytics/` ในการทำ Query ข้อมูลขนาดใหญ่ (Materialized Views/Complex SQL)
-- **API Documentation (FR19)**: ตั้งค่าที่ `main.ts` โดยใช้ Scalar UI
 
 ### Architectural Boundaries
 
-- **Internal Boundary**: แต่ละ Module ใน `modules/` จะต้องคุยกันผ่าน **Services** เท่านั้น (Dependency Injection) ห้ามข้ามไปใช้ Controller ของกันและกัน
-- **Data Boundary**: Prisma Client จะถูกห่อหุ้มด้วย `PrismaService` ใน `shared/` เพื่อให้ทุก Module ใช้สิทธิ์การเข้าถึงฐานข้อมูลผ่านจุดเดียว
-- **External Boundary**: การติดต่อกับโลกภายนอก (Kafka/Keycloak) จะถูกจัดกลุ่มไว้ใน Module เฉพาะทาง เพื่อให้ง่ายต่อการ Mock ตอนทำ Testing
+**API Boundaries:**
+- **External API**: ทุก API ต้องเข้าถึงผ่าน `/v1/` และถูกปกป้องด้วย Keycloak Guard หรือ API Key Guard
+- **Data Boundary**: PostgreSQL คือ Source of Truth เพียงหนึ่งเดียว ส่วน Elasticsearch เป็น Read-only Model สำหรับ Search/Analytics เท่านั้น
 
+**Service Boundaries:**
+- การสื่อสารข้าม Module ต้องผ่าน **Service Injection** เท่านั้น ห้าม Module หนึ่งเรียกใช้ Controller ของอีก Module หนึ่งโดยตรง
+- Shared Services (Prisma, Elasticsearch Client) จะถูกรวบรวมไว้ใน `shared/` module เพื่อการจัดการ Lifecycle ที่ดี
+
+### Requirements to Structure Mapping
+
+**Feature/Epic Mapping:**
+- **Search Experience (FR1-6)**: `src/modules/search/`
+- **Real-time Sync (FR7-12)**: `src/modules/sync/`
+- **Analytics (FR13-16)**: `src/modules/analytics/`
+- **Health Monitoring (FR17-18)**: `src/modules/health/`
+
+### Integration Points
+
+**Internal Communication:**
+- ใช้ **Event-driven architecture (Kafka)** สำหรับการซิงค์ข้อมูลข้ามระบบเพื่อลดความหน่วงในขั้นตอน Write operation ของฐานข้อมูลหลัก
+
+**Data Flow:**
+1. User สร้างข้อมูล -> **Postgres** (ACID Transaction)
+2. Postgres -> **Kafka Event** (Producer)
+3. Kafka -> **Sync Engine** (Consumer)
+4. Sync Engine -> **Elasticsearch** (Bulk Indexing)
+5. User ค้นหา -> **Search API** -> **Elasticsearch** (Sub-second Read)
 
 ## Architecture Validation Results
 
 ### Coherence Validation ✅
-- **Decision Compatibility**: เทคโนโลยีทั้งหมด (NestJS, Prisma, Kafka, Keycloak) เป็นมาตรฐาน Enterprise ที่ทำงานร่วมกันได้ดีเยี่ยม
-- **Pattern Consistency**: กฎการตั้งชื่อและโครงสร้างไฟล์สอดคล้องกับแนวทาง Modular Architecture ของ NestJS
-- **Structure Alignment**: โครงสร้างโฟลเดอร์รองรับทั้งการสเกลข้อมูล และการประมวลผลแบบ Event-driven
+
+**Decision Compatibility:** เทคโนโลยีทั้งหมดเป็นมาตรฐาน Enterprise และรองรับการทำงานแบบ Distributed ร่วมกันได้ดีเยี่ยม โดยเฉพาะการใช้ Kafka เป็นตัวกลางระหว่าง PostgreSQL และ Elasticsearch
+**Pattern Consistency:** กฎการตั้งชื่อและโครงสร้างไฟล์สอดคล้องกันทั่วทั้งระบบ ช่วยลดโอกาสเกิด Code Conflict ระหว่าง AI Agents
+**Structure Alignment:** โครงสร้างโฟลเดอร์รองรับการขยายตัว (Scalability) และแยกส่วนการทำงาน (Decoupling) ได้อย่างชัดเจน
 
 ### Requirements Coverage Validation ✅
-- **Functional Requirements**: ทุกข้อ (FR1-19) มีที่อยู่อย่างชัดเจนใน Module ต่างๆ
-- **Non-Functional Requirements**: รองรับประสิทธิภาพด้วย Postgres 17 และความปลอดภัยด้วย Keycloak OIDC
+
+**Feature/Epic Coverage:** ทุกฟีเจอร์หลัก (Search, Sync, Analytics) มีโมดูลรองรับอย่างชัดเจน
+**Functional Requirements Coverage:** FR1-19 ได้รับการตรวจสอบและยืนยันว่ามี Architectural Support ครบทุกข้อ
+**Non-Functional Requirements Coverage:** รองรับ Performance (<100ms) ด้วย Elasticsearch Indexing และรองรับ Reliability ด้วย Kafka Idempotency
 
 ### Implementation Readiness Validation ✅
-- **Overall Status**: **READY FOR IMPLEMENTATION**
-- **Confidence Level**: High
+
+**Decision Completeness:** การตัดสินใจที่สำคัญทั้งหมด (Versions, Mapping, Sync Logic) ถูกบันทึกไว้อย่างครบถ้วน
+**Structure Completeness:** โครงสร้างโฟลเดอร์มีความเฉพาะเจาะจงและพร้อมสำหรับการเริ่มโปรเจกต์
+**Pattern Completeness:** กำหนดรูปแบบการสื่อสารและจัดการข้อผิดพลาดไว้ชัดเจน
+
+### Gap Analysis Results
+- **Critical Gaps**: None
+- **Important Gaps**: รายละเอียดปลิดย่อยของ Kafka Topic Configuration (เช่น Partitions, Retention) สามารถกำหนดได้ในขั้นตอน Implementation
 
 ### Architecture Completeness Checklist
+
 - [x] Project context thoroughly analyzed
 - [x] Scale and complexity assessed
 - [x] Technical constraints identified
@@ -262,13 +308,25 @@ sr-be-node-nest/
 - [x] Integration points mapped
 - [x] Requirements to structure mapping complete
 
+### Architecture Readiness Assessment
+
+**Overall Status:** **READY FOR IMPLEMENTATION**
+**Confidence Level:** High
+
+**Key Strengths:**
+- การใช้ Event-driven CDC ที่ช่วยให้ข้อมูลสดใหม่อยู่เสมอ
+- การออกแบบ Search Engine ที่เน้น User Experience (Cmd+K)
+- มาตรฐานคุณภาพโค้ดที่เข้มงวด (Quality Gates & Idempotency)
+
 ### Implementation Handoff
 
 **AI Agent Guidelines:**
-- Follow all architectural decisions exactly as documented
-- Use implementation patterns consistently across all components
-- Respect project structure and boundaries
+- ปฏิบัติตามกฎการตั้งชื่อและโครงสร้างที่กำหนดไว้อย่างเคร่งครัด
+- ทุกการประมวลผลข้อมูลต้องมีการตรวจสอบ Idempotency
+- รักษาคุณภาพโค้ดด้วยการเขียน Unit Test ควบคู่เสมอ (Coverage > 80%)
 
 **First Implementation Priority:**
-- Initialize Docker Compose with PostgreSQL, Keycloak, and Kafka.
-
+```bash
+# Initialize project with Elasticsearch and Kafka support
+bun add @nestjs/elasticsearch @elastic/elasticsearch kafkajs
+```

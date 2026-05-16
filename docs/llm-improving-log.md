@@ -2,8 +2,9 @@
 
 ### Technical Resolutions (2026-05-16)
 
-- **Elasticsearch v9 Integration:** `indices.create` no longer uses a `body` property; parameters are flattened (e.g., `settings`, `mappings` are top-level). Use `as any` or strict literal types to satisfy TS for complex nested objects.
-- **E2E Testing:** Services that initialize connections (like Elasticsearch) should skip `onModuleInit` logic in test mode (`process.env.NODE_ENV === 'test'`) or be explicitly mocked to prevent timeouts in global `AppModule` tests.
+- **Elasticsearch v9 Integration:** `indices.create` no longer uses a `body` property; parameters are flattened.
+- **Fuzzy Search:** `multi_match` with `fuzziness: 'AUTO'` and `prefix_length: 2` provides good balance between typo tolerance and performance. Boosting critical fields (e.g., `invoiceNumber^3`) improves result relevance.
+- **E2E Testing:** Use `MockGuard` and `MockAuthModule` to bypass Keycloak in E2E tests. Ensure versioning is enabled in the test app if the controller uses `@Version`.
 
 ### Technical Resolutions (2026-05-11)
 

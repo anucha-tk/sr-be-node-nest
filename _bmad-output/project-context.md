@@ -32,6 +32,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - **Frontend:** React v19.2.6, Vite v8.0.12
 - **Database & ORM:** Prisma v7.8.0, PostgreSQL 17
 - **Messaging:** Apache Kafka (KafkaJS v2.2.4)
+- **Search:** Elasticsearch v9.4.0
 
 ### Key Dependencies
 
@@ -128,4 +129,4 @@ _This file contains critical rules and patterns that AI agents must follow when 
 - Review quarterly for outdated rules.
 - Remove rules that become obvious over time.
 
-Last Updated: 2026-05-13
+Last Updated: 2026-05-16

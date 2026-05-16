@@ -6,6 +6,7 @@ import { Global, Module, Injectable, CanActivate } from '@nestjs/common';
 import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 import { PrismaService } from './shared/prisma/prisma.service';
 import { ApiKeyService } from './modules/auth/services/api-key.service';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 @Injectable()
 class MockGuard implements CanActivate {
@@ -65,12 +66,19 @@ describe('AppModule', () => {
         $connect: jest.fn(),
         $disconnect: jest.fn(),
       })
+      .overrideProvider(ElasticsearchService)
+      .useValue({
+        indices: {
+          exists: jest.fn().mockResolvedValue(true),
+        },
+      })
       .overrideProvider(ConfigService)
       .useValue({
         get: jest.fn((key: string) => {
           if (key === 'NODE_ENV') return 'development';
           if (key === 'DATABASE_URL')
             return 'postgresql://postgres:postgres@localhost:5432/sr_be_db';
+          if (key === 'ELASTICSEARCH_NODE') return 'http://localhost:9200';
           return 'dummy';
         }),
       })

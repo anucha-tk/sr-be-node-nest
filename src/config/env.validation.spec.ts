@@ -26,6 +26,7 @@ describe('validateEnv', () => {
       KEYCLOAK_CLIENT_ID: 'sr-be-client',
       KAFKA_BROKERS: 'localhost:9092',
       KAFKA_CONSUMER_GROUP_ID: 'sr-consumer-group',
+      ELASTICSEARCH_NODE: 'http://localhost:9200',
     });
   });
 

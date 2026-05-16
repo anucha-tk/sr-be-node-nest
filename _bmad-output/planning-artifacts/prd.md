@@ -63,7 +63,7 @@ This project distinguishes itself through its focus on **"High-Complexity Tool I
 
 ### Phase 1: The "Search Master" (MVP)
 - **Goal**: Demonstrate core Elasticsearch capabilities and high-speed search UX.
-- **Must-Have Features**: Elasticsearch Cluster (v8.x) setup, Manual Mapping, N-gram/Edge N-gram analyzers, React-based Command Palette (Cmd+K), and Bulk indexing scripts for 1M records.
+- **Must-Have Features**: Elasticsearch Cluster (v9.x) setup, Manual Mapping, N-gram/Edge N-gram analyzers, React-based Command Palette (Cmd+K), and Bulk indexing scripts for 1M records.
 
 ### Phase 2: The "Activity Stream" (Growth)
 - **Goal**: Showcase distributed system expertise and near real-time data sync.

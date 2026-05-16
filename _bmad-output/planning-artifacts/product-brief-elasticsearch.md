@@ -27,7 +27,7 @@
 *   **UI Focus:** Recharts Integration และ Interactive filters (Facets).
 
 ## 4. Technical Architecture
-*   **Infrastructure:** Elasticsearch 8.x + Kibana (Dockerized)
+*   **Infrastructure:** Elasticsearch 9.4.0 + Kibana (Dockerized)
 *   **Backend:** NestJS + `@nestjs/elasticsearch` + Prisma (as Source of Truth)
 *   **Frontend:** React 19 + Vite + Tailwind 4 + Framer Motion
 *   **Integration:** ใช้ **Prisma Middleware** หรือ **Service Events** เพื่อ Sync ข้อมูลจาก PostgreSQL ไปยัง Elasticsearch (CDC Pattern)

@@ -13,6 +13,7 @@ import { InvoiceModule } from './modules/invoice/invoice.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ObservabilityModule } from './modules/observability/observability.module';
+import { SearchModule } from './modules/search/search.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validateEnv } from './config/env.validation';
@@ -62,6 +63,7 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
     AnalyticsModule,
     NotificationsModule,
     ObservabilityModule,
+    SearchModule,
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => [

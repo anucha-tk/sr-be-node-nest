@@ -8,6 +8,7 @@
 - **Runtime:** Node.js (v24) / [Bun](https://bun.sh/) (Recommended for development scripts)
 - **Database:** PostgreSQL (v17) ผ่าน Prisma (v7.8.0)
 - **Messaging:** Kafka (v4)
+- **Search Engine:** Elasticsearch (v9.4.0) + Kibana (v9.4.0)
 - **Observability:**
   - **Metrics:** Prometheus + prom-client
   - **Tracing:** OpenTelemetry + Jaeger

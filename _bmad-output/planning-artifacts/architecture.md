@@ -39,7 +39,7 @@ _This document builds collaboratively through step-by-step discovery. Sections a
 ### Technical Constraints & Dependencies
 
 - **Platform Constraints**: ต้องทำงานภายใต้ Bun Runtime และ NestJS v11
-- **Data Foundation**: PostgreSQL 17 (Source of Truth) และ Elasticsearch 8.x (Read Model)
+- **Data Foundation**: PostgreSQL 17 (Source of Truth) และ Elasticsearch 9.4.0 (Read Model)
 - **Infrastructure**: ต้องรันผ่าน Docker Compose ทั้งหมดสำหรับการพัฒนาในเครื่อง (Local Dev)
 - **Legacy Integration**: ต้องบูรณาการเข้ากับระบบ Service Registry เดิมที่มีอยู่แล้วในระบบ
 
@@ -118,7 +118,7 @@ bun install framer-motion tailwindcss @tailwindcss/vite
 
 ### Data Architecture
 
-- **Elasticsearch (v8.17.3)**: ทำหน้าที่เป็น Read Model หลักสำหรับการค้นหาและวิเคราะห์ข้อมูล
+- **Elasticsearch (v9.4.0)**: ทำหน้าที่เป็น Read Model หลักสำหรับการค้นหาและวิเคราะห์ข้อมูล
 - **Manual Mapping**: กำหนดฟิลด์ `keyword` สำหรับ ID/Status และ `text` พร้อม `edge_ngram` analyzer สำหรับชื่อและคำค้นหา
 - **Bulk Indexing**: ใช้ระบบ Batch Processing ผ่าน Kafka เพื่อรองรับการนำเข้าข้อมูลขนาดใหญ่ (>10,000 docs/sec)
 
@@ -134,7 +134,7 @@ bun install framer-motion tailwindcss @tailwindcss/vite
 
 ### Infrastructure & Deployment
 
-- **Docker-Compose Environment**: Infrastructure ทั้งหมด (Postgres, Kafka, Elastic 8.17.3, Keycloak) รันผ่าน Docker เพื่อความง่ายในการพัฒนาและ Demo
+- **Docker-Compose Environment**: Infrastructure ทั้งหมด (Postgres, Kafka, Elastic 9.4.0, Keycloak) รันผ่าน Docker เพื่อความง่ายในการพัฒนาและ Demo
 - **Health Indicators**: ทุก Service ต้องมี `/health` endpoint ที่ตรวจสอบสถานะการเชื่อมต่อกับ Elasticsearch และ Kafka
 
 ## Implementation Patterns & Consistency Rules
@@ -225,7 +225,7 @@ sr-be-node-nest/
 │   ├── schema.prisma               # PostgreSQL Schema (Source of Truth)
 │   └── seed.ts                     # 1M+ Records Seeding logic
 ├── docker/
-│   ├── docker-compose.yml          # Postgres, Kafka, Elastic 8.17.3, Kibana
+│   ├── docker-compose.yml          # Postgres, Kafka, Elastic 9.4.0, Kibana
 │   └── elasticsearch.yml           # Custom Elastic configuration
 ├── test/
 │   ├── e2e/                        # Cross-module integration tests

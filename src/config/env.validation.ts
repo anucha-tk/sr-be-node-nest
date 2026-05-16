@@ -26,6 +26,9 @@ export const envSchema = z.object({
   // Throttler
   GLOBAL_THROTTLE_TTL: z.coerce.number().default(60),
   GLOBAL_THROTTLE_LIMIT: z.coerce.number().default(100),
+
+  // Elasticsearch
+  ELASTICSEARCH_NODE: z.url().default('http://localhost:9200'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

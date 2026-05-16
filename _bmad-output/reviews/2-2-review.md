@@ -1,43 +1,36 @@
-# Code Review Report: 2-2-idempotent-revenue-engine
+# Review Report: 2.2 - Command Palette Search API
 
-## 📋 Story Context
+## Story Information
+- **Story**: 2.2 - Command Palette Search API (Fuzzy & Multi-match)
+- **Status**: review
+- **Reviewer**: AI Agent (Adversarial Mode)
 
-- **Story:** 2-2-idempotent-revenue-engine
-- **Status:** Review
-- **Reviewer:** BMad Adversarial Auditor
+## Adversarial Layers
 
-## 🎯 Acceptance Criteria Audit
+### 1. Blind Hunter (Structural & Patterns)
+- **NestJS Patterns**: Correct use of Modules, Controllers, and Services.
+- **Dependency Injection**: `ElasticsearchService` injected correctly.
+- **Versioning**: `@Controller({ path: 'search', version: '1' })` correctly implements URI versioning (`/v1/search`).
+- **DTOs**: `SearchQueryDto` uses Zod for validation.
 
-- [x] Checks `ProcessedEvent` table for `eventId` (idempotency).
-- [x] Updates `SupplierRevenue` in ACID transaction.
-- [x] Skips duplicate events without balance change.
+### 2. Edge Case Hunter (Robustness)
+- **Empty Query**: Handled by `SearchQueryDto` (`min(1)`). Returns 400.
+- **Elastic Failure**: `search` method throws, handled by global `HttpExceptionFilter`.
+- **Typo Tolerance**: `fuzziness: 'AUTO'` and `prefix_length: 2` provide balanced typo tolerance.
 
-## 🔍 Adversarial Findings
+### 3. Acceptance Auditor (Requirements)
+- [x] Returns fuzzy results.
+- [x] Multi-match across entities (Invoice, Supplier).
+- [x] Ranked by relevance score.
+- [x] Standard envelope with execution time.
 
-### 🔴 Critical Issues
+## Findings
 
-- None.
+| ID | Severity | Category | Description | Recommendation | Status |
+|----|----------|----------|-------------|----------------|--------|
+| 1 | Low | Type Safety | `(hit._source as any)` in `SearchService` | Define a `SearchResult` interface | Resolved |
+| 2 | Minor | Consistency | `SearchService.search` uses `SEARCH_INDEX_NAME` from definitions, consistent with initialization. | N/A | Pass |
 
-### 🟡 Warning Issues
-
-- **src/modules/revenue/revenue.service.ts**: Potential P2002 ambiguity. Catching P2002 inside the transaction callback and returning will result in the transaction COMMITTING. While this is acceptable here (as no other changes were made yet), it's a pattern to watch if the order of operations changes.
-- **prisma/schema.prisma**: `Decimal(20, 2)` precision. 20 digits is large, but ensure this covers all potential currency scales if non-USD currencies are introduced (e.g., zero-decimal currencies).
-
-### 🔵 Info / Style Issues
-
-- **src/modules/revenue/revenue.service.ts**: The use of `any` for error typing in the catch block should be replaced with `Prisma.PrismaClientKnownRequestError` for better type safety.
-
-## 🧪 Quality Gate Check
-
-- [x] Unit Tests exist and pass.
-- [x] Idempotency logic specifically tested in `revenue.service.spec.ts`.
-- [x] Standard Envelope compliance (via existing controller patterns).
-
-## 🏁 Final Recommendation
-
-**PASS WITH MINOR FIXES**
-The implementation is solid and satisfies the idempotency requirement. Recommend fixing the error typing in `RevenueService` for better maintainability.
-
----
-
-**Totals: 0🔴 2🟡 1🔵 0❓**
+## Final Triage
+- **Status**: APPROVED with minor notes.
+- **Action**: Fix findings if possible, then move to done.

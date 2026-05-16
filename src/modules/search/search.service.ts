@@ -6,6 +6,16 @@ import {
   SEARCH_INDEX_MAPPING,
 } from './definitions/search.index';
 
+interface SearchHit {
+  id: string;
+  type: string;
+  invoiceNumber?: string;
+  description?: string;
+  name?: string;
+  supplierName?: string;
+  [key: string]: any;
+}
+
 @Injectable()
 export class SearchService implements OnModuleInit {
   private readonly logger = new Logger(SearchService.name);
@@ -47,5 +57,31 @@ export class SearchService implements OnModuleInit {
       // Don't throw error here to allow application to start even if Elastic is down
       // but in production we might want to fail fast
     }
+  }
+
+  async search(query: string) {
+    const result = await this.elasticsearchService.search({
+      index: SEARCH_INDEX_NAME,
+      query: {
+        multi_match: {
+          query,
+          fields: ['invoiceNumber^3', 'name^3', 'description', 'supplierName'],
+          fuzziness: 'AUTO',
+          prefix_length: 2,
+        },
+      },
+    });
+
+    return {
+      hits: result.hits.hits.map((hit) => ({
+        ...(hit._source as SearchHit),
+        _score: hit._score,
+      })) as any[],
+      total:
+        typeof result.hits.total === 'object'
+          ? result.hits.total.value
+          : result.hits.total,
+      took: result.took,
+    };
   }
 }

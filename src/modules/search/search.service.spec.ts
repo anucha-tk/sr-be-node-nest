@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { SearchService } from './search.service';
 import { ElasticsearchService } from '@nestjs/elasticsearch';
@@ -34,7 +37,6 @@ describe('SearchService', () => {
   it('should create index with edge_ngram analyzer', async () => {
     await service.initializeIndex();
 
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
     expect(mockElasticsearchService.indices.create).toHaveBeenCalledWith(
       expect.objectContaining({
         index: expect.any(String),
@@ -58,13 +60,11 @@ describe('SearchService', () => {
         }),
       }),
     );
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment */
   });
 
   it('should define manual mapping for invoices and suppliers', async () => {
     await service.initializeIndex();
 
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment */
     expect(mockElasticsearchService.indices.create).toHaveBeenCalledWith(
       expect.objectContaining({
         mappings: expect.objectContaining({
@@ -89,7 +89,6 @@ describe('SearchService', () => {
         }),
       }),
     );
-    /* eslint-enable @typescript-eslint/no-unsafe-assignment */
   });
 
   it('should log if index already exists', async () => {
@@ -114,5 +113,65 @@ describe('SearchService', () => {
     expect(loggerSpy).toHaveBeenCalledWith(
       expect.stringContaining('Error initializing Elasticsearch index'),
     );
+  });
+
+  describe('search', () => {
+    const mockSearchResponse = {
+      took: 10,
+      hits: {
+        total: { value: 1, relation: 'eq' },
+        hits: [
+          {
+            _index: 'showcase-search-v1',
+            _id: '1',
+            _score: 1.5,
+            _source: {
+              id: '1',
+              type: 'invoice',
+              invoiceNumber: 'INV-001',
+              description: 'Test invoice',
+            },
+          },
+        ],
+      },
+    };
+
+    it('should perform a fuzzy multi_match search', async () => {
+      const mockSearch = jest.fn().mockResolvedValue(mockSearchResponse);
+      // @ts-expect-error - mocking private property or nested method
+      mockElasticsearchService.search = mockSearch;
+
+      const result = await service.search('test-query');
+
+      expect(mockSearch).toHaveBeenCalledWith({
+        index: expect.any(String),
+        query: {
+          multi_match: expect.objectContaining({
+            query: 'test-query',
+            fields: expect.arrayContaining([
+              'invoiceNumber^3',
+              'name^3',
+              'description',
+              'supplierName',
+            ]),
+            fuzziness: 'AUTO',
+          }),
+        },
+      });
+
+      expect(result.hits).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(result.hits[0].invoiceNumber).toBe('INV-001');
+    });
+
+    it('should throw error if search fails', async () => {
+      const mockSearch = jest
+        .fn()
+        .mockRejectedValue(new Error('Search failed'));
+      // @ts-expect-error - mocking
+      mockElasticsearchService.search = mockSearch;
+
+      await expect(service.search('fail')).rejects.toThrow('Search failed');
+    });
   });
 });

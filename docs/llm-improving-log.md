@@ -12,4 +12,6 @@
 
 ## Library
 
-- zod: if use z.string().url() deprecate use z.url()
+- zod:
+  - if use z.string().url() deprecate use z.url()
+  - `.format()` is deprecated; use `z.treeifyError(error)` for structured error reporting instead.

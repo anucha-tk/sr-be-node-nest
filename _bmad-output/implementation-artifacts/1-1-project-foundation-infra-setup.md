@@ -1,6 +1,11 @@
 # Story 1.1: Project Foundation & Infra Setup
 
-Status: review
+Status: done
+
+## Dev Agent Record (Antigravity)
+- **Note**: Reconfirmed `z.treeifyError(validatedConfig.error)` as the standard for this project, correctly identifying `.format()` as deprecated.
+- **Validation**: All ACs met and verified.
+
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

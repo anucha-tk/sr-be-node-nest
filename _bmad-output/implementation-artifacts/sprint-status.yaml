@@ -60,7 +60,7 @@ development_status:
   3-2-idempotent-elastic-sync-consumer: done
   3-3-live-activity-feed-api-sse: done
   3-4-real-time-activity-ui-audit-trail: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
   epic-4: backlog
   4-1-elasticsearch-aggregation-api-stats-metrics: backlog
   4-2-interactive-faceting-filter-api: backlog

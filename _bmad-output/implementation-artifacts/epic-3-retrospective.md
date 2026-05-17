@@ -1,29 +1,36 @@
-# Retrospective: Epic 3 - Invoice History & Search
+# Retrospective: Epic 3 - Real-Time Event Synchronization (The Activity Stream)
 
-**Date:** 2026-05-13
-**Epic:** 3
-**Status:** Complete
+**Date:** 2026-05-17  
+**Epic:** 3  
+**Status:** Complete  
+
+---
 
 ## 🎯 Successes
 
-- **Scalable Search:** Implemented filterable invoice history optimized for 1M+ records using Prisma indexing and standardized pagination.
-- **Defensive Security:** Successfully deployed tiered rate limiting (API Key vs JWT) via `@nestjs/throttler` and custom guards.
-- **High-Fidelity Export:** Standardized JSON export implemented with proper stream headers and filter persistence.
-- **Consumer Excellence:** Achieved 100% "Consumer Ready" status with standardized JSON envelopes, ISO 8601 UTC dates, and global `X-Correlation-Id` tracking.
+- **Robust Live SSE Stream:** Implemented a Server-Sent Events (SSE) real-time activity feed on `/api/v1/activity/stream` with support for event-type filtering.
+- **Idempotency Guarantee:** Created a bulletproof event tracking mechanism using a `ProcessedEvent` table/check to ensure Kafka messages are processed exactly once in the search sync consumer.
+- **Defensive UI Rendering:** Made the React `SystemPulseSidebar` 100% crash-proof with defensive date validation, safe metadata parser utilities, and smooth Framer Motion transitions.
+- **Rate Limit Resolution:** Exempted the persistent SSE endpoint from the global rate limit policy using `@SkipThrottle()` to prevent connection drops under browser-side reconnects.
+- **100% Quality Pass:** Achieved full code verification with all 196 tests passing green and strict linting and formatting compliance.
+
+---
 
 ## 💡 Lessons Learned
 
-- **Interceptor Power:** Moving the `StandardEnvelope` logic to global interceptors and filters significantly reduced controller complexity and eliminated "double wrapping" bugs.
-- **Stream vs. Interceptor:** Discovered that manual header setting for file downloads requires `passthrough: true` to avoid conflicts with global response interceptors.
-- **Error Normalization:** Centralizing error code mapping in `HttpExceptionFilter` ensures business-friendly error codes (e.g., `THROTTLED`) are consistent across the system.
-- **Correlation Propagation:** Implementing correlation IDs at the middleware level allows for seamless tracing across success and error paths.
+- **Exempting Persistent Streams:** Persistent streaming connections (like SSE and WebSockets) must be excluded from global HTTP rate-limiting guards (`@SkipThrottle()`) since automatic browser reconnects easily hit global throttles (e.g., 10 requests/min).
+- **Transport-Aware Interceptors:** NestJS global interceptors capture RPC, HTTP, and WebSocket contexts. Bypassing interceptor logic for non-HTTP requests (`context.getType() !== 'http'`) is crucial to prevent crashes during background Kafka consumer executions.
+- **Type-Safe Request Handlers:** Leveraging NestJS generic parameters `.getRequest<T>()` and `.getResponse<T>()` with inline typescript-eslint definitions avoids unsafe casting (`as any`) and satisfies strict compiler/linter rules.
+- **Defensive Parsing:** Frontend components consuming dynamic stream packets should implement defensive fallbacks for parsing timestamps (`Date` ranges) and nested objects (`Object.entries`) to handle potential envelope shifts cleanly without crashing the render tree.
 
-## 🚀 Action Items for Epic 4 (Performance & Seeding)
+---
 
-1. **High-Speed Seeding:** Implement the `4-1` seeding engine using `Prisma.createMany` or raw SQL `COPY` to handle the 1M record target efficiently.
-2. **Aggregate Query Performance:** For the `4-2` Admin Summary API, ensure aggregate functions (`_sum`, `_count`) are backed by appropriate indexes.
-3. **Advanced SQL Profiling:** Utilize `EXPLAIN ANALYZE` for the complex time-series queries in `4-3` to validate indexing strategy against the seeded dataset.
-4. **Rate Limit Tuning:** Monitor throttler behavior under simulated load during seeding/admin tasks to tune `.env` defaults.
+## 🚀 Action Items for Epic 4 (Search Analytics & Data Insights)
+
+1. **Aggregation Pipeline:** Implement real-time statistical aggregation APIs (Sum, Avg, Histogram) on 1M+ records using Elasticsearch Aggregations.
+2. **Interactive Faceting:** Build dynamic faceting APIs that dynamically adjust counts based on current search filters.
+3. **High-Density Charting:** Integrate interactive React charts (using Recharts) in the frontend dashboard to display dynamic transaction trends and metrics.
+4. **Performance Lab Benchmarking:** Build comparison labs measuring PostgreSQL aggregate speeds vs Elasticsearch sub-second aggregations.
 
 ---
 

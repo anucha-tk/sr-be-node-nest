@@ -14,6 +14,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useSocket } from '../hooks/useSocket';
+import { PAGES } from '../config/pages';
 
 interface PulseEvent {
   id: string;
@@ -194,6 +195,24 @@ export default function SystemPulseSidebar() {
                     <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                     <span><strong>API Keys:</strong> ค้นหาด้วยชื่อคีย์ของ API Key ต่างๆ ที่บันทึกในฐานข้อมูล</span>
                   </li>
+                </ul>
+              </div>
+
+              {/* Quick Navigation Pages */}
+              <div className="glass-panel p-4 bg-primary/5 border-primary/10 rounded-xl space-y-3">
+                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                  <Command size={14} className="text-primary" /> Quick Navigation
+                </h4>
+                <p>ค้นหาชื่อหน้าหรือคีย์เวิร์ดเพื่อนำทางด่วน:</p>
+                <ul className="space-y-2">
+                  {PAGES.map((page) => (
+                    <li key={page.id} className="flex items-start gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                      <span>
+                        <strong>{page.title}:</strong> {page.subLabel}
+                      </span>
+                    </li>
+                  ))}
                 </ul>
               </div>
 

@@ -2,6 +2,8 @@
 
 ### Technical Resolutions (2026-05-17)
 
+- **Instant Frontend Navigation Search**: Implemented case-insensitive keyword search instantly in front-end `useCommandPalette` hook before triggering backend `Elasticsearch` query. This merges local page results dynamically and handles fail-safes gracefully if backend service drops out.
+- **Strict React 19 / TS 5+ Types**: Handled React 19 type errors with logical operators by coercing `unknown` to `boolean` (e.g. `!!log.raw`) and using appropriate type assertions to ensure full compatibility under standard type checkers.
 - **React 19 Virtualization:** Pure React custom virtual list provides extremely lightweight, high-performance rendering (60fps) for 1,000+ items while avoiding React 19 package manager peer dependency clashes.
 - **Virtualized Keyboard Navigation:** Auto-scrolling focused items into the scroll container viewport is easily implemented by tracking `selectedIndex` changes and comparing item positions against container scroll bounds.
 

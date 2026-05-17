@@ -22,7 +22,7 @@ export function CommandPalette({
     selectedIndex,
     handleKeyDown,
     handleSelect,
-  } = useCommandPalette(setActiveTab)
+  } = useCommandPalette(setActiveTab, onLaunchDemo)
 
   if (!isOpen) return null
 

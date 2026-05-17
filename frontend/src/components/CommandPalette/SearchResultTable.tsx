@@ -1,4 +1,4 @@
-import { FileText, Hash, User, Search, ShieldAlert, Activity } from 'lucide-react'
+import { FileText, Hash, User, Search, Activity } from 'lucide-react'
 import type { SearchResult } from '../../hooks/useCommandPalette'
 import { VirtualizedList } from './VirtualizedList'
 
@@ -53,10 +53,12 @@ export function SearchResultTable({
     return ''
   }
 
-  const renderRow = (result: SearchResult, index: number, isSelected: boolean) => {
-    const formattedId = result.id.startsWith('inv_') || result.id.startsWith('key_') || result.id.startsWith('sup_')
-      ? result.id
-      : result.id.slice(0, 8) + '...'
+  const renderRow = (result: SearchResult, _index: number, isSelected: boolean) => {
+    const formattedId = result.type === 'action'
+      ? `NAV: ${result.id}`
+      : result.id.startsWith('inv_') || result.id.startsWith('key_') || result.id.startsWith('sup_')
+        ? result.id
+        : result.id.slice(0, 8) + '...'
 
     return (
       <div
@@ -87,7 +89,7 @@ export function SearchResultTable({
 
         {/* Column 3: Title / Primary Info */}
         <div className={`flex-1 text-xs truncate ${isSelected ? 'text-slate-900 font-bold' : 'text-slate-700 font-semibold'}`}>
-          {result.title || result.name || 'Untitled'}
+          {result.title || result.name || result.supplierName || 'Untitled'}
         </div>
 
         {/* Column 4: Context / Description */}

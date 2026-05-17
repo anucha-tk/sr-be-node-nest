@@ -13,6 +13,8 @@ import IdempotencyView from './components/IdempotencyView'
 import SystemPulseSidebar from './components/SystemPulseSidebar'
 import { CommandPalette } from './components/CommandPalette'
 
+import { PAGES } from './config/pages'
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('intro')
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
@@ -29,7 +31,7 @@ export default function App() {
                 ระบบนี้คือ <strong>"แดชบอร์ดจำลอง"</strong> ที่ถูกสร้างขึ้นมาเพื่อแสดงให้เห็นถึงการทำงานเบื้องหลัง (Backend) ของระบบประมวลผลธุรกรรมทางการเงิน (Revenue Engine) ที่พัฒนาด้วยสถาปัตยกรรมยุคใหม่ 
               </p>
               <ul className="list-disc list-inside text-slate-600 text-sm leading-relaxed space-y-1 ml-4">
-                <li><strong>NestJS:</strong> โครงสร้างหลักของ API ที่แข็งแรงและปลอดภัย</li>
+                <li><strong>NestJS:</strong> โครงสร้างหลัก of API ที่แข็งแรงและปลอดภัย</li>
                 <li><strong>Apache Kafka:</strong> ระบบคิวรองรับข้อมูลมหาศาลแบบ Event-Driven</li>
                 <li><strong>PostgreSQL:</strong> ฐานข้อมูลที่รองรับ Transaction และการดึงข้อมูล 1 ล้านเรคคอร์ดในพริบตา</li>
                 <li><strong>Keycloak:</strong> ระบบรักษาความปลอดภัยและระบุตัวตนระดับองค์กร</li>
@@ -57,21 +59,8 @@ export default function App() {
     }
   }
 
-  const getHeaderInfo = () => {
-    switch(activeTab) {
-      case 'intro': return { title: 'Intro & Architecture', desc: 'ภาพรวมระบบและเทคโนโลยีหลักที่ใช้' }
-      case 'security': return { title: 'Identity & Shield', desc: 'ระบบความปลอดภัยและตัวตน' }
-      case 'event-flow': return { title: 'Event Pulse', desc: 'การประมวลผลแบบ Event-Driven (Kafka)' }
-      case 'observability': return { title: 'Infrastructure Pulse', desc: 'สถานะและการใช้ทรัพยากรของระบบในรูปแบบ Prometheus Metrics' }
-      case 'performance': return { title: 'Warp Speed', desc: 'ประสิทธิภาพการประมวลผลข้อมูล 1M+ เรคคอร์ด' }
-      case 'audit': return { title: 'Paper Trail', desc: 'ความโปร่งใสและความถูกต้องของข้อมูล (Audit Log)' }
-      case 'api-docs': return { title: 'Dev Portal', desc: 'หน้าต่างเชื่อมต่อสำหรับนักพัฒนา (Scalar/OpenAPI)' }
-      case 'idempotency': return { title: 'Safety Guard', desc: 'การป้องกันความผิดพลาดและระบบ Idempotency' }
-      default: return { title: '', desc: '' }
-    }
-  }
-
-  const headerInfo = getHeaderInfo()
+  const activePage = PAGES.find((p) => p.id === activeTab)
+  const headerInfo = activePage ? { title: activePage.title, desc: activePage.desc } : { title: '', desc: '' }
 
   return (
     <div className="flex min-h-screen bg-soft-bg text-slate-900 overflow-hidden">

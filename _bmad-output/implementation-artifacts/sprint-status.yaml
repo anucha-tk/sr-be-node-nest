@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-05-16
-last_updated: 2026-05-16
+last_updated: 2026-05-17
 project: sr-be-node-nest
 project_key: NOKEY
 tracking_system: file-system
@@ -53,7 +53,7 @@ development_status:
   2-2-command-palette-search-api-fuzzy-multi-match: done
   2-3-cmd-k-search-interface-frontend: done
   2-4-search-result-visualization-performance-ux: done
-  2-5-command-palette-documentation-search-centralized-navigation: ready-for-dev
+  2-5-command-palette-documentation-search-centralized-navigation: done
   epic-2-retrospective: done
   epic-3: backlog
   3-1-event-driven-cdc-ingestion-kafka-producer: backlog

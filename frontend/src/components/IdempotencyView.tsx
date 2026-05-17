@@ -42,7 +42,7 @@ export default function IdempotencyView() {
         amount: 100.0
       };
       setLastPayload(payload);
-      addLog('info', `Simulating NEW request with Event ID: ${payload.eventId.split('_')[1]}`);
+      addLog('info', `Simulating NEW request with Event ID: ${(payload.eventId as string).split('_')[1]}`);
     }
 
     try {
@@ -185,7 +185,7 @@ export default function IdempotencyView() {
                     {log.type === 'info' && <Play size={14} className="mt-0.5 shrink-0" />}
                     <span>{log.msg}</span>
                   </div>
-                  {log.raw && (
+                  {!!log.raw && (
                     <pre className="mt-2 p-2 bg-black/30 rounded text-[10px] overflow-x-auto text-slate-500">
                       {JSON.stringify(log.raw, null, 2)}
                     </pre>

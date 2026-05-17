@@ -19,7 +19,6 @@ export function VirtualizedList<T>({
   const [scrollTop, setScrollTop] = useState(0)
 
   const totalHeight = items.length * itemHeight
-  const visibleCount = Math.ceil(height / itemHeight)
   
   // Buffers (overscan) to ensure smooth scrolling
   const overscan = 5

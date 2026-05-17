@@ -1,56 +1,9 @@
 import { motion } from 'framer-motion'
-import { ShieldCheck, Activity, Zap, FileText, Code, Menu, X, Play, LayoutDashboard, Repeat, BarChart3 } from 'lucide-react'
+import { Menu, X, Play } from 'lucide-react'
 
-const MENU_ITEMS = [
-  { 
-    id: 'intro', 
-    label: 'Intro & Architecture',
-    subLabel: 'ภาพรวมสถาปัตยกรรมระบบ',
-    icon: LayoutDashboard 
-  },
-  { 
-    id: 'security', 
-    label: 'Identity & Shield',
-    subLabel: 'ระบบความปลอดภัยและตัวตน',
-    icon: ShieldCheck 
-  },
-  { 
-    id: 'event-flow', 
-    label: 'Event Pulse',
-    subLabel: 'การประมวลผลแบบ Event-Driven',
-    icon: Activity 
-  },
-  { 
-    id: 'observability', 
-    label: 'System Pulse',
-    subLabel: 'สถานะและการทำงานของระบบ',
-    icon: BarChart3 
-  },
-  { 
-    id: 'performance', 
-    label: 'Warp Speed',
-    subLabel: 'ประสิทธิภาพข้อมูลขนาดใหญ่',
-    icon: Zap 
-  },
-  { 
-    id: 'audit', 
-    label: 'Paper Trail',
-    subLabel: 'ความโปร่งใสของข้อมูล',
-    icon: FileText 
-  },
-  { 
-    id: 'api-docs', 
-    label: 'Dev Portal',
-    subLabel: 'หน้าต่างสำหรับนักพัฒนา',
-    icon: Code 
-  },
-  { 
-    id: 'idempotency', 
-    label: 'Safety Guard',
-    subLabel: 'ระบบป้องกันการจ่ายเงินซ้ำ',
-    icon: Repeat 
-  },
-]
+import { PAGES } from '../config/pages'
+
+const MENU_ITEMS = PAGES.filter((p) => p.id !== 'presentation')
 
 interface SidebarProps {
   activeTab: string
@@ -107,7 +60,7 @@ export default function ShowcaseSidebar({
             </div>
             {isSidebarOpen && (
               <div className="flex flex-col truncate">
-                <span className="font-bold text-slate-900">{item.label}</span>
+                <span className="font-bold text-slate-900">{item.title}</span>
                 <span className="text-xs text-slate-600 truncate">{item.subLabel}</span>
               </div>
             )}

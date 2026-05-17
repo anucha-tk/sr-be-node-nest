@@ -163,4 +163,39 @@ describe('useCommandPalette', () => {
 
     expect(result.current.error).toBe('Connection failed')
   })
+
+  it('should instantly match local pages by keyword', () => {
+    const { result } = renderHook(() => useCommandPalette())
+
+    act(() => {
+      result.current.setQuery('สายพาน')
+    })
+
+    // Should immediately find 'intro' page matching keyword 'สายพาน'
+    expect(result.current.results).toHaveLength(1)
+    expect(result.current.results[0]).toEqual({
+      id: 'intro',
+      type: 'action',
+      title: 'Intro & Architecture',
+      description: 'ภาพรวมสถาปัตยกรรมระบบ',
+    })
+  })
+
+  it('should route action items correctly on selection', () => {
+    const setActiveTab = vi.fn()
+    const onLaunchDemo = vi.fn()
+    const { result } = renderHook(() => useCommandPalette(setActiveTab, onLaunchDemo))
+
+    // Select standard action (e.g. security)
+    act(() => {
+      result.current.handleSelect({ id: 'security', type: 'action', title: 'Identity & Shield' })
+    })
+    expect(setActiveTab).toHaveBeenCalledWith('security')
+
+    // Select presentation action
+    act(() => {
+      result.current.handleSelect({ id: 'presentation', type: 'action', title: 'Presentation Mode' })
+    })
+    expect(onLaunchDemo).toHaveBeenCalled()
+  })
 })

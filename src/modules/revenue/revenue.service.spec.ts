@@ -4,6 +4,7 @@ import { PrismaService } from '../../shared/prisma/prisma.service';
 import { RevenueEventDto } from './dto/revenue-event.dto';
 import { Prisma } from '@prisma/client';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { ActivityService } from '../notifications/activity.service';
 
 describe('RevenueService', () => {
   let service: RevenueService;
@@ -46,6 +47,12 @@ describe('RevenueService', () => {
             notifyAuditLog: jest.fn(),
             notifyBalanceUpdate: jest.fn(),
             notifySystemPulse: jest.fn(),
+          },
+        },
+        {
+          provide: ActivityService,
+          useValue: {
+            emit: jest.fn(),
           },
         },
       ],

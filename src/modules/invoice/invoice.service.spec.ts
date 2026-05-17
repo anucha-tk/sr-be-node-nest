@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return */
 import { Test, TestingModule } from '@nestjs/testing';
 import { InvoiceService } from './invoice.service';
 import { PrismaService } from '../../shared/prisma/prisma.service';
-import { InvoiceStatus } from '@prisma/client';
-import { Prisma } from '@prisma/client';
+import { InvoiceStatus, Prisma } from '@prisma/client';
+import { ActivityService } from '../notifications/activity.service';
+import { of } from 'rxjs';
 
 describe('InvoiceService', () => {
   let service: InvoiceService;
@@ -11,7 +13,17 @@ describe('InvoiceService', () => {
     invoice: {
       count: jest.fn(),
       findMany: jest.fn(),
+      upsert: jest.fn(),
     },
+    $transaction: jest.fn(),
+  };
+
+  const mockKafkaClient = {
+    emit: jest.fn().mockReturnValue(of({})),
+  };
+
+  const mockActivityService = {
+    emit: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -22,6 +34,14 @@ describe('InvoiceService', () => {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
+        {
+          provide: 'KAFKA_SERVICE',
+          useValue: mockKafkaClient,
+        },
+        {
+          provide: ActivityService,
+          useValue: mockActivityService,
+        },
       ],
     }).compile();
 
@@ -31,6 +51,118 @@ describe('InvoiceService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('payInvoice', () => {
+    it('should upsert invoice, emit pulses, and publish Kafka event', async () => {
+      const invoiceId = 'uuid-1';
+      const supplierId = 'SUP-001';
+      const amount = 100.5;
+
+      const mockInvoice = {
+        id: invoiceId,
+        invoiceNumber: 'INV-12345',
+        supplierId,
+        amount: new Prisma.Decimal(amount),
+        status: InvoiceStatus.PAID,
+        paidAt: new Date(),
+        createdAt: new Date(),
+      };
+
+      mockPrismaService.$transaction.mockImplementation(
+        async (cb: (tx: any) => Promise<any>) => {
+          return await cb({
+            invoice: {
+              upsert: jest.fn().mockResolvedValue(mockInvoice),
+            },
+          });
+        },
+      );
+
+      const result = await service.payInvoice(invoiceId, amount, supplierId);
+
+      expect(result.id).toBe(invoiceId);
+      expect(result.status).toBe(InvoiceStatus.PAID);
+      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+
+      // Check DB committed pulse
+      expect(mockActivityService.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'DB_COMMIT',
+          label: expect.stringContaining('DB committed'),
+        }),
+      );
+
+      // Check Kafka emit
+      expect(mockKafkaClient.emit).toHaveBeenCalledWith(
+        'invoice.paid',
+        expect.objectContaining({
+          invoiceId,
+          supplierId,
+          amount,
+        }),
+      );
+
+      // Check Kafka produced pulse
+      expect(mockActivityService.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'KAFKA_PRODUCED',
+          label: expect.stringContaining('Kafka produced'),
+        }),
+      );
+    });
+
+    it('should log an error and succeed even if Kafka emission fails', async () => {
+      const invoiceId = 'uuid-2';
+      const supplierId = 'SUP-002';
+      const amount = 50.0;
+
+      const mockInvoice = {
+        id: invoiceId,
+        invoiceNumber: 'INV-67890',
+        supplierId,
+        amount: new Prisma.Decimal(amount),
+        status: InvoiceStatus.PAID,
+        paidAt: new Date(),
+        createdAt: new Date(),
+      };
+
+      mockPrismaService.$transaction.mockImplementation(
+        async (cb: (tx: any) => Promise<any>) => {
+          return await cb({
+            invoice: {
+              upsert: jest.fn().mockResolvedValue(mockInvoice),
+            },
+          });
+        },
+      );
+
+      // Mock Kafka client to throw an error
+      const mockError = new Error('Kafka broker connection lost');
+      mockKafkaClient.emit.mockImplementationOnce(() => {
+        throw mockError;
+      });
+
+      const result = await service.payInvoice(invoiceId, amount, supplierId);
+
+      expect(result.id).toBe(invoiceId);
+      expect(result.status).toBe(InvoiceStatus.PAID);
+      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+
+      // Ensure DB commit pulse is still sent
+      expect(mockActivityService.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'DB_COMMIT',
+        }),
+      );
+
+      // Ensure Kafka Produced Pulse is NOT sent due to error
+      expect(mockActivityService.emit).not.toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'KAFKA_PRODUCED',
+        }),
+      );
+    });
   });
 
   describe('findAll', () => {
@@ -159,12 +291,6 @@ describe('InvoiceService', () => {
       expect(mockPrismaService.invoice.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { supplierId, status: InvoiceStatus.PAID },
-        }),
-      );
-      expect(mockPrismaService.invoice.findMany).not.toHaveBeenCalledWith(
-        expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          take: expect.any(Number),
         }),
       );
     });

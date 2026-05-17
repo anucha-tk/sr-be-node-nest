@@ -17,8 +17,10 @@ describe('ResponseEnvelopeInterceptor', () => {
   it('should wrap response in standard envelope', (done) => {
     const data = { foo: 'bar' };
     const context = {
+      getType: () => 'http',
       switchToHttp: () => ({
         getRequest: () => ({ correlationId: 'test-id' }),
+        getResponse: () => ({ getHeader: () => undefined }),
       }),
     } as unknown as ExecutionContext;
     const next = {
@@ -40,8 +42,10 @@ describe('ResponseEnvelopeInterceptor', () => {
   it('should not wrap Buffer data', (done) => {
     const data = Buffer.from('test');
     const context = {
+      getType: () => 'http',
       switchToHttp: () => ({
         getRequest: () => ({ correlationId: 'test-id' }),
+        getResponse: () => ({ getHeader: () => undefined }),
       }),
     } as unknown as ExecutionContext;
     const next = {
@@ -63,8 +67,10 @@ describe('ResponseEnvelopeInterceptor', () => {
       offset: 0,
     };
     const context = {
+      getType: () => 'http',
       switchToHttp: () => ({
         getRequest: () => ({ correlationId: 'test-id' }),
+        getResponse: () => ({ getHeader: () => undefined }),
       }),
     } as unknown as ExecutionContext;
     const next = {

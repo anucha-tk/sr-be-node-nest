@@ -48,15 +48,49 @@ export class SearchService implements OnModuleInit {
         this.logger.log(`Index ${SEARCH_INDEX_NAME} created successfully.`);
       } else {
         this.logger.log(`Index ${SEARCH_INDEX_NAME} already exists.`);
-        // Optional: Update mapping if needed
       }
     } catch (error) {
       this.logger.error(
         `Error initializing Elasticsearch index: ${error instanceof Error ? error.message : String(error)}`,
       );
-      // Don't throw error here to allow application to start even if Elastic is down
-      // but in production we might want to fail fast
     }
+  }
+
+  async indexInvoice(invoice: {
+    id: string;
+    invoiceNumber: string;
+    supplierId: string;
+    amount: number;
+    status: string;
+    createdAt: string | Date;
+    paidAt?: string | Date | null;
+  }) {
+    await this.elasticsearchService.index({
+      index: SEARCH_INDEX_NAME,
+      id: invoice.id,
+      document: {
+        id: invoice.id,
+        type: 'invoice',
+        invoiceNumber: invoice.invoiceNumber,
+        status: invoice.status,
+        amount: invoice.amount,
+        supplierName: `Supplier (${invoice.supplierId})`,
+        createdAt:
+          typeof invoice.createdAt === 'string'
+            ? invoice.createdAt
+            : invoice.createdAt.toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    });
+    this.logger.log(`Indexed invoice ${invoice.id} in Elasticsearch.`);
+  }
+
+  async deleteInvoice(id: string) {
+    await this.elasticsearchService.delete({
+      index: SEARCH_INDEX_NAME,
+      id,
+    });
+    this.logger.log(`Deleted invoice ${id} from Elasticsearch.`);
   }
 
   async search(query: string) {

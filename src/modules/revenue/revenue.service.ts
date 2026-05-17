@@ -3,6 +3,7 @@ import { PrismaService } from '../../shared/prisma/prisma.service';
 import { RevenueEventDto } from './dto/revenue-event.dto';
 import { Prisma, RevenueAuditLog } from '@prisma/client';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
+import { ActivityService } from '../notifications/activity.service';
 
 export interface ProcessResult {
   status: 'processed' | 'skipped' | 'failed';
@@ -17,6 +18,7 @@ export class RevenueService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notificationsGateway: NotificationsGateway,
+    private readonly activityService: ActivityService,
   ) {}
 
   async processRevenue(dto: RevenueEventDto): Promise<ProcessResult> {
@@ -61,18 +63,32 @@ export class RevenueService {
               lastUpdated: auditLog.createdAt,
             });
 
-            // Pulse: Kafka Consumed
+            // Pulse: WebSockets & SSE - Kafka Consumed
             this.notificationsGateway.notifySystemPulse({
               type: 'KAFKA_CONSUMED',
               label: `Consumed event ${dto.eventId.substring(0, 8)}...`,
               metadata: { topic: 'invoice.paid', eventId: dto.eventId },
             });
+            this.activityService.emit({
+              type: 'KAFKA_CONSUMED',
+              label: `Kafka consumed: Processed payment for Invoice ${dto.invoiceId}`,
+              metadata: {
+                topic: 'invoice.paid',
+                eventId: dto.eventId,
+                supplierId: dto.supplierId,
+              },
+            });
 
-            // Pulse: DB Commit
+            // Pulse: WebSockets & SSE - DB Commit
             this.notificationsGateway.notifySystemPulse({
               type: 'DB_COMMIT',
               label: `Committed revenue for ${dto.supplierId.substring(0, 8)}...`,
               metadata: { auditLogId: auditLog.id },
+            });
+            this.activityService.emit({
+              type: 'DB_COMMIT',
+              label: `DB committed: Saved Revenue Audit Log for Invoice ${dto.invoiceId}`,
+              metadata: { auditLogId: auditLog.id, supplierId: dto.supplierId },
             });
 
             this.logger.log(

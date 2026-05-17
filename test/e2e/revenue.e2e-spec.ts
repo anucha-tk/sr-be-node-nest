@@ -19,6 +19,7 @@ import { ResponseEnvelopeInterceptor } from '../../src/common/interceptors/respo
 import { Reflector, APP_GUARD } from '@nestjs/core';
 import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 import { NotificationsGateway } from '../../src/modules/notifications/notifications.gateway';
+import { ActivityService } from '../../src/modules/notifications/activity.service';
 
 @Injectable()
 class MockGuard implements CanActivate {
@@ -59,6 +60,14 @@ class MockGuard implements CanActivate {
       useValue: {
         notifyAuditLog: jest.fn(),
         notifyBalanceUpdate: jest.fn(),
+        notifySystemPulse: jest.fn(),
+      },
+    },
+    {
+      provide: ActivityService,
+      useValue: {
+        emit: jest.fn(),
+        getStream: jest.fn(),
       },
     },
   ],
@@ -72,6 +81,7 @@ class MockGuard implements CanActivate {
     RoleGuard,
     'KAFKA_SERVICE',
     NotificationsGateway,
+    ActivityService,
   ],
 })
 class MockAuthModule {}

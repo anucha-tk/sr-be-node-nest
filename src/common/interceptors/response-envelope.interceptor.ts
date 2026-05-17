@@ -10,6 +10,17 @@ import { map } from 'rxjs/operators';
 import { RequestWithMetadata } from '../interfaces/request-with-metadata.interface';
 import { StandardEnvelope } from '../interfaces/api-response.interface';
 
+interface MinimalRequest {
+  headers?: {
+    accept?: string;
+  };
+}
+
+interface MinimalResponse {
+  headersSent?: boolean;
+  getHeader?(name: string): string | string[] | undefined;
+}
+
 @Injectable()
 export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
   T,
@@ -21,10 +32,25 @@ export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
   ): Observable<StandardEnvelope<T> | T | StreamableFile> {
     const startTime = performance.now();
 
+    // 1. If not an HTTP request (e.g., RPC/Kafka microservice or WebSockets), bypass wrapping entirely
+    if (context.getType() !== 'http') {
+      return next.handle() as Observable<T>;
+    }
+
     return next.handle().pipe(
       map((data: T) => {
-        // Skip wrapping if data is a StreamableFile or Buffer
-        if (data instanceof StreamableFile || Buffer.isBuffer(data)) {
+        const request = context
+          .switchToHttp()
+          .getRequest<MinimalRequest & Partial<RequestWithMetadata>>();
+        const response = context.switchToHttp().getResponse<MinimalResponse>();
+
+        // 2. Skip wrapping if data is a StreamableFile or Buffer, or if it is an SSE stream request
+        if (
+          data instanceof StreamableFile ||
+          Buffer.isBuffer(data) ||
+          request?.headers?.accept === 'text/event-stream' ||
+          response?.getHeader?.('content-type') === 'text/event-stream'
+        ) {
           return data;
         }
 
@@ -56,10 +82,7 @@ export class ResponseEnvelopeInterceptor<T> implements NestInterceptor<
           };
         }
 
-        const request = context
-          .switchToHttp()
-          .getRequest<RequestWithMetadata>();
-        const correlationId = request.correlationId || 'unknown';
+        const correlationId = request?.correlationId || 'unknown';
 
         const result: StandardEnvelope<T> = {
           success: true,

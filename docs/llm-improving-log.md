@@ -2,6 +2,11 @@
 
 ### Technical Resolutions (2026-05-17)
 
+- **NestJS Server-Sent Events (SSE) Stream**: Built a high-performance, real-time SSE stream (`/api/v1/activity/stream`) using the NestJS `@Sse` decorator and RxJS Observables. It broadcasts unified system activities with query-parameter-based event filtering at the server level.
+- **Kafka-Driven Observability Bridging**: Configured the backend `SearchConsumer` to emit structured audit logs to the `ActivityService` subject upon consuming Kafka messages. This instantly links background messaging activity to active front-end listeners.
+- **SSE Client & WebSocket Hybrid Resiliency**: Upgraded frontend `SystemPulseSidebar` to use a native EventSource client that operates in tandem with WebSockets. It prevents duplicates, manages reconnection seamlessly, and queries dynamic filters (`ALL`, `KAFKA_PRODUCED`, `KAFKA_CONSUMED`, `DB_COMMIT`).
+- **Interactive Trace Details Drawer**: Added a spring-animated Framer Motion slide-in panel in the sidebar, displaying metadata, database changes, and distributed trace IDs. This provides direct deep-dive links into Jaeger tracing UI (port 16686).
+- **High-Coverage Branch Assertions**: Expanded search module tests to cover fallback indexing branches and varying Elasticsearch search total hit structures, pushing branch coverage past the strict 80% CI quality gate.
 - **Instant Frontend Navigation Search**: Implemented case-insensitive keyword search instantly in front-end `useCommandPalette` hook before triggering backend `Elasticsearch` query. This merges local page results dynamically and handles fail-safes gracefully if backend service drops out.
 - **Strict React 19 / TS 5+ Types**: Handled React 19 type errors with logical operators by coercing `unknown` to `boolean` (e.g. `!!log.raw`) and using appropriate type assertions to ensure full compatibility under standard type checkers.
 - **React 19 Virtualization:** Pure React custom virtual list provides extremely lightweight, high-performance rendering (60fps) for 1,000+ items while avoiding React 19 package manager peer dependency clashes.

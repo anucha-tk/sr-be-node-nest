@@ -20,6 +20,7 @@ import { Reflector, APP_GUARD } from '@nestjs/core';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
 import { InvoiceStatus, Prisma } from '@prisma/client';
+import { ActivityService } from '../../src/modules/notifications/activity.service';
 
 @Injectable()
 class MockGuard implements CanActivate {
@@ -54,6 +55,14 @@ class MockGuard implements CanActivate {
     { provide: AuthGuard, useClass: MockGuard },
     { provide: ResourceGuard, useClass: MockGuard },
     { provide: RoleGuard, useClass: MockGuard },
+    { provide: 'KAFKA_SERVICE', useValue: { emit: jest.fn() } },
+    {
+      provide: ActivityService,
+      useValue: {
+        emit: jest.fn(),
+        getStream: jest.fn(),
+      },
+    },
   ],
   exports: [
     'KEYCLOAK_INSTANCE',
@@ -63,6 +72,8 @@ class MockGuard implements CanActivate {
     AuthGuard,
     ResourceGuard,
     RoleGuard,
+    'KAFKA_SERVICE',
+    ActivityService,
   ],
 })
 class MockAuthModule {}

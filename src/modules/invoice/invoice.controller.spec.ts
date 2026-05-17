@@ -12,6 +12,7 @@ describe('InvoiceController', () => {
   const mockInvoiceService = {
     findAll: jest.fn(),
     exportAll: jest.fn(),
+    payInvoice: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -98,6 +99,30 @@ describe('InvoiceController', () => {
       expect(mockInvoiceService.findAll).toHaveBeenCalledWith(
         null,
         expect.objectContaining(mockQuery),
+      );
+    });
+  });
+
+  describe('payInvoice', () => {
+    it('should call payInvoice service with parameters', async () => {
+      const mockInvoice = {
+        id: 'uuid-1',
+        invoiceNumber: 'INV-001',
+        amount: 500,
+        status: InvoiceStatus.PAID,
+      };
+      mockInvoiceService.payInvoice.mockResolvedValue(mockInvoice);
+
+      const result = await controller.payInvoice('uuid-1', {
+        amount: 500,
+        supplierId: 'SUP-001',
+      });
+
+      expect(result).toEqual(mockInvoice);
+      expect(mockInvoiceService.payInvoice).toHaveBeenCalledWith(
+        'uuid-1',
+        500,
+        'SUP-001',
       );
     });
   });

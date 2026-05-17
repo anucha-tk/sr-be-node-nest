@@ -1,11 +1,85 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { InvoiceQueryDto } from './dto/invoice-query.dto';
 import { Prisma } from '@prisma/client';
+import { ClientKafka } from '@nestjs/microservices';
+import { KAFKA_TOPICS } from '../kafka/kafka.constants';
+import { ActivityService } from '../notifications/activity.service';
+import { firstValueFrom } from 'rxjs';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class InvoiceService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(InvoiceService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject('KAFKA_SERVICE') private readonly kafkaClient: ClientKafka,
+    private readonly activityService: ActivityService,
+  ) {}
+
+  async payInvoice(invoiceId: string, amount: number, supplierId: string) {
+    // 1. Database Transaction
+    const invoice = await this.prisma.$transaction(async (tx) => {
+      return await tx.invoice.upsert({
+        where: { id: invoiceId },
+        update: { status: 'PAID', paidAt: new Date() },
+        create: {
+          id: invoiceId,
+          invoiceNumber: `INV-${Date.now()}`,
+          supplierId,
+          amount: new Prisma.Decimal(amount),
+          status: 'PAID',
+          paidAt: new Date(),
+        },
+      });
+    });
+
+    // 2. Emit DB Commit Pulse
+    this.activityService.emit({
+      type: 'DB_COMMIT',
+      label: `DB committed: Update Invoice ${invoice.id} to PAID`,
+      metadata: { invoiceId: invoice.id, supplierId: invoice.supplierId },
+    });
+
+    // 3. Emit Event to Kafka
+    const correlationId = crypto.randomUUID();
+    const eventId = crypto.randomUUID();
+    const payload = {
+      eventId,
+      correlationId,
+      invoiceId: invoice.id,
+      supplierId: invoice.supplierId,
+      amount: invoice.amount.toNumber(),
+      currency: 'USD',
+      status: 'PAID',
+      paidAt: invoice.paidAt!.toISOString(),
+      timestamp: new Date().toISOString(),
+    };
+
+    try {
+      await firstValueFrom(
+        this.kafkaClient.emit(KAFKA_TOPICS.INVOICE_PAID, payload),
+      );
+
+      // 4. Emit Kafka Produced Pulse
+      this.activityService.emit({
+        type: 'KAFKA_PRODUCED',
+        label: `Kafka produced: invoice.paid for ${invoice.id}`,
+        metadata: {
+          topic: KAFKA_TOPICS.INVOICE_PAID,
+          eventId,
+          correlationId,
+        },
+      });
+    } catch (kafkaError) {
+      this.logger.error(
+        `Failed to emit invoice.paid event to Kafka for invoice ${invoice.id}: ${kafkaError instanceof Error ? kafkaError.message : String(kafkaError)}`,
+      );
+    }
+
+    return this.mapToDto(invoice);
+  }
 
   async findAll(supplierId: string | null, query: InvoiceQueryDto) {
     const { limit, offset, sort } = query;

@@ -1,6 +1,9 @@
 import {
   Controller,
   Get,
+  Post,
+  Param,
+  Body,
   Query,
   HttpCode,
   Res,
@@ -43,6 +46,20 @@ export class InvoiceController {
       limit: query.limit,
       offset: query.offset,
     };
+  }
+
+  @Post(':id/pay')
+  @HttpCode(200)
+  @Roles({ roles: ['admin'] })
+  @ApiOperation({ summary: 'Pay an invoice (updates DB & emits Kafka event)' })
+  @ApiStandardResponse(InvoiceListItemDto)
+  async payInvoice(
+    @Param('id') id: string,
+    @Body() body?: { amount?: number; supplierId?: string },
+  ) {
+    const amount = body?.amount ?? 500;
+    const supplierId = body?.supplierId ?? 'seed-supplier-001';
+    return await this.invoiceService.payInvoice(id, amount, supplierId);
   }
 
   @Get('export')

@@ -50,8 +50,8 @@ development_status:
   epic-1-retrospective: done
   epic-2: in-progress
   2-1-elasticsearch-mapping-edge-n-gram-analyzer: done
-  2-2-command-palette-search-api-fuzzy-multi-match: review
-  2-3-cmd-k-search-interface-frontend: backlog
+  2-2-command-palette-search-api-fuzzy-multi-match: done
+  2-3-cmd-k-search-interface-frontend: done
   2-4-search-result-visualization-performance-ux: backlog
   epic-2-retrospective: optional
   epic-3: backlog

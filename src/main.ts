@@ -5,6 +5,7 @@ otelSDK.start();
 import { NestFactory } from '@nestjs/core';
 import { Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
+import { VersioningType } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { apiReference } from '@scalar/nestjs-api-reference';
@@ -14,6 +15,12 @@ import { KAFKA_GROUP_ID } from './modules/kafka/kafka.constants';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.setGlobalPrefix('api');
+  app.enableVersioning({
+    type: VersioningType.URI,
+  });
+
   app.enableCors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') || [
       'http://localhost:3000',

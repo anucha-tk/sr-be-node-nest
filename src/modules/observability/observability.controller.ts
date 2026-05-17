@@ -8,7 +8,7 @@ import * as os from 'os';
 
 @ApiTags('Observability')
 @SkipThrottle()
-@Controller('v1/observability')
+@Controller({ path: 'observability', version: '1' })
 export class ObservabilityController {
   private lastCpuUsage = process.cpuUsage();
   private lastCpuTimestamp = Date.now();

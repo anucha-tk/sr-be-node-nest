@@ -3,6 +3,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
+  VersioningType,
   Global,
   Module,
   Injectable,
@@ -91,6 +92,8 @@ describe('Analytics (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
+    app.enableVersioning({ type: VersioningType.URI });
     app.useGlobalPipes(new ZodValidationPipe());
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
@@ -115,7 +118,7 @@ describe('Analytics (e2e)', () => {
     ]);
 
     const response = await request(app.getHttpServer() as string)
-      .get('/v1/analytics/summary')
+      .get('/api/v1/analytics/summary')
       .expect(200);
 
     expect(response.body.success).toBe(true);
@@ -141,7 +144,7 @@ describe('Analytics (e2e)', () => {
       .mockResolvedValueOnce({ _sum: { amount: 800 } }); // Previous
 
     const response = await request(app.getHttpServer() as string)
-      .get('/v1/analytics/trends?granularity=monthly')
+      .get('/api/v1/analytics/trends?granularity=monthly')
       .expect(200);
 
     expect(response.body.success).toBe(true);

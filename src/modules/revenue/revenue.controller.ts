@@ -31,7 +31,7 @@ interface DuplicateSimulationPayload {
 }
 
 @ApiTags('Revenue')
-@Controller('v1/suppliers')
+@Controller({ path: 'suppliers', version: '1' })
 export class RevenueController {
   private readonly logger = new Logger(RevenueController.name);
 

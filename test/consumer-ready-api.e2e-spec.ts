@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { ZodValidationPipe } from 'nestjs-zod';
@@ -14,6 +14,8 @@ describe('Consumer-Ready API (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
+    app.enableVersioning({ type: VersioningType.URI });
     app.useGlobalPipes(new ZodValidationPipe());
     await app.init();
   });
@@ -25,7 +27,7 @@ describe('Consumer-Ready API (e2e)', () => {
   describe('Standard Response Envelope', () => {
     it('should return success envelope for GET /', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const response = await request(app.getHttpServer()).get('/');
+      const response = await request(app.getHttpServer()).get('/api');
 
       expect(response.status).toBe(200);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -44,7 +46,7 @@ describe('Consumer-Ready API (e2e)', () => {
     it('should return error envelope for non-existent route', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const response = await request(app.getHttpServer()).get(
-        '/v1/non-existent',
+        '/api/v1/non-existent',
       );
 
       expect(response.status).toBe(404);
@@ -62,7 +64,7 @@ describe('Consumer-Ready API (e2e)', () => {
   describe('Naming Conventions and Formats', () => {
     it('should use camelCase for all keys in envelope', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const response = await request(app.getHttpServer()).get('/');
+      const response = await request(app.getHttpServer()).get('/api');
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const body: StandardEnvelope<unknown> = response.body;
       const keys = Object.keys(body);
@@ -82,7 +84,9 @@ describe('Consumer-Ready API (e2e)', () => {
   describe('Error Codes', () => {
     it('should return ERR_RATE_LIMIT_EXCEEDED when throttled', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-      const response = await request(app.getHttpServer()).get('/v1/invoices');
+      const response = await request(app.getHttpServer()).get(
+        '/api/v1/invoices',
+      );
       expect(response.status).toBe(401);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const body: StandardEnvelope<null> = response.body;
@@ -92,7 +96,7 @@ describe('Consumer-Ready API (e2e)', () => {
     it('should return VALIDATION_ERROR for bad input', async () => {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       const response = await request(app.getHttpServer())
-        .post('/v1/auth/api-keys')
+        .post('/api/v1/auth/api-keys')
         .send({});
 
       if (response.status === 401) {

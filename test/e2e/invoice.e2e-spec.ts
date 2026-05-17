@@ -3,6 +3,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
+  VersioningType,
   Global,
   Module,
   Injectable,
@@ -89,6 +90,8 @@ describe('Invoice (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
+    app.enableVersioning({ type: VersioningType.URI });
     app.useGlobalPipes(new ZodValidationPipe());
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
@@ -120,7 +123,7 @@ describe('Invoice (e2e)', () => {
     (prisma.invoice.findMany as jest.Mock).mockResolvedValue(mockItems);
 
     const response = await request(app.getHttpServer() as string)
-      .get('/v1/invoices?limit=10&offset=0')
+      .get('/api/v1/invoices?limit=10&offset=0')
       .expect(200);
 
     expect(response.body.success).toBe(true);
@@ -138,7 +141,7 @@ describe('Invoice (e2e)', () => {
     (prisma.invoice.findMany as jest.Mock).mockResolvedValue([]);
 
     await request(app.getHttpServer() as string)
-      .get('/v1/invoices?status=PENDING')
+      .get('/api/v1/invoices?status=PENDING')
       .expect(200);
 
     // eslint-disable-next-line @typescript-eslint/unbound-method

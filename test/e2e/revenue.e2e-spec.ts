@@ -3,6 +3,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
+  VersioningType,
   Global,
   Module,
   Injectable,
@@ -99,6 +100,8 @@ describe('Revenue (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
+    app.enableVersioning({ type: VersioningType.URI });
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
     prisma = app.get<PrismaService>(PrismaService);
@@ -123,7 +126,7 @@ describe('Revenue (e2e)', () => {
     );
 
     const response = await request(app.getHttpServer() as string)
-      .get('/v1/suppliers/me/revenue')
+      .get('/api/v1/suppliers/me/revenue')
       .expect(200);
 
     expect(response.body.success).toBe(true);
@@ -137,7 +140,7 @@ describe('Revenue (e2e)', () => {
     (prisma.supplierRevenue.findUnique as jest.Mock).mockResolvedValue(null);
 
     const response = await request(app.getHttpServer() as string)
-      .get('/v1/suppliers/me/revenue')
+      .get('/api/v1/suppliers/me/revenue')
       .expect(200);
 
     expect(response.body.success).toBe(true);

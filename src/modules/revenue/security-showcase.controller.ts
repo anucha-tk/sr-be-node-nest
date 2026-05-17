@@ -4,7 +4,7 @@ import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { Public } from 'nest-keycloak-connect';
 
 @ApiTags('Security Showcase')
-@Controller('v1/security-showcase')
+@Controller({ path: 'security-showcase', version: '1' })
 export class SecurityShowcaseController {
   private readonly logger = new Logger(SecurityShowcaseController.name);
 

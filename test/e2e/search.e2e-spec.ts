@@ -3,6 +3,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   INestApplication,
+  VersioningType,
   Global,
   Module,
   Injectable,
@@ -83,6 +84,8 @@ describe('Search (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
+    app.enableVersioning({ type: VersioningType.URI });
     app.enableVersioning();
     app.useGlobalPipes(new ZodValidationPipe());
     app.useGlobalFilters(new HttpExceptionFilter());
@@ -122,7 +125,7 @@ describe('Search (e2e)', () => {
     );
 
     const response = await request(app.getHttpServer() as string)
-      .get('/v1/search?q=cloud')
+      .get('/api/v1/search?q=cloud')
       .expect(200);
 
     expect(response.body.success).toBe(true);
@@ -145,7 +148,7 @@ describe('Search (e2e)', () => {
 
   it('GET /v1/search should return 400 if query is missing', async () => {
     await request(app.getHttpServer() as string)
-      .get('/v1/search')
+      .get('/api/v1/search')
       .expect(400);
   });
 });

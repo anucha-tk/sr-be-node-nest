@@ -17,7 +17,7 @@ import { ApiStandardResponse } from '../../common/docs/api-response.decorator';
 import { InvoiceListItemDto } from './dto/invoice-list-item.dto';
 
 @ApiTags('Invoices')
-@Controller('v1/invoices')
+@Controller({ path: 'invoices', version: '1' })
 export class InvoiceController {
   constructor(private readonly invoiceService: InvoiceService) {}
 

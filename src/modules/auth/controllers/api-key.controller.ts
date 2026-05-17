@@ -11,7 +11,7 @@ import {
 } from '../dto/api-key-response.dto';
 
 @ApiTags('Auth')
-@Controller('v1/auth/api-keys')
+@Controller({ path: 'auth/api-keys', version: '1' })
 export class ApiKeyController {
   constructor(private readonly apiKeyService: ApiKeyService) {}
 

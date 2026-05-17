@@ -8,7 +8,7 @@ import { TrendResponseDto } from './dto/trend-response.dto';
 import { ApiStandardResponse } from '../../common/docs/api-response.decorator';
 
 @ApiTags('Analytics')
-@Controller('v1/analytics')
+@Controller({ path: 'analytics', version: '1' })
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 

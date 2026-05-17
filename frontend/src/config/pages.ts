@@ -76,6 +76,27 @@ export const PAGES: PageConfig[] = [
     icon: Activity,
   },
   {
+    id: 'insights',
+    title: 'Search Insights',
+    subLabel: 'วิเคราะห์ข้อมูลเรียลไทม์',
+    desc: 'วิเคราะห์สถิติและข้อมูลเชิงลึกผ่าน Elasticsearch Aggregations และการกรองข้อมูลแบบมีปฏิสัมพันธ์ (Faceting/Drill-down)',
+    keywords: [
+      'insights',
+      'search',
+      'analytics',
+      'aggregation',
+      'statistics',
+      'charts',
+      'recharts',
+      'drilldown',
+      'faceting',
+      'วิเคราะห์',
+      'สถิติ',
+      'กราฟ'
+    ],
+    icon: BarChart3,
+  },
+  {
     id: 'observability',
     title: 'Infrastructure Pulse',
     subLabel: 'สถานะและการทำงานของระบบ',

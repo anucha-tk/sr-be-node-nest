@@ -1,10 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { AnalyticsService } from './analytics.service';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 
 describe('AnalyticsService', () => {
   let service: AnalyticsService;
   let prisma: PrismaService;
+  let elasticsearchService: ElasticsearchService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -20,11 +22,19 @@ describe('AnalyticsService', () => {
             $queryRaw: jest.fn(),
           },
         },
+        {
+          provide: ElasticsearchService,
+          useValue: {
+            search: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<AnalyticsService>(AnalyticsService);
     prisma = module.get<PrismaService>(PrismaService);
+    elasticsearchService =
+      module.get<ElasticsearchService>(ElasticsearchService);
   });
 
   it('should be defined', () => {
@@ -162,6 +172,104 @@ describe('AnalyticsService', () => {
       const result = await service.getTrends({ granularity: 'monthly' });
       expect(result.comparison.currentValue).toBe(0);
       expect(result.comparison.previousValue).toBe(0);
+    });
+  });
+
+  describe('getSearchStats', () => {
+    it('should aggregate statistics, facets and trends from Elasticsearch', async () => {
+      const mockEsResponse = {
+        aggregations: {
+          stats: { count: 5, sum: 1500, avg: 300, min: 100, max: 500 },
+          by_status: {
+            buckets: [{ key: 'PAID', doc_count: 5 }],
+          },
+          by_supplier: {
+            buckets: [{ key: 'Supplier Alpha', doc_count: 5 }],
+          },
+          trends: {
+            buckets: [
+              {
+                key_as_string: '2026-05-17',
+                doc_count: 5,
+                total_amount: { value: 1500 },
+              },
+            ],
+          },
+        },
+      };
+
+      (elasticsearchService.search as jest.Mock).mockResolvedValueOnce(
+        mockEsResponse,
+      );
+
+      const result = await service.getSearchStats({
+        q: 'Supplier',
+        status: 'PAID',
+        supplierName: 'Supplier Alpha',
+        granularity: 'daily',
+      });
+
+      expect(result.stats).toEqual({
+        count: 5,
+        sum: 1500,
+        avg: 300,
+        min: 100,
+        max: 500,
+      });
+      expect(result.facets.status).toEqual([{ key: 'PAID', docCount: 5 }]);
+      expect(result.facets.supplierName).toEqual([
+        { key: 'Supplier Alpha', docCount: 5 },
+      ]);
+      expect(result.trends).toEqual([
+        { period: '2026-05-17', count: 5, amount: 1500 },
+      ]);
+
+      expect(elasticsearchService.search).toHaveBeenCalled();
+    });
+
+    it('should handle weekly, monthly, and yearly granularities', async () => {
+      const mockEsResponse = { aggregations: {} };
+      (elasticsearchService.search as jest.Mock).mockResolvedValue(
+        mockEsResponse,
+      );
+
+      await service.getSearchStats({ granularity: 'weekly' });
+      await service.getSearchStats({ granularity: 'monthly' });
+      await service.getSearchStats({ granularity: 'yearly' });
+
+      expect(elasticsearchService.search).toHaveBeenCalledTimes(3);
+    });
+
+    it('should gracefully handle empty or undefined aggregations in response', async () => {
+      (elasticsearchService.search as jest.Mock).mockResolvedValueOnce({});
+
+      const result = await service.getSearchStats({ granularity: 'monthly' });
+      expect(result.stats).toEqual({
+        count: 0,
+        sum: 0,
+        avg: 0,
+        min: 0,
+        max: 0,
+      });
+      expect(result.facets.status).toEqual([]);
+      expect(result.trends).toEqual([]);
+    });
+
+    it('should gracefully fallback when Elasticsearch search throws an error', async () => {
+      (elasticsearchService.search as jest.Mock).mockRejectedValueOnce(
+        new Error('ES Down'),
+      );
+
+      const result = await service.getSearchStats({ granularity: 'monthly' });
+      expect(result.stats).toEqual({
+        count: 0,
+        sum: 0,
+        avg: 0,
+        min: 0,
+        max: 0,
+      });
+      expect(result.facets.status).toEqual([]);
+      expect(result.trends).toEqual([]);
     });
   });
 });

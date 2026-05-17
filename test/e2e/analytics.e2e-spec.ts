@@ -19,6 +19,7 @@ import { ResponseEnvelopeInterceptor } from '../../src/common/interceptors/respo
 import { Reflector, APP_GUARD } from '@nestjs/core';
 import { ZodValidationPipe } from 'nestjs-zod';
 import { AuthGuard, ResourceGuard, RoleGuard } from 'nest-keycloak-connect';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 
 let currentRole = 'admin';
 
@@ -71,6 +72,11 @@ class MockAuthModule {}
 describe('Analytics (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
+  let elasticsearchService: ElasticsearchService;
+
+  const mockElasticsearchService = {
+    search: jest.fn(),
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -88,6 +94,10 @@ describe('Analytics (e2e)', () => {
             $queryRaw: jest.fn(),
           },
         },
+        {
+          provide: ElasticsearchService,
+          useValue: mockElasticsearchService,
+        },
       ],
     }).compile();
 
@@ -98,6 +108,7 @@ describe('Analytics (e2e)', () => {
     app.useGlobalFilters(new HttpExceptionFilter());
     app.useGlobalInterceptors(new ResponseEnvelopeInterceptor());
     prisma = app.get<PrismaService>(PrismaService);
+    elasticsearchService = app.get<ElasticsearchService>(ElasticsearchService);
     await app.init();
   });
 
@@ -150,5 +161,47 @@ describe('Analytics (e2e)', () => {
     expect(response.body.success).toBe(true);
     expect(response.body.data.trends).toHaveLength(1);
     expect(response.body.data.comparison.growthPercentage).toBe(25);
+  });
+
+  it('GET /v1/analytics/search-stats should return search stats for admin', async () => {
+    currentRole = 'admin';
+    const mockSearchResponse = {
+      took: 5,
+      hits: {
+        total: { value: 10, relation: 'eq' },
+        hits: [],
+      },
+      aggregations: {
+        stats: { count: 10, sum: 1000, avg: 100, min: 10, max: 200 },
+        by_status: {
+          buckets: [{ key: 'PAID', doc_count: 10 }],
+        },
+        by_supplier: {
+          buckets: [{ key: 'Supplier 1', doc_count: 10 }],
+        },
+        trends: {
+          buckets: [
+            {
+              key_as_string: '2026-05-17',
+              doc_count: 10,
+              total_amount: { value: 1000 },
+            },
+          ],
+        },
+      },
+    };
+
+    (elasticsearchService.search as jest.Mock).mockResolvedValueOnce(
+      mockSearchResponse,
+    );
+
+    const response = await request(app.getHttpServer() as string)
+      .get('/api/v1/analytics/search-stats?granularity=daily&q=test')
+      .expect(200);
+
+    expect(response.body.success).toBe(true);
+    expect(response.body.data.stats.count).toBe(10);
+    expect(response.body.data.facets.status[0].key).toBe('PAID');
+    expect(response.body.data.trends[0].amount).toBe(1000);
   });
 });

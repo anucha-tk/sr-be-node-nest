@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ArchitectureDiagram from './components/ArchitectureDiagram'
 import MetricsDashboard from './components/MetricsDashboard'
+import InsightsDashboard from './components/InsightsDashboard'
 import PrometheusDashboard from './components/PrometheusDashboard'
 import PresentationMode from './components/PresentationMode'
 import ShowcaseSidebar from './components/ShowcaseSidebar'
@@ -44,6 +45,8 @@ export default function App() {
         return <SecurityView />
       case 'event-flow':
         return <MetricsDashboard />
+      case 'insights':
+        return <InsightsDashboard />
       case 'observability':
         return <PrometheusDashboard />
       case 'performance':

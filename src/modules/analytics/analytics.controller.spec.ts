@@ -15,6 +15,7 @@ describe('AnalyticsController', () => {
           useValue: {
             getSummary: jest.fn(),
             getTrends: jest.fn(),
+            getSearchStats: jest.fn(),
           },
         },
       ],
@@ -63,6 +64,32 @@ describe('AnalyticsController', () => {
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.getTrends).toHaveBeenCalledWith({
         granularity: 'monthly',
+      });
+    });
+  });
+
+  describe('getSearchStats', () => {
+    it('should return service search stats', async () => {
+      const mockSearchStats = {
+        stats: { count: 10, sum: 1000, avg: 100, min: 10, max: 200 },
+        facets: {
+          status: [{ key: 'PAID', docCount: 10 }],
+          supplierName: [{ key: 'Supplier 1', docCount: 10 }],
+        },
+        trends: [{ period: '2026-05-17', count: 10, amount: 1000 }],
+      };
+      (service.getSearchStats as jest.Mock).mockResolvedValue(mockSearchStats);
+
+      const result = await controller.getSearchStats({
+        q: 'test',
+        granularity: 'daily',
+      });
+
+      expect(result).toEqual(mockSearchStats);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(service.getSearchStats).toHaveBeenCalledWith({
+        q: 'test',
+        granularity: 'daily',
       });
     });
   });

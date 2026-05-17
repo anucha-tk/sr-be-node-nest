@@ -1,13 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import { ElasticsearchService } from '@nestjs/elasticsearch';
 import { PrismaService } from '../../shared/prisma/prisma.service';
 import { AdminSummaryDto } from './dto/admin-summary.dto';
 import { InvoiceStatus } from '@prisma/client';
 import { TrendQueryDto } from './dto/trend-query.dto';
 import { TrendResponseDto } from './dto/trend-response.dto';
+import {
+  SearchStatsQueryDto,
+  SearchStatsResponseDto,
+} from './dto/search-stats.dto';
+import { SEARCH_INDEX_NAME } from '../search/definitions/search.index';
 
 @Injectable()
 export class AnalyticsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly elasticsearchService: ElasticsearchService,
+  ) {}
 
   async getSummary(): Promise<AdminSummaryDto & { lastRefreshed?: string }> {
     const [summary] = await this.prisma.$queryRaw<
@@ -146,5 +155,144 @@ export class AnalyticsService {
       },
       lastRefreshed,
     };
+  }
+
+  async getSearchStats(
+    query: SearchStatsQueryDto,
+  ): Promise<SearchStatsResponseDto> {
+    const must: Record<string, unknown>[] = [];
+    if (query.q) {
+      must.push({
+        multi_match: {
+          query: query.q,
+          fields: ['invoiceNumber^3', 'name^3', 'description', 'supplierName'],
+          fuzziness: 'AUTO',
+          prefix_length: 2,
+        },
+      });
+    }
+
+    const filter: Record<string, unknown>[] = [];
+    if (query.status) {
+      filter.push({ term: { 'status.keyword': query.status } });
+    }
+    if (query.supplierName) {
+      filter.push({ term: { 'supplierName.keyword': query.supplierName } });
+    }
+
+    const esQuery = {
+      bool: {
+        must: must.length > 0 ? must : [{ match_all: {} }],
+        filter: filter.length > 0 ? filter : undefined,
+      },
+    };
+
+    let calendarInterval: 'day' | 'week' | 'month' | 'year' = 'month';
+    if (query.granularity === 'daily') {
+      calendarInterval = 'day';
+    } else if (query.granularity === 'weekly') {
+      calendarInterval = 'week';
+    } else if (query.granularity === 'monthly') {
+      calendarInterval = 'month';
+    } else if (query.granularity === 'yearly') {
+      calendarInterval = 'year';
+    }
+
+    const aggs = {
+      stats: {
+        stats: { field: 'amount' },
+      },
+      by_status: {
+        terms: { field: 'status.keyword', size: 10 },
+      },
+      by_supplier: {
+        terms: { field: 'supplierName.keyword', size: 10 },
+      },
+      trends: {
+        date_histogram: {
+          field: 'createdAt',
+          calendar_interval: calendarInterval,
+          format: 'yyyy-MM-dd',
+          min_doc_count: 0,
+        },
+        aggs: {
+          total_amount: {
+            sum: { field: 'amount' },
+          },
+        },
+      },
+    };
+
+    try {
+      const result = await this.elasticsearchService.search({
+        index: SEARCH_INDEX_NAME,
+        size: 0,
+        query: esQuery,
+        aggs,
+      });
+
+      interface EsStatsAgg {
+        count: number;
+        sum: number;
+        avg: number;
+        min: number;
+        max: number;
+      }
+      interface EsBucket {
+        key: string | number;
+        doc_count: number;
+        total_amount?: { value: number };
+        key_as_string?: string;
+      }
+
+      const aggregations = result.aggregations as
+        | Record<string, unknown>
+        | undefined;
+
+      const statsAgg = (aggregations?.stats as EsStatsAgg) || {
+        count: 0,
+        sum: 0,
+        avg: 0,
+        min: 0,
+        max: 0,
+      };
+      const statusBuckets =
+        (aggregations?.by_status as { buckets: EsBucket[] })?.buckets || [];
+      const supplierBuckets =
+        (aggregations?.by_supplier as { buckets: EsBucket[] })?.buckets || [];
+      const trendBuckets =
+        (aggregations?.trends as { buckets: EsBucket[] })?.buckets || [];
+
+      return {
+        stats: {
+          count: Number(statsAgg.count || 0),
+          sum: Number(statsAgg.sum || 0),
+          avg: Number(statsAgg.avg || 0),
+          min: Number(statsAgg.min || 0),
+          max: Number(statsAgg.max || 0),
+        },
+        facets: {
+          status: statusBuckets.map((b) => ({
+            key: String(b.key),
+            docCount: Number(b.doc_count),
+          })),
+          supplierName: supplierBuckets.map((b) => ({
+            key: String(b.key),
+            docCount: Number(b.doc_count),
+          })),
+        },
+        trends: trendBuckets.map((b) => ({
+          period: String(b.key_as_string || b.key),
+          count: Number(b.doc_count || 0),
+          amount: Number(b.total_amount?.value || 0),
+        })),
+      };
+    } catch {
+      return {
+        stats: { count: 0, sum: 0, avg: 0, min: 0, max: 0 },
+        facets: { status: [], supplierName: [] },
+        trends: [],
+      };
+    }
   }
 }

@@ -1,28 +1,28 @@
-# Retrospective: Epic 2 - Real-time Revenue Tracking
+# Retrospective: Epic 2 - Command Palette Search Experience (The Search Master)
 
-**Date:** 2026-05-12
+**Date:** 2026-05-17
 **Epic:** 2
 **Status:** Complete
 
 ## 🎯 Successes
 
-- **High-Integrity Ingestion:** Kafka consumer successfully processes `invoice.paid` events with Zod validation and DLQ support.
-- **Guaranteed Idempotency:** Implemented `ProcessedEvent` tracking with ACID transactions, ensuring zero duplicate revenue updates.
-- **Immutable Audit Trail:** Append-only logging captures every balance change with source correlation, meeting strict financial audit requirements.
-- **Performance Excellence:** Revenue balance API achieves < 200ms P95 latency via optimized Prisma queries and indexing.
+- **Manual Mapping & Analyzer Tuning:** Successfully configured manual mapping and Edge N-gram analyzers in Elasticsearch v9, optimizing partial-word matching speed and accuracy.
+- **Typo Tolerance & Multi-Match API:** Implemented a robust fuzzy search API that allows spelling mistakes while ranking relevant documents using field boosts (e.g., `invoiceNumber^3`).
+- **Seamless Frontend Keyboard Control:** Built the global `Cmd+K` palette trigger with fluid keyboard selection (ArrowUp/Down/Enter) and focus management.
+- **Extreme Scale Rendering Performance:** Added high-density result tabular styling integrated with a custom virtualized list, delivering 60fps scrolling performance when rendering large result arrays without DOM bloat.
+- **Visual Speed Perception:** Implemented beautiful pulsing skeleton loaders matching the exact table schema, maximizing user patience and speed perception.
 
 ## 💡 Lessons Learned
 
-- **Precision is Paramount:** Using `Prisma.Decimal` (mapped to Postgres `DECIMAL`) is non-negotiable for financial math to avoid floating-point drift.
-- **Observability via Correlation:** Passing the Kafka `correlationId` into the audit log and service layers significantly improved debugging speed during integration.
-- **Identity Context:** Custom `@CurrentUser` decorator simplified RBAC enforcement and ensured suppliers only access their own revenue data.
+- **Elasticsearch API Evolutions:** Flattened arguments for index creation to conform with the strict parameters in Elasticsearch v9, avoiding legacy `body` deprecation errors.
+- **Fuzziness Calibration:** `prefix_length: 2` combined with auto-fuzziness is perfect to balance typo tolerance without dragging down query execution speeds on massive datasets.
+- **React 19 Compatibility:** Lightweight custom virtual list component avoids peer dependency conflicts seen in third-party libraries (e.g. `react-window`) under React 19.
 
 ## 🚀 Action Items for Epic 3
 
-1. **Massive Scale Optimization:** Epic 3 involves 1M+ records; SQL index strategy and pagination efficiency must be the primary focus.
-2. **Defensive API Design:** Implement the planned rate-limiting (Story 3.2) early to protect the search endpoints from heavy query load.
-3. **Export Schema Stability:** Ensure the JSON export matches the `InvoiceListItemDTO` exactly to maintain external consumer compatibility.
-4. **Prisma Middleware/Extensions:** Explore Prisma extensions for automatic timestamping or auditing to further reduce boilerplate in Epic 3.
+1. **Kafka-Driven Ingestion Integration:** Implement real-time transactional synchronization (Story 3.1 & 3.2) between PostgreSQL updates and the tuned Elasticsearch indexes.
+2. **Idempotency Protection:** Ensure every Kafka consumption checks and logs using the `ProcessedEvent` scheme to prevent duplicate search indexing.
+3. **Live SSE Channel:** Connect Server-Sent Events to stream live activity feeds into the UI sidebar with Framer Motion.
 
 ---
 

@@ -12,12 +12,17 @@ import {
   Server
 } from 'lucide-react'
 import { fetchApi } from '../api'
+import { useWebSockets } from '../hooks/useWebSockets'
 
 export default function MetricsDashboard() {
   const [balance, setBalance] = useState<number | null>(null)
   const [latency, setLatency] = useState<number | null>(null)
   const [isSimulating, setIsSimulating] = useState(false)
   const [events, setEvents] = useState<Array<{ id: string; amount: number; status: string; time: string }>>([])
+  const [amountInput, setAmountInput] = useState<string>('500')
+  const [activeStep, setActiveStep] = useState<number | null>(null)
+
+  const { subscribe } = useWebSockets()
 
   const fetchBalance = useCallback(async () => {
     const res = await fetchApi<{ balance: number }>('/v1/suppliers/me/revenue')
@@ -34,18 +39,31 @@ export default function MetricsDashboard() {
     return () => { clearTimeout(timer) }
   }, [fetchBalance])
 
+  useEffect(() => {
+    const unsubscribe = subscribe('balance_updated', (data: { supplierId: string; balance: number }) => {
+      setBalance(data.balance)
+    })
+    return unsubscribe
+  }, [subscribe])
+
   const simulateTransaction = async () => {
     if (isSimulating) return
+    const amountVal = parseFloat(amountInput) || 500
     setIsSimulating(true)
+    setActiveStep(1) // Step 1 Active
 
-    // Call the new backend endpoint to trigger a Kafka event
-    const res = await fetchApi<{ eventId: string; amount: number }>('/v1/suppliers/simulate-payment', { method: 'POST' })
+    // Call the backend endpoint to trigger a Kafka event with custom amount
+    const res = await fetchApi<{ message: string; data: { eventId: string; amount: number } }>('/v1/suppliers/simulate-payment', { 
+      method: 'POST',
+      body: JSON.stringify({ amount: amountVal })
+    })
     
-    if (res.success && res.data) {
+    if (res.success && res.data?.data) {
+      const payload = res.data.data;
       // Add event to UI timeline
       const newEvent = {
-        id: res.data.eventId,
-        amount: res.data.amount,
+        id: payload.eventId,
+        amount: payload.amount,
         status: 'sending',
         time: new Date().toLocaleTimeString()
       }
@@ -54,15 +72,22 @@ export default function MetricsDashboard() {
       // Simulate the flow through the system
       setTimeout(() => {
         setEvents(prev => prev.map(e => e.id === newEvent.id ? { ...e, status: 'checking' } : e))
+        setActiveStep(2) // Step 2 Active
       }, 1000)
 
       setTimeout(() => {
         setEvents(prev => prev.map(e => e.id === newEvent.id ? { ...e, status: 'saved' } : e))
-        fetchBalance() // Refresh balance after "saving"
-        setIsSimulating(false)
+        setActiveStep(3) // Step 3 Active
+        void fetchBalance() // Fallback balance refresh
       }, 2500)
+
+      setTimeout(() => {
+        setActiveStep(null) // Reset active steps
+        setIsSimulating(false)
+      }, 4000)
     } else {
       setIsSimulating(false)
+      setActiveStep(null)
     }
   }
 
@@ -82,7 +107,9 @@ export default function MetricsDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Step 1: The Conveyor Belt (Kafka) */}
-        <motion.div className="glass-panel p-6 flex flex-col items-center text-center">
+        <motion.div className={`glass-panel p-6 flex flex-col items-center text-center transition-all duration-300 ${
+          activeStep === 1 ? 'ring-2 ring-primary border-primary shadow-[0_0_15px_rgba(0,119,182,0.25)] scale-[1.02]' : ''
+        }`}>
           <div className="p-4 bg-blue-500/20 rounded-full text-blue-400 mb-4 relative">
             <Truck size={32} />
             {isSimulating && (
@@ -97,8 +124,22 @@ export default function MetricsDashboard() {
           </div>
           <h4 className="font-bold text-lg mb-1">1. สายพานรับข้อมูล</h4>
           <p className="text-xs text-slate-600 mb-4">เทคโนโลยี: Apache Kafka</p>
-          <p className="text-sm text-slate-600">รองรับรายการโอนเงินนับแสนรายการต่อวินาที โดยไม่ทำให้ระบบล่ม</p>
+          <p className="text-sm text-slate-600 mb-6">รองรับรายการโอนเงินนับแสนรายการต่อวินาที โดยไม่ทำให้ระบบล่ม</p>
           
+          <div className="w-full mb-4">
+            <label className="block text-left text-xs font-bold text-slate-600 mb-1">
+              ระบุจำนวนเงิน ($)
+            </label>
+            <input
+              type="number"
+              value={amountInput}
+              onChange={(e) => setAmountInput(e.target.value)}
+              disabled={isSimulating}
+              placeholder="500"
+              className="w-full px-3 py-2 bg-white/60 border border-slate-200 rounded-lg text-slate-900 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50"
+            />
+          </div>
+
           <button
             onClick={simulateTransaction}
             disabled={isSimulating}
@@ -107,12 +148,14 @@ export default function MetricsDashboard() {
             }`}
           >
             {isSimulating ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} />}
-            {isSimulating ? 'กำลังลำเลียงข้อมูล...' : 'จำลองมีเงินโอนเข้า 500$'}
+            {isSimulating ? 'กำลังลำเลียงข้อมูล...' : `จำลองมีเงินโอนเข้า ${amountInput || '500'}$`}
           </button>
         </motion.div>
 
         {/* Step 2: The Inspector (Idempotency) */}
-        <motion.div className="glass-panel p-6 flex flex-col items-center text-center relative overflow-hidden">
+        <motion.div className={`glass-panel p-6 flex flex-col items-center text-center relative overflow-hidden transition-all duration-300 ${
+          activeStep === 2 ? 'ring-2 ring-primary border-primary shadow-[0_0_15px_rgba(0,119,182,0.25)] scale-[1.02]' : ''
+        }`}>
           <div className={`p-4 rounded-full mb-4 transition-colors duration-500 ${
             events[0]?.status === 'checking' ? 'bg-amber-500/40 text-amber-500 scale-110 shadow-[0_4px_24px_rgba(245,158,11,0.3)]' : 'bg-slate-100 text-slate-500'
           }`}>
@@ -124,7 +167,9 @@ export default function MetricsDashboard() {
         </motion.div>
 
         {/* Step 3: The Vault (Database) */}
-        <motion.div className="glass-panel p-6 flex flex-col items-center text-center border-t-4 border-emerald-500">
+        <motion.div className={`glass-panel p-6 flex flex-col items-center text-center border-t-4 border-emerald-500 transition-all duration-300 ${
+          activeStep === 3 ? 'ring-2 ring-primary border-primary shadow-[0_0_15px_rgba(0,119,182,0.25)] scale-[1.02]' : ''
+        }`}>
           <div className={`p-4 rounded-full mb-4 transition-colors duration-500 ${
             events[0]?.status === 'saved' ? 'bg-emerald-500/40 text-emerald-600 scale-110 shadow-[0_4px_24px_rgba(16,185,129,0.3)]' : 'bg-emerald-100 text-emerald-600'
           }`}>
@@ -168,7 +213,7 @@ export default function MetricsDashboard() {
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-600">{evt.time}</span>
                   <span className="text-sm font-mono text-slate-600">{evt.id}</span>
-                  <span className="text-emerald-600 font-bold">+${evt.amount}</span>
+                  <span className="text-emerald-600 font-bold">+${evt.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div>
                   {evt.status === 'sending' && <span className="text-xs bg-blue-500/20 text-blue-600 px-2 py-1 rounded flex items-center gap-1"><Truck size={12}/> วิ่งบนสายพาน</span>}

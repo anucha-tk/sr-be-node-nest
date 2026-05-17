@@ -119,4 +119,32 @@ describe('RevenueController', () => {
       );
     });
   });
+
+  describe('simulatePayment', () => {
+    const mockUser = {
+      sub: 'SUP-001',
+      preferred_username: 'supplier1',
+      roles: ['admin'],
+    };
+
+    it('should simulate payment with default amount when body is not provided', async () => {
+      const result = await controller.simulatePayment(mockUser);
+      expect(result.data.amount).toBe(500.0);
+      expect(mockKafkaClient.emit).toHaveBeenCalledWith(
+        KAFKA_TOPICS.INVOICE_PAID,
+        expect.objectContaining({ amount: 500.0 }),
+      );
+    });
+
+    it('should simulate payment with custom amount when provided in body', async () => {
+      const result = await controller.simulatePayment(mockUser, {
+        amount: 1500.0,
+      });
+      expect(result.data.amount).toBe(1500.0);
+      expect(mockKafkaClient.emit).toHaveBeenCalledWith(
+        KAFKA_TOPICS.INVOICE_PAID,
+        expect.objectContaining({ amount: 1500.0 }),
+      );
+    });
+  });
 });

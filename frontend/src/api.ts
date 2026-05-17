@@ -18,7 +18,8 @@ export interface ApiResponse<T> {
 
 export async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const formattedEndpoint = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
+    const response = await fetch(`${API_BASE_URL}${formattedEndpoint}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',

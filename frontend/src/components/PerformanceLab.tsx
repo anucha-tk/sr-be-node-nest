@@ -31,7 +31,6 @@ export default function PerformanceLab() {
   const [showHistory, setShowHistory] = useState(false)
 
   const runBenchmark = useCallback(async () => {
-    setIsRunning(true)
     try {
       const startTime = Date.now()
       const response = await fetchApi<Record<string, unknown>>('/v1/analytics/summary')
@@ -118,7 +117,7 @@ export default function PerformanceLab() {
           <div className="mt-12 p-6 rounded-2xl bg-white/60 border border-slate-200 space-y-6">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">เป้าหมาย (API)</span>
-              <span className="text-xs font-mono text-primary">/v1/analytics/summary</span>
+              <span className="text-xs font-mono text-primary">/api/v1/analytics/summary</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-slate-600 uppercase tracking-widest">ฐานข้อมูล</span>

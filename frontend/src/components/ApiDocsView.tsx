@@ -50,7 +50,7 @@ export default function ApiDocsView() {
           <div className="p-6 bg-white flex-1 font-mono text-sm leading-relaxed overflow-y-auto shadow-inner rounded-b-2xl">
             <div className="text-slate-600 mb-2">// 1. นักพัฒนาส่งคำสั่งขอข้อมูล พร้อมแนบ "กุญแจผ่านทาง"</div>
             <div className="text-primary font-bold">curl <span className="text-slate-600 font-normal">-X GET</span></div>
-            <div className="text-cyan font-bold pl-4">"http://localhost:3000/v1/analytics/summary" \</div>
+            <div className="text-cyan font-bold pl-4">"http://localhost:3000/api/v1/analytics/summary" \</div>
             <div className="text-slate-600 pl-4">-H <span className="text-slate-600">"x-api-key: {apiKey.substring(0, 15)}..."</span></div>
             <br />
             <div className="text-slate-600">// 2. ระบบตอบกลับเป็นข้อมูล JSON ที่ตกลงกันไว้ตามมาตรฐาน</div>

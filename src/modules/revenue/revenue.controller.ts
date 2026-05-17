@@ -75,12 +75,15 @@ export class RevenueController {
   @ApiOperation({
     summary: 'Simulate a payment event sent to Kafka (Showcase purposes)',
   })
-  async simulatePayment(@CurrentUser() user: KeycloakUser) {
+  async simulatePayment(
+    @CurrentUser() user: KeycloakUser,
+    @Body() body?: { amount?: number },
+  ) {
     const timestamp = new Date().toISOString();
     const eventId = crypto.randomUUID();
     const invoiceId = `inv_sim_${Date.now()}`;
     const supplierId = user?.sub || 'seed-supplier-001';
-    const amount = 500.0;
+    const amount = body?.amount !== undefined ? Number(body.amount) : 500.0;
 
     const payload = {
       eventId,

@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Command, X, FileText, User, Hash, Loader2 } from 'lucide-react'
-import { useCommandPalette, type SearchResult } from '../../hooks/useCommandPalette'
+import { Search, Command, X, FileText } from 'lucide-react'
+import { useCommandPalette } from '../../hooks/useCommandPalette'
+import { SearchResultSkeleton } from './SearchResultSkeleton'
+import { SearchResultTable } from './SearchResultTable'
 
 export function CommandPalette() {
   const {
@@ -35,7 +37,7 @@ export function CommandPalette() {
           initial={{ opacity: 0, scale: 0.95, y: -20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
-          className="relative w-full max-w-2xl overflow-hidden glass-panel !rounded-2xl shadow-2xl bg-white/95 border border-white/40 ring-1 ring-black/5"
+          className="relative w-full max-w-4xl overflow-hidden glass-panel !rounded-2xl shadow-2xl bg-white/95 border border-white/40 ring-1 ring-black/5"
         >
           <div className="flex items-center px-4 border-b border-slate-100">
             <Search className="w-5 h-5 text-slate-400 mr-3" />
@@ -56,9 +58,8 @@ export function CommandPalette() {
 
           <div className="max-h-[60vh] overflow-y-auto overflow-x-hidden p-2 custom-scrollbar">
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-12 gap-3 text-slate-400">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <p className="text-sm font-medium">Searching across millions of records...</p>
+              <div className="py-2">
+                <SearchResultSkeleton />
               </div>
             ) : error ? (
               <div className="py-12 text-center">
@@ -69,18 +70,15 @@ export function CommandPalette() {
                 <p className="text-slate-400 text-sm">Please try again later or contact support.</p>
               </div>
             ) : results.length > 0 ? (
-              <div className="space-y-1">
-                <p className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="space-y-2 p-1">
+                <p className="px-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                   Search Results ({results.length})
                 </p>
-                {results.map((result, index) => (
-                  <SearchResultItem
-                    key={result.id}
-                    result={result}
-                    isSelected={index === selectedIndex}
-                    onClick={() => handleSelect(result)}
-                  />
-                ))}
+                <SearchResultTable
+                  results={results}
+                  selectedIndex={selectedIndex}
+                  onSelect={handleSelect}
+                />
               </div>
             ) : query.trim() ? (
               <div className="py-12 text-center">
@@ -125,59 +123,6 @@ export function CommandPalette() {
         </motion.div>
       </div>
     </AnimatePresence>
-  )
-}
-
-function SearchResultItem({
-  result,
-  isSelected,
-  onClick,
-}: {
-  result: SearchResult
-  isSelected: boolean
-  onClick: () => void
-}) {
-  const getIcon = () => {
-    switch (result.type) {
-      case 'invoice': return <FileText className="w-4 h-4" />
-      case 'api-key': return <Hash className="w-4 h-4" />
-      case 'supplier': return <User className="w-4 h-4" />
-      default: return <Search className="w-4 h-4" />
-    }
-  }
-
-  return (
-    <div
-      onClick={onClick}
-      className={`
-        group flex items-center px-3 py-3 rounded-xl cursor-pointer transition-all duration-200
-        ${isSelected ? 'bg-primary/10 border-primary/20 ring-1 ring-primary/20' : 'hover:bg-slate-50'}
-      `}
-    >
-      <div className={`
-        w-10 h-10 rounded-lg flex items-center justify-center mr-3 transition-colors
-        ${isSelected ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-white group-hover:text-primary'}
-      `}>
-        {getIcon()}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between">
-          <h4 className={`text-sm font-semibold truncate ${isSelected ? 'text-slate-900' : 'text-slate-700'}`}>
-            {result.invoiceNumber || result.name || result.title || 'Untitled'}
-          </h4>
-          <span className={`text-[10px] font-bold uppercase tracking-tight px-2 py-0.5 rounded-full border ${
-            isSelected ? 'bg-primary/20 border-primary/30 text-primary' : 'bg-slate-100 border-slate-200 text-slate-400'
-          }`}>
-            {result.type}
-          </span>
-        </div>
-        {result.description && (
-          <p className={`text-xs truncate ${isSelected ? 'text-slate-600' : 'text-slate-400'}`}>
-            {result.description}
-          </p>
-        )}
-      </div>
-    </div>
   )
 }
 

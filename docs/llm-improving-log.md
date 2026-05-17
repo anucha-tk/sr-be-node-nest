@@ -1,5 +1,10 @@
 ## LLM Improving log
 
+### Technical Resolutions (2026-05-17)
+
+- **React 19 Virtualization:** Pure React custom virtual list provides extremely lightweight, high-performance rendering (60fps) for 1,000+ items while avoiding React 19 package manager peer dependency clashes.
+- **Virtualized Keyboard Navigation:** Auto-scrolling focused items into the scroll container viewport is easily implemented by tracking `selectedIndex` changes and comparing item positions against container scroll bounds.
+
 ### Technical Resolutions (2026-05-16)
 
 - **Elasticsearch v9 Integration:** `indices.create` no longer uses a `body` property; parameters are flattened.

@@ -67,9 +67,9 @@ development_status:
   4-3-insights-dashboard-ui-recharts-integration: done
   4-4-real-time-chart-updates-drill-down: done
   epic-4-retrospective: optional
-  epic-5: backlog
-  5-1-interactive-architecture-map-component: backlog
-  5-2-live-performance-lab-benchmarking: backlog
-  5-3-security-identity-vault-demo: backlog
-  5-4-presentation-mode-storytelling-ui: backlog
+  epic-5: done
+  5-1-interactive-architecture-map-component: done
+  5-2-live-performance-lab-benchmarking: done
+  5-3-security-identity-vault-demo: done
+  5-4-presentation-mode-storytelling-ui: done
   epic-5-retrospective: optional

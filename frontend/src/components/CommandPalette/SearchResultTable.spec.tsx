@@ -60,6 +60,50 @@ describe('SearchResultTable', () => {
     expect(screen.getByText('active')).toBeInTheDocument()
   })
 
+  it('should handle supplier, action, and default types with correct styling and fallback formatting', () => {
+    const extraResults: SearchResult[] = [
+      {
+        id: 'sup_123',
+        type: 'supplier',
+        supplierName: 'Global Corp',
+        description: 'Supplier for services',
+      },
+      {
+        id: 'security',
+        type: 'action',
+        title: 'Identity & Shield',
+      },
+      {
+        id: 'custom_id_too_long_value',
+        type: 'other' as any,
+        name: 'Custom Node',
+      },
+      {
+        id: 'short',
+        type: 'other' as any,
+      }
+    ]
+
+    render(
+      <SearchResultTable
+        results={extraResults}
+        selectedIndex={1}
+        onSelect={vi.fn()}
+      />
+    )
+
+    expect(screen.getByText('supplier')).toBeInTheDocument()
+    expect(screen.getByText('Global Corp')).toBeInTheDocument()
+
+    expect(screen.getByText('action')).toBeInTheDocument()
+    expect(screen.getByText('NAV: security')).toBeInTheDocument()
+
+    expect(screen.getByText('custom_i...')).toBeInTheDocument()
+    expect(screen.getByText('Custom Node')).toBeInTheDocument()
+
+    expect(screen.getByText('Untitled')).toBeInTheDocument()
+  })
+
   it('should call onSelect when a row is clicked', () => {
     const handleSelect = vi.fn()
     render(

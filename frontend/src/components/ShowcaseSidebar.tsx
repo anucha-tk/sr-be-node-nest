@@ -83,8 +83,8 @@ export default function ShowcaseSidebar({
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-cyan shadow-[0_4px_10px_rgba(0,210,255,0.3)] flex-shrink-0" />
           {isSidebarOpen && (
             <div className="text-sm truncate">
-              <p className="font-medium text-slate-900">Interview Candidate</p>
-              <p className="text-slate-600 text-xs truncate">System Architecture Demo</p>
+              <p className="font-bold text-slate-900">SR-BE-Node-Nest</p>
+              <p className="text-slate-600 text-xs truncate">Smart Revenue Pipeline</p>
             </div>
           )}
         </div>

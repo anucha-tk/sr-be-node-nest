@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { fetchApi } from '../api'
 import { useWebSockets } from '../hooks/useWebSockets'
+import ShowcaseComparisonCards from './ShowcaseComparisonCards'
 
 export default function MetricsDashboard() {
   const [balance, setBalance] = useState<number | null>(null)
@@ -93,16 +94,42 @@ export default function MetricsDashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Explanation for Non-Tech */}
-      <div className="glass-panel p-6 bg-primary/5 border-primary/10">
-        <h3 className="text-xl font-bold text-primary mb-2">เปรียบเทียบการทำงาน (Analogy)</h3>
-        <p className="text-slate-600 text-sm leading-relaxed">
-          ระบบ <span className="font-bold">Event-Driven (Kafka)</span> เปรียบเสมือน <span className="text-emerald-400 font-bold">"สายพานลำเลียงพัสดุขนาดใหญ่"</span> 
-          เมื่อมีเงินโอนเข้ามา (พัสดุ) ระบบจะไม่รบกวนการทำงานของหน้าร้าน แต่จะโยนลงสายพานทันที 
-          จากนั้นจะมี <span className="text-amber-400 font-bold">"พนักงานตรวจรับ (Idempotency)"</span> คอยเช็คว่าพัสดุชิ้นนี้เคยรับไปแล้วหรือยัง เพื่อป้องกันการบวกเงินซ้ำซ้อน 
-          ก่อนจะนำไปเก็บลงคลัง (Database) อย่างปลอดภัย
-        </p>
-      </div>
+      <ShowcaseComparisonCards
+        card1={{
+          problem: (
+            <>
+              ในชั่วโมงเร่งด่วนที่มีธุรกรรมชำระเงินเข้ามาพร้อมกันใน 1 วินาที ระบบบัญชีแบบเดิมจะค้างเพราะเขียนฐานข้อมูลไม่ทัน ทำให้ <span className="font-bold text-rose-600">ยอดเงินไม่เข้า ยอดแจ้งเตือนล้มเหลว หรือลูกค้าถูกตัดเงินซ้ำซ้อน</span>
+            </>
+          ),
+          solution: (
+            <>
+              ใช้สายพานชำระเงินความเร็วสูง (Apache Kafka) มารองรับธุรกรรมทั้งหมดเป็นคิว แล้วทยอยนำเข้าอัปเดตใบแจ้งหนี้รายรับอย่างปลอดภัยเป็นระบบ
+            </>
+          ),
+          impact: (
+            <>
+              ระบบสามารถประมวลผลธุรกรรมการเงินได้อย่างมั่นคง <span className="font-bold text-rose-600">รองรับปริมาณธุรกรรมมหาศาลได้อย่างราบรื่น 100% โดยไม่มีธุรกรรมสูญหายระหว่างทาง</span>
+            </>
+          ),
+        }}
+        card2={{
+          title: "สายพานกระจายและควบคุมแรงดันธุรกรรม (High-Speed Financial Message Broker)",
+          leftTitle: "ถ้าไม่ใช้ Pattern (ก่อน)",
+          leftContent: (
+            <>
+              <p>ธุรกรรมพุ่งชนฐานข้อมูล Postgres โดยตรงเหมือนน้ำป่าไหลหลากทะลักใส่ท่อขนาดเล็ก</p>
+              <p className="font-bold text-rose-600">➔ ผลลัพธ์: ท่อล้น ฐานข้อมูลค้างชะงัก และข้อมูลสูญหายระหว่างทาง</p>
+            </>
+          ),
+          rightTitle: "สิ่งที่เราใช้ (หลัง)",
+          rightContent: (
+            <>
+              <p>ข้อมูลชำระเงินพักในอ่างกระจายแรงดันน้ำ (Kafka) ➔ ค่อยๆ ปล่อยบันทึกยอดอย่างเป็นระบบตามกำลังเครื่อง</p>
+              <p className="font-bold text-emerald-600">➔ ผลลัพธ์: ท่อการเงินไม่สะดุด ข้อมูลครบสมบูรณ์ทุกสตางค์</p>
+            </>
+          ),
+        }}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         

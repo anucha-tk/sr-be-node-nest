@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Shield, Key, X, FileJson, Zap, AlertTriangle, ShieldAlert } from 'lucide-react'
 import { fetchApi } from '../api'
 
+import ShowcaseComparisonCards from './ShowcaseComparisonCards'
+
 interface ApiKey {
   id: string;
   name: string;
@@ -127,6 +129,42 @@ export default function SecurityView() {
 
   return (
     <div className="space-y-8">
+      <ShowcaseComparisonCards
+        card1={{
+          problem: (
+            <>
+              ยอดรายรับของบริษัทและข้อมูลสลิปคู่ค้าเป็นข้อมูลความลับสูง หากไม่มีการสกัดกัน แฮกเกอร์อาจยิงบอทสุ่มเจาะดึงข้อมูลบิล หรือพนักงานแอบดูยอดเงินหลังบ้าน <span className="font-bold text-rose-600">ทำให้ข้อมูลความลับทางการค้ารั่วไหลและเสียชื่อเสียงทางธุรกิจ</span>
+            </>
+          ),
+          solution: (
+            <>
+              ติดตั้งระบบสิทธิ์ Keycloak ควบคุมการล็อกอิน และกำหนดสิทธิ์เรียกใช้ผ่าน API Key Scopes คู่กับระบบตรวจความเร็วยิงสุ่ม (Rate Limiting) ป้องกันบอท
+            </>
+          ),
+          impact: (
+            <>
+              ข้อมูลทางการเงินและใบแจ้งหนี้ปลอดภัยสูงสุด <span className="font-bold text-rose-600">สกัดการแอบดึงข้อมูลการเงินและการโจมตีกระหน่ำยิงรัวได้ 100%</span> พร้อมบดบังยอดเงินตามสิทธิ์
+            </>
+          ),
+        }}
+        card2={{
+          title: "การควบคุมความปลอดภัยห้องนิรภัยทางการเงิน (Multi-layered Financial Vault Security)",
+          leftTitle: "ถ้าไม่ใช้ Pattern (ก่อน)",
+          leftContent: (
+            <>
+              <p>ไม่มีด่านคัดกรอง ➔ บอทยิงสุ่มค้นหาเลขใบแจ้งหนี้ดึงรายได้คู่ค้าไปได้โดยตรง</p>
+              <p className="font-bold text-rose-600">➔ ผลลัพธ์: ข้อมูลความลับรั่วไหล ละเมิดกฎหมายความเป็นส่วนตัวการเงิน</p>
+            </>
+          ),
+          rightTitle: "สิ่งที่เราใช้ (หลัง)",
+          rightContent: (
+            <>
+              <p>ผู้ใช้งานทั่วไปจะเห็นยอดเงินถูกปิดบัง (Masked: ฿*,***.**) ➔ หากบอทยิงถี่เกิน 5 ครั้ง/นาที</p>
+              <p className="font-bold text-emerald-600">➔ ผลลัพธ์: ระบบสั่งล็อกพอร์ตบล็อกการเชื่อมต่อทันทีใน 1 มิลลิวินาที (HTTP 429)</p>
+            </>
+          ),
+        }}
+      />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
         <div className="space-y-6">
           <motion.div 

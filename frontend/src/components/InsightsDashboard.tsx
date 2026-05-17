@@ -28,6 +28,7 @@ import {
   Clock
 } from 'lucide-react'
 import { fetchApi } from '../api'
+import ShowcaseComparisonCards from './ShowcaseComparisonCards'
 
 interface FacetItem {
   key: string
@@ -134,6 +135,42 @@ export default function InsightsDashboard() {
 
   return (
     <div className="space-y-8">
+      <ShowcaseComparisonCards
+        card1={{
+          problem: (
+            <>
+              การคำนวณและสรุปยอดเงินเพื่อแยกประเภทภาษี ยอดรายรับสะสมรายวัน หรือการจัดกลุ่มสถานะบิลของคู่ค้าจากประวัติธุรกรรมหลายล้านรายการบนระบบบัญชีแบบเดิม จะใช้คำสั่งที่ซับซ้อน ดึงข้อมูลนานมาก ทำให้ <span className="font-bold text-rose-600">กราฟรายงานรายได้ค้าง ข้อมูลการคำนวณภาษีล่าช้า และมองไม่เห็นกระแสเงินสดจริงของบริษัท</span>
+            </>
+          ),
+          solution: (
+            <>
+              ใช้ฟังก์ชันการคำนวณสรุปยอดแบบกระจายศูนย์ความเร็วสูง (Elasticsearch Aggregations) จัดหมวดหมู่ยอดขาย คำนวณค่าเฉลี่ย และจัดสัดส่วนสถานะการชำระเงินของใบแจ้งหนี้สะสมไว้ล่วงหน้าอย่างอัตโนมัติ
+            </>
+          ),
+          impact: (
+            <>
+              แดชบอร์ดสรุปวิเคราะห์ข้อมูลรายรับและสถานะบิลทางการเงิน <span className="font-bold text-rose-600">ตอบสนองไว กราฟสปีดเปลี่ยนตามตัวกรองได้ทันทีใน 20 มิลลิวินาที</span> ช่วยให้ฝ่ายการเงินสามารถวางแผนการบริหารจัดการกระแสเงินสดได้อย่างมีประสิทธิภาพ
+            </>
+          ),
+        }}
+        card2={{
+          title: "เครื่องคำนวณสถิติและจำแนกข้อมูลรายได้เรียลไทม์ (Instant Revenue Aggregator & Faceting)",
+          leftTitle: "ถ้าไม่ใช้ Pattern (ก่อน)",
+          leftContent: (
+            <>
+              <p>บัญชีกดฟิลเตอร์ดูยอดเงินรวมไตรมาสล่าสุด ➔ ระบบรันคิวรีสแกนหาผลรวมเฉลี่ยยอดเงินใหม่จาก Postgres ตรงๆ</p>
+              <p className="font-bold text-rose-600">➔ ผลลัพธ์: ระบบประมวลผลหมดเวลา (Timeout) กราฟการเงินค้างเติ่งไม่ยอมโหลด</p>
+            </>
+          ),
+          rightTitle: "สิ่งที่เราใช้ (หลัง)",
+          rightContent: (
+            <>
+              <p>ดึงผลการวิเคราะห์สะสมล่วงหน้าบนหน่วยความจำความเร็วสูงของ Elastic ➔ กราฟ Recharts อัปเดตเสร็จทันที</p>
+              <p className="font-bold text-emerald-600">➔ ผลลัพธ์: กราฟ Recharts ปรับรูปรายงานเปลี่ยนยอดรายวันในเสี้ยววินาที สะดวกสบายขั้นสุด</p>
+            </>
+          ),
+        }}
+      />
       {/* Interactive Controls & Filters */}
       <div className="glass-panel p-6 bg-white/10 border-white/20 backdrop-blur-md relative overflow-visible">
         <div className="flex flex-col md:flex-row gap-4 items-center justify-between">

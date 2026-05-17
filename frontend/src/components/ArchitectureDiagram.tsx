@@ -46,73 +46,148 @@ const nodeTypes = {
 }
 
 const initialNodes: Node[] = [
+  // Quality Gate (Top Left)
+  {
+    id: 'testcov',
+    type: 'tech',
+    position: { x: 50, y: -20 },
+    data: { label: 'Jest Coverage >=80%', category: 'Quality Gate', icon: Shield, id: 'testcov' },
+  },
+  // Ingress & Messaging
   {
     id: 'kafka',
     type: 'tech',
-    position: { x: 250, y: 0 },
+    position: { x: 300, y: -20 },
     data: { label: 'Apache Kafka', category: 'Messaging', icon: Zap, id: 'kafka' },
   },
+  // Security & Docs (Left Column)
   {
     id: 'keycloak',
     type: 'tech',
-    position: { x: 0, y: 100 },
+    position: { x: 20, y: 120 },
     data: { label: 'Keycloak OIDC', category: 'Security', icon: Shield, id: 'keycloak' },
   },
   {
+    id: 'swagger',
+    type: 'tech',
+    position: { x: 20, y: 240 },
+    data: { label: 'Swagger & Scalar API', category: 'API Docs', icon: Code2, id: 'swagger' },
+  },
+  // Main Framework Core (Center Column)
+  {
     id: 'nestjs',
     type: 'tech',
-    position: { x: 250, y: 120 },
+    position: { x: 300, y: 120 },
     data: { label: 'NestJS Backend', category: 'Framework', icon: Cpu, id: 'nestjs' },
   },
   {
     id: 'prisma',
     type: 'tech',
-    position: { x: 250, y: 240 },
+    position: { x: 300, y: 240 },
     data: { label: 'Prisma ORM', category: 'ORM', icon: Code2, id: 'prisma' },
   },
   {
     id: 'postgres',
     type: 'tech',
-    position: { x: 250, y: 360 },
+    position: { x: 300, y: 360 },
     data: { label: 'PostgreSQL 17', category: 'Database', icon: Database, id: 'postgres' },
+  },
+  // Real-Time & Search Analytics (Right Column)
+  {
+    id: 'socket',
+    type: 'tech',
+    position: { x: 580, y: 120 },
+    data: { label: 'Socket.io WebSocket', category: 'Real-Time Sync', icon: Zap, id: 'socket' },
+  },
+  {
+    id: 'elastic',
+    type: 'tech',
+    position: { x: 580, y: 240 },
+    data: { label: 'Elasticsearch 9', category: 'Search Engine', icon: Database, id: 'elastic' },
   },
 ]
 
 const initialEdges: Edge[] = [
+  // 1. Kafka to NestJS event streaming
   { 
-    id: 'e1-2', 
+    id: 'e-kafka-nestjs', 
     source: 'kafka', 
     target: 'nestjs', 
     animated: true, 
-    label: 'Events',
+    label: 'Events Ingestion',
     style: { stroke: '#0077B6' },
     type: ConnectionLineType.SmoothStep,
     markerEnd: { type: MarkerType.ArrowClosed, color: '#0077B6' }
   },
+  // 2. Keycloak authorization guard
   { 
-    id: 'e2-3', 
+    id: 'e-keycloak-nestjs', 
     source: 'keycloak', 
     target: 'nestjs', 
-    label: 'Auth',
+    label: 'OIDC Shield',
     style: { stroke: '#00D2FF', strokeDasharray: '5,5' },
     type: ConnectionLineType.SmoothStep,
     markerEnd: { type: MarkerType.ArrowClosed, color: '#00D2FF' }
   },
+  // 3. Swagger/Scalar client client calls
   { 
-    id: 'e3-4', 
+    id: 'e-swagger-nestjs', 
+    source: 'swagger', 
+    target: 'nestjs', 
+    label: 'API Sandbox',
+    style: { stroke: '#0077B6', strokeDasharray: '2,2' },
+    type: ConnectionLineType.SmoothStep,
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#0077B6' }
+  },
+  // 4. Quality gates on NestJS core code
+  { 
+    id: 'e-testcov-nestjs', 
+    source: 'testcov', 
+    target: 'nestjs', 
+    label: 'Strict CI Gate',
+    style: { stroke: '#10B981', strokeDasharray: '4,4' },
+    type: ConnectionLineType.SmoothStep,
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#10B981' }
+  },
+  // 5. NestJS to Prisma database access
+  { 
+    id: 'e-nestjs-prisma', 
     source: 'nestjs', 
     target: 'prisma', 
     style: { stroke: '#0077B6' },
     type: ConnectionLineType.SmoothStep,
     markerEnd: { type: MarkerType.ArrowClosed, color: '#0077B6' }
   },
+  // 6. Prisma to PostgreSQL raw persistence
   { 
-    id: 'e4-5', 
+    id: 'e-prisma-postgres', 
     source: 'prisma', 
     target: 'postgres', 
     style: { stroke: '#0077B6' },
     type: ConnectionLineType.SmoothStep,
     markerEnd: { type: MarkerType.ArrowClosed, color: '#0077B6' }
+  },
+  // 7. NestJS to Elasticsearch CQRS write path
+  { 
+    id: 'e-nestjs-elastic', 
+    source: 'nestjs', 
+    target: 'elastic', 
+    animated: true,
+    label: 'Sync Inverted Index',
+    style: { stroke: '#F59E0B' },
+    type: ConnectionLineType.SmoothStep,
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#F59E0B' }
+  },
+  // 8. NestJS to Socket.io WebSockets real-time push
+  { 
+    id: 'e-nestjs-socket', 
+    source: 'nestjs', 
+    target: 'socket', 
+    animated: true,
+    label: 'WebSocket Broadcast',
+    style: { stroke: '#10B981' },
+    type: ConnectionLineType.SmoothStep,
+    markerEnd: { type: MarkerType.ArrowClosed, color: '#10B981' }
   },
 ]
 
@@ -122,23 +197,44 @@ export default function ArchitectureDiagram() {
   const [selectedTech, setSelectedTech] = useState<{ id: string; name: string; category: string; version: string; description: string; link: string }>(TECH_STACK.find(t => t.id === 'nestjs')!)
 
   const triggerBeam = useCallback(() => {
-    // Stage 1: Kafka -> NestJS
-    setEdges(eds => eds.map(e => e.id === 'e1-2' ? { ...e, animated: true, style: { stroke: '#fbbf24', strokeWidth: 3 } } : e))
+    // Stage 1: Client Request & Authentication (Swagger + Keycloak -> NestJS)
+    setEdges(eds => eds.map(e => 
+      e.id === 'e-swagger-nestjs' || e.id === 'e-keycloak-nestjs'
+        ? { ...e, animated: true, style: { stroke: '#fbbf24', strokeWidth: 3 } } 
+        : e
+    ))
     
     setTimeout(() => {
-      // Stage 2: NestJS -> Prisma
-      setEdges(eds => eds.map(e => e.id === 'e3-4' ? { ...e, animated: true, style: { stroke: '#fbbf24', strokeWidth: 3 } } : e))
-    }, 500)
+      // Stage 2: Event-Driven Queueing (Kafka -> NestJS Microservice Consumer)
+      setEdges(eds => eds.map(e => 
+        e.id === 'e-kafka-nestjs'
+          ? { ...e, animated: true, style: { stroke: '#fbbf24', strokeWidth: 3 } } 
+          : e
+      ))
+    }, 800)
 
     setTimeout(() => {
-      // Stage 3: Prisma -> Postgres
-      setEdges(eds => eds.map(e => e.id === 'e4-5' ? { ...e, animated: true, style: { stroke: '#fbbf24', strokeWidth: 3 } } : e))
-    }, 1000)
+      // Stage 3: Data Branching & Sync (NestJS -> Prisma & Elasticsearch & WebSockets)
+      setEdges(eds => eds.map(e => 
+        e.id === 'e-nestjs-prisma' || e.id === 'e-nestjs-elastic' || e.id === 'e-nestjs-socket'
+          ? { ...e, animated: true, style: { stroke: '#fbbf24', strokeWidth: 3 } } 
+          : e
+      ))
+    }, 1600)
 
     setTimeout(() => {
-      // Reset
+      // Stage 4: DB Ledger Commit (Prisma -> PostgreSQL)
+      setEdges(eds => eds.map(e => 
+        e.id === 'e-prisma-postgres'
+          ? { ...e, animated: true, style: { stroke: '#fbbf24', strokeWidth: 3 } } 
+          : e
+      ))
+    }, 2400)
+
+    setTimeout(() => {
+      // Reset to original styles
       setEdges(initialEdges)
-    }, 3000)
+    }, 4500)
   }, [])
 
   useEffect(() => {

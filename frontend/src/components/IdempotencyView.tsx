@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Repeat, ShieldCheck, AlertCircle, Play, CheckCircle2, Terminal } from 'lucide-react'
+import ShowcaseComparisonCards from './ShowcaseComparisonCards'
 import { fetchApi } from '../api'
 
 interface ProcessResult {
@@ -73,16 +74,42 @@ export default function IdempotencyView() {
 
   return (
     <div className="space-y-8">
-      {/* Concept Explanation */}
-      <div className="glass-panel p-6 bg-indigo-50 border-indigo-200">
-        <h3 className="text-xl font-bold text-indigo-600 mb-2 flex items-center gap-2">
-          ระบบป้องกันการจ่ายเงินซ้ำ (Idempotency Engine)
-        </h3>
-        <p className="text-slate-600 text-sm leading-relaxed">
-          ในระบบการเงินระดับโลก ปัญหา <span className="text-rose-600 font-bold">"กดปุ่มจ่ายเงินซ้ำ"</span> หรือ <span className="text-rose-600 font-bold">"เน็ตหลุดตอนกำลังจ่าย"</span> เกิดขึ้นได้เสมอ 
-          เทคโนโลยี Idempotency ของเราช่วยให้มั่นใจว่า <span className="text-emerald-600 font-bold">"หนึ่งคำสั่ง จะเกิดขึ้นเพียงครั้งเดียวเสมอ"</span> แม้จะยิงข้อมูลเดิมเข้ามา 100 รอบก็ตาม
-        </p>
-      </div>
+      <ShowcaseComparisonCards
+        card1={{
+          problem: (
+            <>
+              ลูกค้ากดปุ่มชำระเงินบิลเดิมซ้ำๆ รัวๆ หรือกดจ่ายเงินตอนที่สัญญาณอินเทอร์เน็ตหลุดพอดี ทำให้ระบบส่งคำขอเงินโอนตัวเดิมเข้ามาเบิ้ล <span className="font-bold text-rose-600">ทำให้เงินปลิว คู่ค้าถูกหักยอดเงินซ้ำซ้อน 2 รอบ บัญชีติดลบ และเกิดความเสียหายรุนแรง</span>
+            </>
+          ),
+          solution: (
+            <>
+              วางระบบป้องกันทำรายการซ้ำซ้อน (Idempotency Engine) บันทึกและดึงรหัสธุรกรรมจำเพาะ (eventId) ตรวจสอบกับประวัติการประมวลผลก่อนดำเนินการบันทึกยอดเงินเสมอ
+            </>
+          ),
+          impact: (
+            <>
+              ขจัดความเสี่ยงจากการจ่ายเงินซ้ำซ้อนได้อย่างเด็ดขาด <span className="font-bold text-rose-600">หนึ่งคำสั่งซื้อชำระเงินเกิดขึ้นเพียงครั้งเดียวเสมอ 100% แม้จะถูกยิงรัวเข้ามา 100 รอบก็ตาม</span>
+            </>
+          ),
+        }}
+        card2={{
+          title: "เกราะกำบังการโอนเงินซ้ำซ้อนและป้องกันบัญชีเบิ้ลจ่าย (Double-Payment Shield)",
+          leftTitle: "ถ้าไม่ใช้ Pattern (ก่อน)",
+          leftContent: (
+            <>
+              <p>เน็ตช้าลูกค้ากดจ่ายเงินรัวๆ 5 รอบ ➔ ระบบไล่บันทึกเงินโอนบวกเข้าบัญชีไปทั้ง 5 รอบ</p>
+              <p className="font-bold text-rose-600">➔ ผลลัพธ์: หักเงินลูกค้าซ้ำ 5 เท่า ร้านต้องมานั่งทยอยทำเรื่องโอนเงินคืนวุ่นวาย</p>
+            </>
+          ),
+          rightTitle: "สิ่งที่เราใช้ (หลัง)",
+          rightContent: (
+            <>
+              <p>ยิงข้อมูลชำระเงินเข้ามา 5 รอบ ➔ รอบแรกผ่าน ➔ รอบที่ 2-5 คัดกรองเจอ Event ID ซ้ำ</p>
+              <p className="font-bold text-emerald-600">➔ ผลลัพธ์: ระบบส่งสถานะข้าม (HTTP 200 OK - SKIPPED) ปลอดภัยไร้กังวล</p>
+            </>
+          ),
+        }}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Control Panel */}

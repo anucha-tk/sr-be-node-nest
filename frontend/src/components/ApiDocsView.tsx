@@ -1,19 +1,48 @@
 import { motion } from 'framer-motion'
 import { BookOpen, Terminal, ExternalLink } from 'lucide-react'
+import ShowcaseComparisonCards from './ShowcaseComparisonCards'
 
 export default function ApiDocsView() {
   const apiKey = import.meta.env.VITE_API_KEY || 'sk_live_12345';
 
   return (
     <div className="space-y-8">
-      {/* Explanation for Non-Tech */}
-      <div className="glass-panel p-6 bg-purple-500/10 border-purple-500/20">
-        <h3 className="text-xl font-bold text-purple-400 mb-2">เปรียบเทียบการทำงาน (Analogy)</h3>
-        <p className="text-slate-600 text-sm leading-relaxed">
-          <span className="font-bold">API Documentation</span> เปรียบเสมือน <span className="text-emerald-400 font-bold">"เมนูอาหารของร้าน"</span> ที่บอกนักพัฒนาคนอื่นๆ (ลูกค้า) ว่าระบบเรามีเมนูอะไรให้สั่งบ้าง ต้องสั่งยังไง (ใส่ส่วนผสมอะไรบ้าง) และหน้าตาอาหารที่ได้จะเป็นแบบไหน
-          โดยเราเลือกใช้มาตรฐาน <span className="text-amber-400 font-bold">OpenAPI (Swagger/Scalar)</span> ซึ่งเป็นมาตรฐานที่ทั่วโลกยอมรับ ทำให้นักพัฒนาจากบริษัทอื่นสามารถเข้ามาเชื่อมต่อระบบกับเราได้อย่างรวดเร็วและไม่ผิดพลาด
-        </p>
-      </div>
+      <ShowcaseComparisonCards
+        card1={{
+          problem: (
+            <>
+              เมื่อคู่ค้ารายใหม่ต้องการเชื่อมระบบส่งข้อมูลบิลกับบริษัท หากไม่มีเอกสารคู่มือที่ชัดเจน ทีมโปรแกรมเมอร์ของคู่ค้าจะต้องเดาโครงสร้างข้อมูล ส่งอีเมลถามกันไปมา <span className="font-bold text-rose-600">ทำให้เชื่อมระบบขลุกขลักล่าช้าเป็นเดือนๆ เสียโอกาสทางธุรกิจอย่างประเมินค่าไม่ได้</span>
+            </>
+          ),
+          solution: (
+            <>
+              ใช้มาตรฐานเอกสาร API อัตโนมัติ (OpenAPI/Scalar Blueprint) เผยแพร่ช่องทางเชื่อมต่อ รูปแบบโครงสร้าง และตัวอย่างผลลัพธ์ที่สวยงามและใช้งานทดสอบสดๆ ได้ทันที
+            </>
+          ),
+          impact: (
+            <>
+              ช่วยให้คู่ค้าต่างระบบสามารถเรียนรู้โครงสร้างและเริ่มเชื่อมโยงยอดเงินกับระบบเราได้ <span className="font-bold text-rose-600">เร็วขึ้น 5 เท่าในเวลาไม่กี่นาที</span> ลดต้นทุนการคุยงานไอทีได้อย่างยอดเยี่ยม
+            </>
+          ),
+        }}
+        card2={{
+          title: "พิมพ์เขียวของหน้ากากเชื่อมต่อข้อมูลการเงินคู่ค้า (Dynamic OpenAPI & Scalar Blueprint)",
+          leftTitle: "ถ้าไม่ใช้ Pattern (ก่อน)",
+          leftContent: (
+            <>
+              <p>ส่งไฟล์เอกสาร PDF หรือภาพแคปหน้าจอโครงสร้าง API เก่าๆ ผ่านไลน์ให้โปรแกรมเมอร์คู่ค้าเดาต่อ</p>
+              <p className="font-bold text-rose-600">➔ ผลลัพธ์: ยิงทดสอบระบบไม่ผ่านเพราะข้อมูลไม่ตรง เสียเวลาแก้โค้ดซ้ำไปซ้ำมา</p>
+            </>
+          ),
+          rightTitle: "สิ่งที่เราใช้ (หลัง)",
+          rightContent: (
+            <>
+              <p>เปิดหน้า Scalar UI อัตโนมัติที่อัปเดตตรงตามโค้ดล่าสุดตลอดเวลา</p>
+              <p className="font-bold text-emerald-600">➔ ผลลัพธ์: โปรแกรมเมอร์คู่ค้ากดทดสอบยิง API จริงผ่านหน้าเว็บได้ทันที ประหยัดเวลา 100%</p>
+            </>
+          ),
+        }}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[400px]">
         <motion.div 

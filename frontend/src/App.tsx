@@ -12,8 +12,8 @@ import AuditTrailView from './components/AuditTrailView'
 import ApiDocsView from './components/ApiDocsView'
 import IdempotencyView from './components/IdempotencyView'
 import SystemPulseSidebar from './components/SystemPulseSidebar'
+import ShowcaseComparisonCards from './components/ShowcaseComparisonCards'
 import { CommandPalette } from './components/CommandPalette'
-
 import { PAGES } from './config/pages'
 
 export default function App() {
@@ -26,18 +26,42 @@ export default function App() {
       case 'intro':
         return (
           <div className="space-y-8">
-            <div className="glass-panel p-6 bg-primary/5 border-primary/10">
-              <h3 className="text-xl font-bold text-primary mb-2">ยินดีต้อนรับสู่ Backend Showcase</h3>
-              <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                ระบบนี้คือ <strong>"แดชบอร์ดจำลอง"</strong> ที่ถูกสร้างขึ้นมาเพื่อแสดงให้เห็นถึงการทำงานเบื้องหลัง (Backend) ของระบบประมวลผลธุรกรรมทางการเงิน (Revenue Engine) ที่พัฒนาด้วยสถาปัตยกรรมยุคใหม่ 
-              </p>
-              <ul className="list-disc list-inside text-slate-600 text-sm leading-relaxed space-y-1 ml-4">
-                <li><strong>NestJS:</strong> โครงสร้างหลัก of API ที่แข็งแรงและปลอดภัย</li>
-                <li><strong>Apache Kafka:</strong> ระบบคิวรองรับข้อมูลมหาศาลแบบ Event-Driven</li>
-                <li><strong>PostgreSQL:</strong> ฐานข้อมูลที่รองรับ Transaction และการดึงข้อมูล 1 ล้านเรคคอร์ดในพริบตา</li>
-                <li><strong>Keycloak:</strong> ระบบรักษาความปลอดภัยและระบุตัวตนระดับองค์กร</li>
-              </ul>
-            </div>
+            <ShowcaseComparisonCards
+              card1={{
+                problem: (
+                  <>
+                    เมื่อบริษัทมีใบแจ้งหนี้และยอดธุรกรรมเข้ามาหลักล้านรายการ การค้นหายอดเงินหรือสรุปรายได้จากฐานข้อมูลแบบเดิมมักจะดีเลย์ ส่งผลให้ <span className="font-bold text-rose-600">ผู้บริหารมองไม่เห็นยอดเงินไหลเข้าแบบเรียลไทม์ และระบบชำระเงินปลายทางสะดุด</span>
+                  </>
+                ),
+                solution: (
+                  <>
+                    แยกหน้าที่งาน! เก็บประวัติธุรกรรมไว้ในสมุดบัญชีหลัก (PostgreSql) แล้วส่งผ่านความเคลื่อนไหวทางการเงินผ่านสายพาน Kafka ไปที่ระบบสืบค้นประสิทธิภาพสูง (Elasticsearch) เพื่อคำนวณและแสดงผลเรียลไทม์
+                  </>
+                ),
+                impact: (
+                  <>
+                    ทีมบัญชีและผู้บริหารสามารถเรียกดูรายงานรายได้และค้นหาใบแจ้งหนี้ได้ <span className="font-bold text-rose-600">เร็วขึ้นกว่าเดิม 10 เท่าในเวลาไม่ถึงวินาที</span> ช่วยให้ตัดสินใจทางธุรกิจได้อย่างแม่นยำ
+                  </>
+                ),
+              }}
+              card2={{
+                title: "สถาปัตยกรรมตัดจ่ายเงินอัจฉริยะ (Smart Revenue Pipeline Architecture)",
+                leftTitle: "ถ้าไม่ใช้ Pattern (ก่อน)",
+                leftContent: (
+                  <>
+                    <p>ลูกค้าชำระเงิน ➔ ระบบรันคิวรีสแกนคำนวณสรุปยอดตรงๆ จาก Postgres ➔ ฐานข้อมูลทำงานหนักเกิน 100%</p>
+                    <p className="font-bold text-rose-600">➔ ผลลัพธ์: ระบบจ่ายเงินสะดุด ลูกค้าชำระเงินไม่ได้ชั่วคราว</p>
+                  </>
+                ),
+                rightTitle: "สิ่งที่เราใช้ (หลัง)",
+                rightContent: (
+                  <>
+                    <p>ลูกค้าชำระเงิน ➔ ส่งข้อมูลบนสายพาน Kafka อัตโนมัติไป Elasticsearch ➔ ดึงวิเคราะห์เสร็จในเสี้ยววินาที</p>
+                    <p className="font-bold text-emerald-600">➔ ผลลัพธ์: ระบบชำระเงินหลักทำงานได้อย่างราบรื่นและปลอดภัย 100%</p>
+                  </>
+                ),
+              }}
+            />
             <ArchitectureDiagram />
           </div>
         )

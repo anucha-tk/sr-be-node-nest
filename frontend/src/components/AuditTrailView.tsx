@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { FileSearch, Clock, CheckCircle2, Lock, Zap } from 'lucide-react'
+import { FileSearch, Clock, CheckCircle2, Lock } from 'lucide-react'
 import { fetchApi } from '../api'
 import { useWebSockets } from '../hooks/useWebSockets'
+import ShowcaseComparisonCards from './ShowcaseComparisonCards'
 
 interface AuditLog {
   id: string;
@@ -25,7 +26,7 @@ interface MappedAudit {
 export default function AuditTrailView() {
   const [audits, setAudits] = useState<MappedAudit[]>([])
   const [loading, setLoading] = useState(true)
-  const { isConnected, subscribe } = useWebSockets()
+  const { subscribe } = useWebSockets()
 
   const mapAuditItem = useCallback((item: AuditLog): MappedAudit => ({
     id: item.id,
@@ -66,24 +67,42 @@ export default function AuditTrailView() {
 
   return (
     <div className="space-y-8">
-      {/* Explanation for Non-Tech */}
-      <div className="glass-panel p-6 bg-amber-50 border-amber-200">
-        <h3 className="text-xl font-bold text-amber-600 mb-2 flex items-center gap-2">
-          เปรียบเทียบการทำงาน (Analogy)
-          {isConnected && (
-            <span className="ml-auto flex items-center gap-1 px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-[10px] font-bold uppercase tracking-wider animate-pulse">
-              <Zap size={10} /> Live WebSocket Connected
-            </span>
-          )}
-        </h3>
-        <p className="text-slate-600 text-sm leading-relaxed">
-          ระบบ <span className="font-bold">Audit Log</span> แบบ <span className="text-amber-600 font-bold">Immutable (แก้ไขไม่ได้)</span> เปรียบเสมือน <span className="text-rose-600 font-bold">"สมุดข่อยโบราณที่เขียนด้วยหมึกฝังลึก"</span> 
-          ทุกครั้งที่มีการเปลี่ยนตัวเลขยอดเงินในบัญชี ระบบจะบังคับให้จดประวัติลงสมุดเล่มนี้เสมอ 
-          <span className="block mt-2 font-semibold text-primary italic">
-            *ตอนนี้เปิดใช้งาน Real-time WebSocket: ข้อมูลจะเด้งขึ้นหน้าจอทันทีที่มีการบันทึกสำเร็จโดยไม่ต้องกด Refresh!
-          </span>
-        </p>
-      </div>
+      <ShowcaseComparisonCards
+        card1={{
+          problem: (
+            <>
+              บัญชีรายรับและข้อมูลโอนเงินอาจถูกแก้ไข/ลบโดยมิชอบจากบุคคลภายใน หรือเกิดจากความเสียหายของข้อมูลในระบบบัญชีปกติ ทำให้ <span className="font-bold text-rose-600">ข้อมูลการโอนเงินคู่ค้าสูญหาย ยอดเงินจริงไม่ตรงกับรายงาน และขัดต่อกฎหมายภาษี</span>
+            </>
+          ),
+          solution: (
+            <>
+              ออกแบบระบบจัดเก็บ Log ธุรกรรมที่แก้ไขไม่ได้ (Immutable Audit Log - WORM Concept) บังคับบันทึกประวัติการบวก/ลบเงินของแต่ละคู่ค้าคู่กับ correlationId เสมอ
+            </>
+          ),
+          impact: (
+            <>
+              บัญชีและประวัติรายรับคู่ค้าโปร่งใส ตรวจสอบย้อนกลับได้ครบถ้วน <span className="font-bold text-rose-600">ป้องกันการแก้ไขข้อมูลย้อนหลังและการทุจริตยอดเงิน 100%</span> พร้อมเชื่อมต่อส่งข้อมูลแบบสดทันที
+            </>
+          ),
+        }}
+        card2={{
+          title: "สมุดบันทึกตรวจสอบธุรกรรมที่ไม่มีใครสามารถแก้ไขได้ (Immutable Audit Ledger)",
+          leftTitle: "ถ้าไม่ใช้ Pattern (ก่อน)",
+          leftContent: (
+            <>
+              <p>บันทึกยอดเงินสุทธิลงตารางฐานข้อมูลปกติ ➔ แฮกเกอร์แอบแก้ค่าตัวเลขตรงๆ ในฐานข้อมูล</p>
+              <p className="font-bold text-rose-600">➔ ผลลัพธ์: ไม่มีประวัติการแก้ไข บัญชีจับมือใครดมไม่ได้ สูญเสียเงินมหาศาล</p>
+            </>
+          ),
+          rightTitle: "สิ่งที่เราใช้ (หลัง)",
+          rightContent: (
+            <>
+              <p>ทุกการอัปเดตจะบันทึก Log ใหม่เสมอห้ามแก้ไขทับ (WORM) ➔ ตรวจสอบค่าตัวเลขสุทธิขัดแย้งกับ Log</p>
+              <p className="font-bold text-emerald-600">➔ ผลลัพธ์: หากมีสิ่งผิดปกติ ระบบจะร้องเตือนทันที ตรวจสอบย้อนกลับได้ใน 1 วินาที</p>
+            </>
+          ),
+        }}
+      />
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}

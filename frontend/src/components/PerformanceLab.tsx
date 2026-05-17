@@ -18,6 +18,8 @@ import {
   Clock
 } from 'lucide-react'
 
+import ShowcaseComparisonCards from './ShowcaseComparisonCards'
+
 interface PerformanceMetric {
   name: string
   time: number
@@ -71,14 +73,42 @@ export default function PerformanceLab() {
 
   return (
     <div className="space-y-8">
-      {/* Explanation for Non-Tech */}
-      <div className="glass-panel p-6 bg-primary/5 border-primary/10">
-        <h3 className="text-xl font-bold text-primary mb-2">เปรียบเทียบการทำงาน (Analogy)</h3>
-        <p className="text-slate-600 text-sm leading-relaxed">
-          เวลาดึงข้อมูลวิเคราะห์จากข้อมูลนับแสนหรือล้านรายการ การไม่มี <span className="font-bold">Index</span> เหมือนการที่คุณไปห้องสมุดแล้ว <span className="text-rose-400 font-bold">"ต้องเดินหาหนังสือทีละเล่มจากทุกชั้น"</span> (กินเวลานาน) 
-          แต่ระบบของเรามีการทำ <span className="text-emerald-400 font-bold">Database Indexing (B-Tree)</span> ซึ่งเปรียบเสมือนคุณ <span className="text-emerald-400 font-bold">"เปิดตู้บัตรคำค้นหา"</span> แล้วรู้ทันทีว่าข้อมูลกองอยู่ตรงไหนบ้าง ทำให้ระบบดึงข้อมูลสรุปผลรวมได้ในเวลา <span className="text-amber-400 font-bold">แทบจะในพริบตา (Sub-millisecond)</span>
-        </p>
-      </div>
+      <ShowcaseComparisonCards
+        card1={{
+          problem: (
+            <>
+              ระบบดึงยอดรายรับสะสมเพื่อยื่นภาษีต้องกวาดคิวรีข้อมูลใบแจ้งหนี้หลักล้านเรคคอร์ด หากดึงข้อมูลแบบไม่มีการทำดัชนี (Index) คิวรีจะช้ามาก <span className="font-bold text-rose-600">ทำให้ระบบหน้าร้านค้าง ลูกค้าชำระเงินไม่ได้ และเซิร์ฟเวอร์แรมหมดล่มไปดื้อๆ</span>
+            </>
+          ),
+          solution: (
+            <>
+              ออกแบบและจัดสถิติดัชนีข้อมูลอัจฉริยะ (B-Tree Indexing) บนคอลัมน์ที่มีการสืบค้นบ่อยใน PostgreSQL ช่วยให้สแกนเจอกลุ่มข้อมูลในเสี้ยววินาที
+            </>
+          ),
+          impact: (
+            <>
+              ระบบประมวลผลดึงสรุปยอดธุรกรรมได้อย่างรวดเร็ว <span className="font-bold text-rose-600">ตอบสนองไว ค้นเจอทันใจในระดับต่ำกว่า 1 มิลลิวินาที (Sub-millisecond) ดึงข้อมูลล้านแถวได้ชิลๆ</span>
+            </>
+          ),
+        }}
+        card2={{
+          title: "สนามทดลองประสิทธิภาพการคำนวณสรุปยอดภาษีความเร็วสูง (High-Performance B-Tree Index Lab)",
+          leftTitle: "ถ้าไม่ใช้ Pattern (ก่อน)",
+          leftContent: (
+            <>
+              <p>ระบบเดินสุ่มค้นหาแผ่นสลิปชำระเงินในกล่องกระดาษทีละใบจากล้านใบ</p>
+              <p className="font-bold text-rose-600">➔ ผลลัพธ์: ค้นข้อมูลเสร็จสิ้นใน 20 วินาที ส่งผลให้แอปหมุนค้างคอยนาน</p>
+            </>
+          ),
+          rightTitle: "สิ่งที่เราใช้ (หลัง)",
+          rightContent: (
+            <>
+              <p>ระบบเปิดแฟ้มสารบัญแยกประเภทแยกตามคู่ค้า/วันที่ (B-Tree) ➔ ดึงสรุปยอดภาษีเสร็จทันที</p>
+              <p className="font-bold text-emerald-600">➔ ผลลัพธ์: ดึงข้อมูลสรุปเสร็จใน 0.05 มิลลิวินาที ปลอดภัยไร้คอขวด</p>
+            </>
+          ),
+        }}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Control Panel */}

@@ -22,6 +22,7 @@ import {
   Line
 } from 'recharts'
 import { fetchApi } from '../api'
+import ShowcaseComparisonCards from './ShowcaseComparisonCards'
 
 interface MetricSummary {
   cpu: {
@@ -77,6 +78,42 @@ export default function PrometheusDashboard() {
 
   return (
     <div className="space-y-8 pb-12">
+      <ShowcaseComparisonCards
+        card1={{
+          problem: (
+            <>
+              เมื่อเกิดปัญหาขัดข้องทางเทคนิค เช่น ฐานข้อมูลค้าง หรือระบบส่ง Kafka ช้า ฝ่ายไอทีมักจะคลำทางหาจุดบกพร่องไม่เจอ ทำให้ <span className="font-bold text-rose-600">การแก้ระบบล่มล่าช้าเป็นชั่วโมง และส่งผลต่อความน่าเชื่อถือของแบรนด์</span>
+            </>
+          ),
+          solution: (
+            <>
+              วางระบบมาตรวัดสุขภาพไอที (Infrastructure Observability Metrics) ผ่าน Prometheus ดึงค่าสถานะเครื่องแบบวิเคราะห์เชิงลึก (CPU, RAM, Socket Connection) เพื่อคอยเตือนภัยล่วงหน้า
+            </>
+          ),
+          impact: (
+            <>
+              ช่วยให้ฝ่ายเทคนิคสามารถระบุจุดคอขวดและจุดรั่วไหลของหน่วยความจำได้อย่างรวดเร็ว <span className="font-bold text-rose-600">รู้ปัญหาล่วงหน้าทันทีภายใน 5 วินาที ก่อนที่ลูกค้าจะพบระบบทำงานช้า</span>
+            </>
+          ),
+        }}
+        card2={{
+          title: "ระบบวัดวิเคราะห์สุขภาพทางเทคนิคของเครื่องประมวลผล (Real-time Infrastructure Observability)",
+          leftTitle: "ถ้าไม่ใช้ Pattern (ก่อน)",
+          leftContent: (
+            <>
+              <p>ระบบล่มโดยไม่รู้ตัว ➔ คอยลุ้นให้คู่ค้าโทรมาแจ้งยอดชำระเงินไม่เข้า</p>
+              <p className="font-bold text-rose-600">➔ ผลลัพธ์: กว่าทีมไอทีจะแกะเจอสาเหตุใช้เวลาครึ่งวัน เสียรายได้หลายแสน</p>
+            </>
+          ),
+          rightTitle: "สิ่งที่เราใช้ (หลัง)",
+          rightContent: (
+            <>
+              <p>ระบบวัดสแกนอัตโนมัติแจ้งเตือนทันควัน ➔ วิเคราะห์กราฟทรัพยากรตรงจุด</p>
+              <p className="font-bold text-emerald-600">➔ ผลลัพธ์: ตรวจเจอและจูนเครื่องได้ทันควันใน 5 วินาที ปลอดภัยไร้กังวล</p>
+            </>
+          ),
+        }}
+      />
       {/* Real-time Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 

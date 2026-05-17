@@ -14,7 +14,7 @@ export type SearchResult = {
   metadata?: Record<string, unknown>
 }
 
-export function useCommandPalette() {
+export function useCommandPalette(setActiveTab?: (tab: string) => void) {
   const [isOpen, setIsOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
@@ -69,10 +69,16 @@ export function useCommandPalette() {
 
   const handleSelect = useCallback((result: SearchResult) => {
     console.log('Selected:', result)
-    // Implement navigation or action based on type
     setIsOpen(false)
     setQuery('')
-  }, [])
+    if (!setActiveTab) return
+
+    if (result.type === 'invoice') {
+      setActiveTab('audit')
+    } else if (result.type === 'api-key' || result.type === 'supplier') {
+      setActiveTab('security')
+    }
+  }, [setActiveTab])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {

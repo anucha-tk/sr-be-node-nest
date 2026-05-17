@@ -128,7 +128,10 @@ export default function App() {
       </main>
 
       <SystemPulseSidebar />
-      <CommandPalette />
+      <CommandPalette 
+        setActiveTab={setActiveTab}
+        onLaunchDemo={() => setShowPresentation(true)}
+      />
     </div>
   )
 }

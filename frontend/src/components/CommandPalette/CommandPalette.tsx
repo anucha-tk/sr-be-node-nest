@@ -4,7 +4,13 @@ import { useCommandPalette } from '../../hooks/useCommandPalette'
 import { SearchResultSkeleton } from './SearchResultSkeleton'
 import { SearchResultTable } from './SearchResultTable'
 
-export function CommandPalette() {
+export function CommandPalette({ 
+  setActiveTab, 
+  onLaunchDemo 
+}: { 
+  setActiveTab: (tab: string) => void; 
+  onLaunchDemo: () => void; 
+}) {
   const {
     isOpen,
     setIsOpen,
@@ -16,7 +22,7 @@ export function CommandPalette() {
     selectedIndex,
     handleKeyDown,
     handleSelect,
-  } = useCommandPalette()
+  } = useCommandPalette(setActiveTab)
 
   if (!isOpen) return null
 
@@ -96,11 +102,19 @@ export function CommandPalette() {
                     icon={<Command className="w-4 h-4" />}
                     title="Launch Demo"
                     desc="Open presentation mode"
+                    onClick={() => {
+                      onLaunchDemo()
+                      setIsOpen(false)
+                    }}
                   />
                   <QuickActionItem
                     icon={<FileText className="w-4 h-4" />}
                     title="View API Docs"
                     desc="Explore Scalar reference"
+                    onClick={() => {
+                      setActiveTab('api-docs')
+                      setIsOpen(false)
+                    }}
                   />
                 </div>
               </div>
@@ -126,9 +140,22 @@ export function CommandPalette() {
   )
 }
 
-function QuickActionItem({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+function QuickActionItem({ 
+  icon, 
+  title, 
+  desc, 
+  onClick 
+}: { 
+  icon: React.ReactNode; 
+  title: string; 
+  desc: string; 
+  onClick?: () => void;
+}) {
   return (
-    <div className="flex items-center p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 cursor-pointer group transition-all">
+    <div 
+      onClick={onClick}
+      className="flex items-center p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 cursor-pointer group transition-all"
+    >
       <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors mr-3">
         {icon}
       </div>

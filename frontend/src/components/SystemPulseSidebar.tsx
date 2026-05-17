@@ -9,6 +9,9 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Command,
+  Info,
+  Search,
 } from 'lucide-react';
 import { useSocket } from '../hooks/useSocket';
 
@@ -23,6 +26,7 @@ interface PulseEvent {
 
 export default function SystemPulseSidebar() {
   const [isOpen, setIsOpen] = useState(true);
+  const [activeSidebarTab, setActiveSidebarTab] = useState<'pulse' | 'guide'>('pulse');
   const [events, setEvents] = useState<PulseEvent[]>([]);
   const { socket, isConnected } = useSocket();
 
@@ -77,7 +81,7 @@ export default function SystemPulseSidebar() {
               className={`text-primary ${isConnected ? 'animate-pulse' : 'opacity-50'}`}
               size={20}
             />
-            <h3 className="font-bold text-slate-900">System Pulse</h3>
+            <h3 className="font-bold text-slate-900">System Control</h3>
           </div>
           <div className="flex items-center gap-1">
             <span
@@ -89,55 +93,158 @@ export default function SystemPulseSidebar() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-          <AnimatePresence initial={false}>
-            {events.length === 0 ? (
-              <div className="text-center py-12 opacity-50 space-y-2">
-                <Clock className="mx-auto" size={32} />
-                <p className="text-xs">Waiting for system pulses...</p>
-              </div>
-            ) : (
-              events.map((event) => (
-                <motion.div
-                  key={event.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="p-3 rounded-lg bg-white/40 border border-white/20 shadow-sm hover:border-primary/30 transition-all group"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-md bg-white/60 shadow-inner flex-shrink-0 group-hover:scale-110 transition-transform">
-                      {getIcon(event.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight mb-1">
-                        {event.type.replace('_', ' ')}
-                      </p>
-                      <p className="text-xs font-medium text-slate-900 leading-tight">
-                        {event.label}
-                      </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-[9px] text-slate-400">
-                          {new Date(event.timestamp).toLocaleTimeString()}
+        {/* Sidebar Tabs */}
+        <div className="flex border-b border-white/10 px-4 py-2 bg-white/20 gap-2">
+          <button
+            onClick={() => setActiveSidebarTab('pulse')}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              activeSidebarTab === 'pulse'
+                ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm'
+                : 'text-slate-500 hover:bg-white/40'
+            }`}
+          >
+            <Activity size={12} />
+            Live Traces
+          </button>
+          <button
+            onClick={() => setActiveSidebarTab('guide')}
+            className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+              activeSidebarTab === 'guide'
+                ? 'bg-primary/10 text-primary border border-primary/20 shadow-sm'
+                : 'text-slate-500 hover:bg-white/40'
+            }`}
+          >
+            <Command size={12} />
+            Cmd+K Guide
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+          {activeSidebarTab === 'pulse' ? (
+            <AnimatePresence initial={false}>
+              {events.length === 0 ? (
+                <div className="text-center py-12 opacity-50 space-y-2">
+                  <Clock className="mx-auto" size={32} />
+                  <p className="text-xs">Waiting for system pulses...</p>
+                </div>
+              ) : (
+                events.map((event) => (
+                  <motion.div
+                    key={event.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="p-3 rounded-lg bg-white/40 border border-white/20 shadow-sm hover:border-primary/30 transition-all group mb-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-md bg-white/60 shadow-inner flex-shrink-0 group-hover:scale-110 transition-transform">
+                        {getIcon(event.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-tight mb-1">
+                          {event.type.replace('_', ' ')}
                         </p>
-                        {event.traceId && (
-                          <a
-                            href={`http://localhost:16686/trace/${event.traceId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-[9px] font-bold text-primary hover:text-primary/70 transition-colors bg-primary/10 px-1.5 py-0.5 rounded"
-                          >
-                            <span>DEEP DIVE</span>
-                            <ExternalLink size={8} />
-                          </a>
-                        )}
+                        <p className="text-xs font-medium text-slate-900 leading-tight">
+                          {event.label}
+                        </p>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-[9px] text-slate-400">
+                            {new Date(event.timestamp).toLocaleTimeString()}
+                          </p>
+                          {event.traceId && (
+                            <a
+                              href={`http://localhost:16686/trace/${event.traceId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-[9px] font-bold text-primary hover:text-primary/70 transition-colors bg-primary/10 px-1.5 py-0.5 rounded"
+                            >
+                              <span>DEEP DIVE</span>
+                              <ExternalLink size={8} />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4 text-slate-600 text-xs leading-relaxed"
+            >
+              {/* Search Capabilities */}
+              <div className="glass-panel p-4 bg-primary/5 border-primary/10 rounded-xl space-y-3">
+                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                  <Search size={14} className="text-primary" /> Search Capabilities
+                </h4>
+                <p>ระบบค้นหาแบบ Full-Text Search ค้นหาได้หลายหลากมิติ:</p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                    <span><strong>Invoices (ใบแจ้งหนี้):</strong> ค้นหาด้วยรหัสใบแจ้งหนี้ (เช่น <code>inv_sim_...</code>) หรือสถานะเงินโอน</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                    <span><strong>Suppliers (ร้านค้า):</strong> ค้นหาด้วยรหัสร้านค้า หรือชื่อร้านค้าในระบบ</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                    <span><strong>API Keys:</strong> ค้นหาด้วยชื่อคีย์ของ API Key ต่างๆ ที่บันทึกในฐานข้อมูล</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Technical Under the Hood */}
+              <div className="glass-panel p-4 bg-amber-500/5 border-amber-500/10 rounded-xl space-y-3">
+                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                  <Database size={14} className="text-amber-500" /> Elastic Search Logic
+                </h4>
+                <p>เบื้องหลังสถาปัตยกรรมค้นหาแบบความเร็วสูง:</p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />
+                    <span><strong>Edge N-Gram Autocomplete:</strong> ซอยย่อยตัวอักษรเพื่อผลลัพธ์แบบ Type-Ahead ทันทีขณะเริ่มพิมพ์</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />
+                    <span><strong>Weighted Search:</strong> ให้คะแนน <code>invoiceNumber^3</code> และ <code>name^3</code> ค้นพบก่อนฟิลด์อื่น</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 flex-shrink-0" />
+                    <span><strong>Fuzziness (AUTO):</strong> ค้นพบได้แม้มิสสะกดคำผิดเล็กน้อย (Fuzzy Logic)</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Keyboard Shortcuts */}
+              <div className="glass-panel p-4 bg-emerald-500/5 border-emerald-500/10 rounded-xl space-y-3">
+                <h4 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                  <Info size={14} className="text-emerald-500" /> Keyboard Shortcuts
+                </h4>
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 border rounded bg-white font-mono shadow-sm text-[8px]">Cmd+K</kbd>
+                    <span>เปิดค้นหา</span>
                   </div>
-                </motion.div>
-              ))
-            )}
-          </AnimatePresence>
+                  <div className="flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 border rounded bg-white font-mono shadow-sm text-[8px]">↑↓</kbd>
+                    <span>เลือกแถว</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 border rounded bg-white font-mono shadow-sm text-[8px]">Enter</kbd>
+                    <span>ไปหน้านั้น</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <kbd className="px-1.5 py-0.5 border rounded bg-white font-mono shadow-sm text-[8px]">ESC</kbd>
+                    <span>ปิดหน้า</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
 
         <div className="p-4 bg-primary/5 border-t border-white/10 text-center">

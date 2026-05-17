@@ -226,6 +226,19 @@ So that the experience feels fast and professional even when loading large datas
 **Then** skeleton loaders are displayed to maintain UI responsiveness
 **And** results are rendered in a high-density table using a Virtualized List for performance
 
+### Story 2.5: CMD+K Documentation Search & Centralized Navigation
+
+As a User,
+I want to search for system concepts, design analogies (like "สายพานลำเลียงพัสดุ"), and technical documentation keywords in the Command Palette,
+So that I can instantly navigate to any section of the technical showcase or simulation dashboard.
+
+**Acceptance Criteria:**
+
+**Given** the Command Palette is open
+**When** I search for a page concept or analogy keyword
+**Then** the palette displays matching documentation pages under "Quick Navigation"
+**And** selecting a documentation result routes me to the target tab instantly and closes the search menu
+
 ## Epic 3: Real-Time Event Synchronization (The Activity Stream)
 
 Implement near real-time sync via Kafka CDC and a live activity feed via SSE to ensure data consistency without manual refreshes.

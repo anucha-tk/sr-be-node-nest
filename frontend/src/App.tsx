@@ -11,6 +11,7 @@ import AuditTrailView from './components/AuditTrailView'
 import ApiDocsView from './components/ApiDocsView'
 import IdempotencyView from './components/IdempotencyView'
 import SystemPulseSidebar from './components/SystemPulseSidebar'
+import { CommandPalette } from './components/CommandPalette'
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('intro')
@@ -127,6 +128,7 @@ export default function App() {
       </main>
 
       <SystemPulseSidebar />
+      <CommandPalette />
     </div>
   )
 }
